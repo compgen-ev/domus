@@ -4,7 +4,7 @@ import { localized, msg } from '@lit/localize';
 import maplibregl, { type Map, type MapLayerMouseEvent, type GeoJSONSource } from 'maplibre-gl';
 import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
-import { fetchOhmRelationGeometry, fetchOhmByWikidataId, type OhmFetchResult } from '../services/ohm';
+import { fetchOhmRelationGeometry, fetchOhmByWikidataId } from '../services/ohm';
 import type { WikidataBuilding } from '../types/building';
 import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
