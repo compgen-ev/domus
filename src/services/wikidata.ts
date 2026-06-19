@@ -101,10 +101,12 @@ export async function fetchBuildings(
 
 function buildDetailQuery(id: string, langs: string): string {
   return `
-SELECT ?demolished ?heritageLabel
+SELECT ?demolished ?heritage ?heritageLabel
   ?occupant ?occupantLabel ?occupStart ?occupEnd
   ?owner ?ownerLabel ?ownerStart ?ownerEnd
   ?address ?addrStart ?addrEnd
+  ?architect ?architectLabel
+  ?commissioned ?commissionedLabel
 WHERE {
   BIND(wd:${id} AS ?item)
   OPTIONAL { ?item wdt:P576 ?demolished . }
@@ -130,12 +132,21 @@ WHERE {
     OPTIONAL { ?addrStmt pq:P580 ?addrStart . }
     OPTIONAL { ?addrStmt pq:P582 ?addrEnd . }
   }
+  OPTIONAL {
+    ?item p:P84 ?archStmt .
+    ?archStmt ps:P84 ?architect .
+  }
+  OPTIONAL {
+    ?item p:P88 ?commStmt .
+    ?commStmt ps:P88 ?commissioned .
+  }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }`;
 }
 
 interface DetailBinding {
   demolished?: SparqlBinding;
+  heritage?: SparqlBinding;
   heritageLabel?: SparqlBinding;
   occupant?: SparqlBinding;
   occupantLabel?: SparqlBinding;
@@ -148,6 +159,10 @@ interface DetailBinding {
   address?: SparqlBinding;
   addrStart?: SparqlBinding;
   addrEnd?: SparqlBinding;
+  architect?: SparqlBinding;
+  architectLabel?: SparqlBinding;
+  commissioned?: SparqlBinding;
+  commissionedLabel?: SparqlBinding;
 }
 
 export async function fetchBuildingDetail(
@@ -172,14 +187,16 @@ export async function fetchBuildingDetail(
   const rows = data.results.bindings;
 
   let demolished: string | undefined;
-  let heritage: string | undefined;
+  const heritageSet = new Set<string>();
   const occupants = new Map<string, PersonRef>();
   const owners = new Map<string, PersonRef>();
   const addresses = new Map<string, AddressEntry>();
+  const architects = new Map<string, PersonRef>();
+  const commissionedBy = new Map<string, PersonRef>();
 
   for (const row of rows) {
     if (row.demolished && !demolished) demolished = row.demolished.value;
-    if (row.heritageLabel && !heritage) heritage = row.heritageLabel.value;
+    if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
 
     if (row.occupant) {
       const key = `${row.occupant.value}|${row.occupStart?.value ?? ''}|${row.occupEnd?.value ?? ''}`;
@@ -215,6 +232,26 @@ export async function fetchBuildingDetail(
         });
       }
     }
+
+    if (row.architect) {
+      const key = row.architect.value;
+      if (!architects.has(key)) {
+        architects.set(key, {
+          id: extractQid(row.architect.value),
+          label: row.architectLabel?.value ?? extractQid(row.architect.value),
+        });
+      }
+    }
+
+    if (row.commissioned) {
+      const key = row.commissioned.value;
+      if (!commissionedBy.has(key)) {
+        commissionedBy.set(key, {
+          id: extractQid(row.commissioned.value),
+          label: row.commissionedLabel?.value ?? extractQid(row.commissioned.value),
+        });
+      }
+    }
   }
 
   const byStart = (a: { start?: string }, b: { start?: string }) => {
@@ -226,7 +263,9 @@ export async function fetchBuildingDetail(
 
   return {
     demolished,
-    heritage,
+    heritages: [...heritageSet],
+    architects: [...architects.values()],
+    commissionedBy: [...commissionedBy.values()],
     occupants: [...occupants.values()].sort(byStart),
     owners: [...owners.values()].sort(byStart),
     addresses: [...addresses.values()].sort(byStart),

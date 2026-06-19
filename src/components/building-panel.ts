@@ -200,6 +200,17 @@ export class BuildingPanel extends LitElement {
         flex-shrink: 0;
       }
 
+      .entry-label a {
+        color: inherit;
+        text-decoration: underline;
+        text-decoration-color: #cbd5e1;
+        text-underline-offset: 2px;
+      }
+
+      .entry-label a:hover {
+        text-decoration-color: currentColor;
+      }
+
       .footer {
         padding: 0.75rem 1rem;
         border-top: 1px solid #f1f5f9;
@@ -293,14 +304,18 @@ export class BuildingPanel extends LitElement {
 
   private _renderSection(
     title: string,
-    items: Array<{ primary: string; range: string }>,
+    items: Array<{ primary: string; href?: string; range?: string }>,
   ): TemplateResult {
     return html`
       <div class="section">
         <p class="section-title">${title}</p>
-        ${items.map(({ primary, range }) => html`
+        ${items.map(({ primary, href, range }) => html`
           <div class="entry">
-            <span class="entry-label">${primary}</span>
+            <span class="entry-label">
+              ${href
+                ? html`<a href=${href} target="_blank" rel="noopener">${primary}</a>`
+                : primary}
+            </span>
             ${range ? html`<span class="entry-dates">${range}</span>` : ''}
           </div>
         `)}
@@ -309,7 +324,18 @@ export class BuildingPanel extends LitElement {
   }
 
   private _personItems(people: PersonRef[]) {
-    return people.map((p) => ({ primary: p.label, range: yearRange(p.start, p.end) }));
+    return people.map((p) => ({
+      primary: p.label,
+      href: `https://www.wikidata.org/wiki/${p.id}`,
+      range: yearRange(p.start, p.end),
+    }));
+  }
+
+  private _entityItems(entities: PersonRef[]) {
+    return entities.map((e) => ({
+      primary: e.label,
+      href: `https://www.wikidata.org/wiki/${e.id}`,
+    }));
   }
 
   private _addressItems(addresses: AddressEntry[]) {
@@ -329,7 +355,7 @@ export class BuildingPanel extends LitElement {
         <div class="header">
           <div class="title">
             <div class="badges">
-              ${detail?.heritage ? html`<span class="badge badge-heritage">${detail.heritage}</span>` : ''}
+              ${detail?.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
               ${type ? html`<span class="badge badge-type">${type}</span>` : ''}
             </div>
             <h2>${label}</h2>
@@ -359,6 +385,14 @@ export class BuildingPanel extends LitElement {
 
           ${detail && detail.owners.length > 0
             ? this._renderSection(msg('Eigentümer'), this._personItems(detail.owners))
+            : ''}
+
+          ${detail && detail.architects.length > 0
+            ? this._renderSection(msg('Architekt'), this._entityItems(detail.architects))
+            : ''}
+
+          ${detail && detail.commissionedBy.length > 0
+            ? this._renderSection(msg('Bauherr'), this._entityItems(detail.commissionedBy))
             : ''}
         </div>
 

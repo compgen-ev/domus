@@ -54,6 +54,14 @@
   <source>Anmelden zum Bearbeiten</source>
   <target>Login to edit</target>
 </trans-unit>
+<trans-unit id="s7a09c81d25b6650c">
+  <source>Architekt</source>
+  <target>Architect</target>
+</trans-unit>
+<trans-unit id="s1cb20379e6d7d910">
+  <source>Bauherr</source>
+  <target>Commissioned by</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

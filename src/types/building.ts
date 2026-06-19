@@ -25,7 +25,9 @@ export interface AddressEntry {
 
 export interface BuildingDetail {
   demolished?: string;
-  heritage?: string;
+  heritages: string[];
+  architects: PersonRef[];
+  commissionedBy: PersonRef[];
   occupants: PersonRef[];
   owners: PersonRef[];
   addresses: AddressEntry[];
