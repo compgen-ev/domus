@@ -1,13 +1,16 @@
 # Domus
 
-A map that shows buildings from Wikidata. Zoom in past level 14 to see pins; click a pin for details. Early-stage frontend for a planned open data house history platform.
+An open-data platform for house history. Search and contribute the history of buildings — who lived there, who owned it, how addresses changed over time. Data is stored in Wikidata; building shapes come from OpenHistoricalMap.
+
+A [CompGen](https://www.compgen.de/) project. Early stage.
 
 ## Dev
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 — hot reload on file save
-npm run build      # type-check + production bundle → dist/
+npm run dev      # landing at localhost:5173/, map at localhost:5173/map/
+npm run build    # → dist/index.html (landing) + dist/map/ (app)
+npm run preview  # preview the build at localhost:4173/
 ```
 
 ## Stack
@@ -16,5 +19,5 @@ npm run build      # type-check + production bundle → dist/
 |---|---|
 | UI | Lit 3 + TypeScript |
 | Map | MapLibre GL JS + OpenFreeMap |
-| Data | Wikidata SPARQL API |
+| Data | Wikidata SPARQL + OpenHistoricalMap |
 | Build | Vite 6 |

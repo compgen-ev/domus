@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Domus</title>
+  <meta name="description" content="Häusergeschichte erforschen und dokumentieren.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: #fff;
+      color: #0f172a;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+
+    .hero {
+      text-align: center;
+      max-width: 480px;
+    }
+
+    h1 {
+      font-size: clamp(3.5rem, 10vw, 6rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #000052;
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+
+    .tagline {
+      font-size: 1.05rem;
+      color: rgba(0, 0, 82, 0.55);
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: #000052;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 0.8rem 2rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .cta:hover { background: #00003a; }
+
+    footer {
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: rgba(0, 0, 82, 0.4);
+    }
+
+    footer a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    footer a:hover { color: rgba(0, 0, 82, 0.65); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="hero">
+      <h1>Domus</h1>
+      <p class="tagline"
+         data-de="Häusergeschichte erforschen und dokumentieren."
+         data-en="Research and document the history of buildings.">
+        Häusergeschichte erforschen und dokumentieren.
+      </p>
+      <a class="cta" href="./map/">
+        <span data-de="Zur Karte" data-en="Open Map">Zur Karte</span>
+        <span aria-hidden="true">→</span>
+      </a>
+    </div>
+  </main>
+  <footer>
+    <span data-de="Ein Projekt des " data-en="A project by ">Ein Projekt des </span><a href="https://www.compgen.de/" target="_blank" rel="noopener">Vereins für Computergenealogie (CompGen)</a>
+  </footer>
+  <script>
+    const lang = (navigator.languages?.[0] ?? navigator.language ?? '').startsWith('en') ? 'en' : 'de';
+    if (lang === 'en') {
+      document.documentElement.lang = 'en';
+      document.title = 'Domus';
+      document.querySelector('meta[name=description]').content =
+        'Research and document the history of buildings.';
+      document.querySelectorAll('[data-en]').forEach(el => {
+        el.textContent = el.dataset.en;
+      });
+    }
+  </script>
+</body>
+</html>

@@ -9,7 +9,7 @@
     "useDefineForClassFields": false,
     "experimentalDecorators": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "outDir": "dist",
+    "noEmit": true,
     "skipLibCheck": true
   },
   "include": ["src"]

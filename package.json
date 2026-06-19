@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "build": "tsc && vite build && mkdir -p dist && cp landing/index.html dist/index.html",
+    "preview": "vite preview --outDir dist"
   },
   "dependencies": {
     "lit": "^3.2.0",
