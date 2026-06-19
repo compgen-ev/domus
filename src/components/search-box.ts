@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { localized, msg } from '@lit/localize';
 import { searchPlaces, type NominatimResult } from '../services/nominatim';
 
 const DEBOUNCE_MS = 400;
@@ -10,6 +11,7 @@ export interface PlaceSelectedEvent {
   boundingbox: [string, string, string, string];
 }
 
+@localized()
 @customElement('search-box')
 export class SearchBox extends LitElement {
   static styles = css`
@@ -151,13 +153,13 @@ export class SearchBox extends LitElement {
       <div class="input-row">
         <input
           type="search"
-          placeholder="Search places…"
+          placeholder=${msg('Orte suchen …')}
           .value=${this.query}
           @input=${this._onInput}
           @keydown=${this._onKeydown}
-          aria-label="Search places"
+          aria-label=${msg('Orte suchen')}
         />
-        <button class="search-btn" @click=${this._search} aria-label="Search">
+        <button class="search-btn" @click=${this._search} aria-label=${msg('Suchen')}>
           ${this.loading ? '⟳' : '⌕'}
         </button>
       </div>
@@ -172,7 +174,7 @@ export class SearchBox extends LitElement {
                       </div>
                     `,
                   )
-                : html`<div class="no-results">No results found</div>`}
+                : html`<div class="no-results">${msg('Keine Ergebnisse')}</div>`}
             </div>
           `
         : ''}

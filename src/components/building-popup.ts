@@ -1,7 +1,9 @@
 import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { localized, msg, str } from '@lit/localize';
 import type { WikidataBuilding } from '../types/building';
 
+@localized()
 @customElement('building-popup')
 export class BuildingPopup extends LitElement {
   static styles = css`
@@ -123,7 +125,7 @@ export class BuildingPopup extends LitElement {
 
   private _formatInception(raw: string): string {
     const year = raw.match(/^(\d{1,4})/)?.[1];
-    return year ? `Built around ${year}` : raw;
+    return year ? msg(str`Erbaut um ${year}`) : raw;
   }
 
   render() {
@@ -152,7 +154,7 @@ export class BuildingPopup extends LitElement {
             <a class="wikidata-link" href="${wikidataUrl}" target="_blank" rel="noopener">
               Wikidata
             </a>
-            <button class="close" @click=${this._close} aria-label="Close">&#x2715;</button>
+            <button class="close" @click=${this._close} aria-label=${msg('Schließen')}>&#x2715;</button>
           </div>
         </div>
       </div>

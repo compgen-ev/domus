@@ -1,5 +1,6 @@
 import { LitElement, html, css, unsafeCSS } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { localized, msg } from '@lit/localize';
 import maplibregl, { type Map, type MapLayerMouseEvent, type GeoJSONSource } from 'maplibre-gl';
 import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
@@ -11,6 +12,7 @@ import type { PlaceSelectedEvent } from './search-box';
 const MIN_ZOOM_FOR_BUILDINGS = 14;
 const DEBOUNCE_MS = 400;
 
+@localized()
 @customElement('map-view')
 export class MapView extends LitElement {
   static styles = [
@@ -96,11 +98,11 @@ export class MapView extends LitElement {
       <div id="map"></div>
       <search-box @place-selected=${this._onPlaceSelected}></search-box>
       <div class="zoom-hint" ?hidden=${!this.showHint}>
-        Zoom in to discover buildings
+        ${msg('Hineinzoomen, um Gebäude zu entdecken')}
       </div>
       <div class="loading-indicator" ?hidden=${!this.loading}>
         <div class="spinner"></div>
-        Loading buildings…
+        ${msg('Gebäude werden geladen …')}
       </div>
       ${this.selectedBuilding
         ? html`<building-popup

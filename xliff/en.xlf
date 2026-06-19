@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+<file target-language="en" source-language="de" original="lit-localize-inputs" datatype="plaintext">
+<body>
+<trans-unit id="s9072a8014828ef62">
+  <source>Erbaut um <x id="0" equiv-text="${year}"/></source>
+  <target>Built around <x id="0" equiv-text="${year}"/></target>
+</trans-unit>
+<trans-unit id="sb2246a8686ca9805">
+  <source>Schließen</source>
+  <target>Close</target>
+</trans-unit>
+<trans-unit id="s5263e4300fe1285a">
+  <source>Hineinzoomen, um Gebäude zu entdecken</source>
+  <target>Zoom in to discover buildings</target>
+</trans-unit>
+<trans-unit id="s957f87bd214537d2">
+  <source>Gebäude werden geladen …</source>
+  <target>Loading buildings…</target>
+</trans-unit>
+<trans-unit id="s8857b4bdc1e0d1ab">
+  <source>Orte suchen …</source>
+  <target>Search places…</target>
+</trans-unit>
+<trans-unit id="s6b25f9f93a7bce15">
+  <source>Orte suchen</source>
+  <target>Search places</target>
+</trans-unit>
+<trans-unit id="s6996a49699e9ebbd">
+  <source>Suchen</source>
+  <target>Search</target>
+</trans-unit>
+<trans-unit id="s1722844cc298f67c">
+  <source>Keine Ergebnisse</source>
+  <target>No results found</target>
+</trans-unit>
+</body>
+</file>
+</xliff>
