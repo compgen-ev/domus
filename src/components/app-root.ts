@@ -142,6 +142,11 @@ export class AppRoot extends LitElement {
       this.authenticated = false;
     }
 
+    // Dev mode: auto-authenticate when running dev server
+    if (import.meta.env.DEV) {
+      this.authenticated = true;
+    }
+
     const id = new URLSearchParams(location.search).get('id');
     if (id) this._loadBuildingById(id);
   }
@@ -258,6 +263,7 @@ export class AppRoot extends LitElement {
             .hasOhmFootprint=${this.hasOhmFootprint}
             .ohmElementId=${this.ohmElementId}
             .ohmElementType=${this.ohmElementType}
+            .authenticated=${this.authenticated}
             @back-to-map=${this._onBackToMap}
           ></building-page>`
         : html`

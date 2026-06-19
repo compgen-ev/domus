@@ -1,9 +1,10 @@
 import { LitElement, html, css, type TemplateResult } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
+import './building-edit-form';
 
 function extractYear(iso: string): string {
   return iso.match(/^(-?\d{1,4})/)?.[1] ?? '';
@@ -185,6 +186,26 @@ export class BuildingPage extends LitElement {
       }
 
       .back-btn:hover { background: #dde0f5; }
+
+      .edit-btn {
+        background: #000052;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.35rem 0.875rem;
+        border-radius: 1rem;
+      }
+
+      .edit-btn:hover { background: #00003a; }
+
+      .edit-wrapper {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 1rem;
+      }
     `,
   ];
 
@@ -194,9 +215,20 @@ export class BuildingPage extends LitElement {
   @property({ attribute: false }) hasOhmFootprint = false;
   @property({ attribute: false }) ohmElementId: string | undefined;
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
+  @property({ attribute: false }) authenticated = false;
+
+  @state() private editMode = false;
 
   private _backToMap() {
     this.dispatchEvent(new CustomEvent('back-to-map', { bubbles: true, composed: true }));
+  }
+
+  private _edit() {
+    this.editMode = true;
+  }
+
+  private _cancelEdit() {
+    this.editMode = false;
   }
 
   private _datesLine(): string {
@@ -254,6 +286,18 @@ export class BuildingPage extends LitElement {
     const { detail, detailLoading } = this;
     const datesLine = this._datesLine();
 
+    if (this.editMode) {
+      return html`
+        <div class="edit-wrapper">
+          <building-edit-form
+            .building=${this.building}
+            .detail=${this.detail}
+            @cancel=${this._cancelEdit}
+          ></building-edit-form>
+        </div>
+      `;
+    }
+
     return html`
       ${image ? keyed(image, html`
         <div class="hero"><img src=${image} alt=${label}></div>
@@ -310,6 +354,9 @@ export class BuildingPage extends LitElement {
               target="_blank" rel="noopener">
               OpenHistoricalMap ↗
             </a>
+          ` : ''}
+          ${this.authenticated ? html`
+            <button class="edit-btn" @click=${this._edit}>${msg('Bearbeiten')}</button>
           ` : ''}
         </div>
       </div>

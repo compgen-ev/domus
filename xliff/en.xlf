@@ -82,6 +82,114 @@
   <source>Abmelden</source>
   <target>Sign out</target>
 </trans-unit>
+<trans-unit id="sa1b2c3d4e5f6g7h8">
+  <source>bearbeiten</source>
+  <target>edit</target>
+</trans-unit>
+<trans-unit id="sb2c3d4e5f6g7h8i9">
+  <source>Änderungen werden direkt in Wikidata gespeichert</source>
+  <target>Changes are saved directly to Wikidata</target>
+</trans-unit>
+<trans-unit id="sc3d4e5f6g7h8i9j0">
+  <source>Grunddaten</source>
+  <target>Basic facts</target>
+</trans-unit>
+<trans-unit id="sd4e5f6g7h8i9j0k1">
+  <source>Name</source>
+  <target>Name</target>
+</trans-unit>
+<trans-unit id="se5f6g7h8i9j0k1l2">
+  <source>Typ</source>
+  <target>Type</target>
+</trans-unit>
+<trans-unit id="sf6g7h8i9j0k1l2m3">
+  <source>Haus</source>
+  <target>House</target>
+</trans-unit>
+<trans-unit id="sg7h8i9j0k1l2m3n4">
+  <source>Bauernhaus</source>
+  <target>Farmhouse</target>
+</trans-unit>
+<trans-unit id="sh8i9j0k1l2m3n4o5">
+  <source>Mehrfamilienhaus</source>
+  <target>Apartment building</target>
+</trans-unit>
+<trans-unit id="si9j0k1l2m3n4o5p6">
+  <source>Mühle</source>
+  <target>Mill</target>
+</trans-unit>
+<trans-unit id="sj0k1l2m3n4o5p6q7">
+  <source>Herrenhaus</source>
+  <target>Manor</target>
+</trans-unit>
+<trans-unit id="sk1l2m3n4o5p6q7r8">
+  <source>Sonstiges</source>
+  <target>Other</target>
+</trans-unit>
+<trans-unit id="sl2m3n4o5p6q7r8s9">
+  <source>Erbaut</source>
+  <target>Built</target>
+</trans-unit>
+<trans-unit id="sm3n4o5p6q7r8s9t0">
+  <source>Abgerissen</source>
+  <target>Demolished</target>
+</trans-unit>
+<trans-unit id="sn4o5p6q7r8s9t0u1">
+  <source>Hinzufügen</source>
+  <target>Add</target>
+</trans-unit>
+<trans-unit id="so5p6q7r8s9t0u1v2">
+  <source>Ereignisse</source>
+  <target>Events</target>
+</trans-unit>
+<trans-unit id="sp6q7r8s9t0u1v2w3">
+  <source>Externe Links</source>
+  <target>External links</target>
+</trans-unit>
+<trans-unit id="sq7r8s9t0u1v2w3x4">
+  <source>Quelle</source>
+  <target>Source</target>
+</trans-unit>
+<trans-unit id="sr8s9t0u1v2w3x4y5">
+  <source>erforderlich</source>
+  <target>required</target>
+</trans-unit>
+<trans-unit id="ss9t0u1v2w3x4y5z6">
+  <source>Alle Änderungen müssen mit einer Quelle belegt werden.</source>
+  <target>All changes must be backed by a source.</target>
+</trans-unit>
+<trans-unit id="st0u1v2w3x4y5z6a7">
+  <source>Online-Quelle</source>
+  <target>Online source</target>
+</trans-unit>
+<trans-unit id="su1v2w3x4y5z6a7b8">
+  <source>Archivdokument</source>
+  <target>Archive document</target>
+</trans-unit>
+<trans-unit id="sv2w3x4y5z6a7b8c9">
+  <source>Beschreibung / Seite</source>
+  <target>Description / Page</target>
+</trans-unit>
+<trans-unit id="sw3x4y5z6a7b8c9d0">
+  <source>optional</source>
+  <target>optional</target>
+</trans-unit>
+<trans-unit id="sx4y5z6a7b8c9d0e1">
+  <source>Archivname</source>
+  <target>Archive name</target>
+</trans-unit>
+<trans-unit id="sy5z6a7b8c9d0e1f2">
+  <source>Signatur</source>
+  <target>Call number</target>
+</trans-unit>
+<trans-unit id="sz6a7b8c9d0e1f2g3">
+  <source>Abbrechen</source>
+  <target>Cancel</target>
+</trans-unit>
+<trans-unit id="sa7b8c9d0e1f2g3h4">
+  <source>Änderungen speichern</source>
+  <target>Save changes</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

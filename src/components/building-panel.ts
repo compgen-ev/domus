@@ -1,10 +1,11 @@
 import { LitElement, html, css, type PropertyValues, type TemplateResult } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
 import { login } from '../services/wikimedia-auth';
+import './building-edit-form';
 
 function extractYear(iso: string): string {
   return iso.match(/^(-?\d{1,4})/)?.[1] ?? '';
@@ -264,6 +265,8 @@ export class BuildingPanel extends LitElement {
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
   @property({ attribute: false }) authenticated = false;
 
+  @state() private editMode = false;
+
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building')) {
       this.toggleAttribute('open', this.building !== null);
@@ -283,8 +286,11 @@ export class BuildingPanel extends LitElement {
   }
 
   private _edit() {
-    // TODO: Open edit form
-    console.log('Edit clicked');
+    this.editMode = true;
+  }
+
+  private _cancelEdit() {
+    this.editMode = false;
   }
 
   private _datesLine(): string {
@@ -341,6 +347,18 @@ export class BuildingPanel extends LitElement {
     const { label, type, image, id } = this.building;
     const { detail, detailLoading } = this;
     const datesLine = this._datesLine();
+
+    if (this.editMode) {
+      return html`
+        <div class="panel">
+          <building-edit-form
+            .building=${this.building}
+            .detail=${this.detail}
+            @cancel=${this._cancelEdit}
+          ></building-edit-form>
+        </div>
+      `;
+    }
 
     return html`
       <div class="panel">
