@@ -1,8 +1,21 @@
-import { LitElement, html, css, type PropertyValues } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { LitElement, html, css, type PropertyValues, type TemplateResult } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
-import type { WikidataBuilding } from '../types/building';
+import { keyed } from 'lit/directives/keyed.js';
+import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
+import { fetchBuildingDetail } from '../services/wikidata';
 import { baseStyles } from '../styles/shared';
+
+function extractYear(iso: string): string {
+  return iso.match(/^(-?\d{1,4})/)?.[1] ?? '';
+}
+
+function yearRange(start?: string, end?: string): string {
+  const s = start ? extractYear(start) : '';
+  const e = end ? extractYear(end) : '';
+  if (!s && !e) return '';
+  return `${s}–${e}`;
+}
 
 @localized()
 @customElement('building-panel')
@@ -77,24 +90,38 @@ export class BuildingPanel extends LitElement {
 
       .title { flex: 1; min-width: 0; }
 
-      .type-badge {
+      .badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 0.4rem;
+      }
+
+      .badge {
         font-size: 0.65rem;
         font-weight: 700;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.06em;
         text-transform: uppercase;
         color: #fff;
-        background: #000052;
         padding: 2px 7px;
         border-radius: 10px;
         display: inline-block;
-        margin-bottom: 0.4rem;
       }
+
+      .badge-type { background: #000052; }
+      .badge-heritage { background: #b45309; }
 
       h2 {
         font-size: 1.1rem;
         font-weight: 700;
         color: #0f172a;
         line-height: 1.3;
+        margin: 0 0 0.25rem;
+      }
+
+      .dates {
+        font-size: 0.85rem;
+        color: #64748b;
         margin: 0;
       }
 
@@ -118,29 +145,103 @@ export class BuildingPanel extends LitElement {
         flex: 1;
       }
 
-      .inception { font-size: 0.875rem; color: #666; }
+      .skeleton {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0.5rem 0;
+      }
+
+      .skel-line {
+        height: 12px;
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.2s infinite;
+        border-radius: 4px;
+      }
+
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      .section {
+        margin-bottom: 1rem;
+      }
+
+      .section-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #94a3b8;
+        margin: 0 0 0.4rem;
+      }
+
+      .entry {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+        padding: 0.3rem 0;
+        border-bottom: 1px solid #f8fafc;
+        font-size: 0.875rem;
+        color: #1e293b;
+      }
+
+      .entry:last-child { border-bottom: none; }
+
+      .entry-label { flex: 1; min-width: 0; }
+
+      .entry-dates {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
 
       .footer {
         padding: 0.75rem 1rem;
         border-top: 1px solid #f1f5f9;
         display: flex;
+        align-items: center;
         gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      a.ext-link, button.action-btn {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.875rem;
+        border-radius: 1rem;
+        text-decoration: none;
+        cursor: pointer;
+        font-family: inherit;
       }
 
       a.ext-link {
-        font-size: 0.8rem;
         color: #000052;
-        text-decoration: none;
-        padding: 0.35rem 0.875rem;
         border: 1px solid #000052;
-        border-radius: 1rem;
       }
 
       a.ext-link:hover { background: #000052; color: #fff; }
+
+      button.action-btn {
+        color: #fff;
+        background: #000052;
+        border: none;
+        margin-left: auto;
+      }
+
+      button.action-btn:hover { background: #00003a; }
     `,
   ];
 
   @property({ attribute: false }) building: WikidataBuilding | null = null;
+
+  @state() private detail: BuildingDetail | null = null;
+  @state() private detailLoading = false;
+
+  private detailController: AbortController | null = null;
 
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building')) {
@@ -148,36 +249,124 @@ export class BuildingPanel extends LitElement {
     }
   }
 
+  protected updated(changed: PropertyValues) {
+    if (changed.has('building')) {
+      this.detailController?.abort();
+      this.detail = null;
+      if (this.building) {
+        this.detailController = new AbortController();
+        this._loadDetail(this.building.id, this.detailController.signal);
+      }
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.detailController?.abort();
+  }
+
+  private async _loadDetail(id: string, signal: AbortSignal) {
+    this.detailLoading = true;
+    try {
+      this.detail = await fetchBuildingDetail(id, signal);
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('Detail fetch failed:', err);
+      }
+    } finally {
+      this.detailLoading = false;
+    }
+  }
+
   private _close() {
     this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
   }
 
-  private _formatInception(raw: string): string {
-    const year = raw.match(/^(\d{1,4})/)?.[1];
-    return year ? msg(str`Erbaut um ${year}`) : raw;
+  private _datesLine(): string {
+    const builtYear = this.building?.inception ? extractYear(this.building.inception) : '';
+    const demoYear = this.detail?.demolished ? extractYear(this.detail.demolished) : '';
+    if (builtYear && demoYear) return `${builtYear}–${demoYear}`;
+    if (builtYear) return msg(str`Erbaut um ${builtYear}`);
+    if (demoYear) return msg(str`Abgerissen ${demoYear}`);
+    return '';
+  }
+
+  private _renderSection(
+    title: string,
+    items: Array<{ primary: string; range: string }>,
+  ): TemplateResult {
+    return html`
+      <div class="section">
+        <p class="section-title">${title}</p>
+        ${items.map(({ primary, range }) => html`
+          <div class="entry">
+            <span class="entry-label">${primary}</span>
+            ${range ? html`<span class="entry-dates">${range}</span>` : ''}
+          </div>
+        `)}
+      </div>
+    `;
+  }
+
+  private _personItems(people: PersonRef[]) {
+    return people.map((p) => ({ primary: p.label, range: yearRange(p.start, p.end) }));
+  }
+
+  private _addressItems(addresses: AddressEntry[]) {
+    return addresses.map((a) => ({ primary: a.text, range: yearRange(a.start, a.end) }));
   }
 
   render() {
     if (!this.building) return html`<div class="panel"></div>`;
-    const { label, type, image, inception, id } = this.building;
+    const { label, type, image, id } = this.building;
+    const { detail, detailLoading } = this;
+    const datesLine = this._datesLine();
 
     return html`
       <div class="panel">
-        ${image ? html`<div class="image-wrap"><img src=${image} alt=${label}></div>` : ''}
+        ${image ? keyed(image, html`<div class="image-wrap"><img src=${image} alt=${label}></div>`) : ''}
+
         <div class="header">
           <div class="title">
-            ${type ? html`<span class="type-badge">${type}</span>` : ''}
+            <div class="badges">
+              ${detail?.heritage ? html`<span class="badge badge-heritage">${detail.heritage}</span>` : ''}
+              ${type ? html`<span class="badge badge-type">${type}</span>` : ''}
+            </div>
             <h2>${label}</h2>
+            ${datesLine ? html`<p class="dates">${datesLine}</p>` : ''}
           </div>
           <button class="close-btn" @click=${this._close} aria-label=${msg('Schließen')}>✕</button>
         </div>
+
         <div class="body">
-          ${inception ? html`<p class="inception">${this._formatInception(inception)}</p>` : ''}
+          ${detailLoading ? html`
+            <div class="skeleton">
+              <div class="skel-line" style="width:40%"></div>
+              <div class="skel-line" style="width:80%"></div>
+              <div class="skel-line" style="width:65%"></div>
+              <div class="skel-line" style="width:40%; margin-top:8px"></div>
+              <div class="skel-line" style="width:72%"></div>
+            </div>
+          ` : ''}
+
+          ${detail && detail.addresses.length > 0
+            ? this._renderSection(msg('Adressgeschichte'), this._addressItems(detail.addresses))
+            : ''}
+
+          ${detail && detail.occupants.length > 0
+            ? this._renderSection(msg('Bewohner'), this._personItems(detail.occupants))
+            : ''}
+
+          ${detail && detail.owners.length > 0
+            ? this._renderSection(msg('Eigentümer'), this._personItems(detail.owners))
+            : ''}
         </div>
+
         <div class="footer">
           <a class="ext-link" href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
             Wikidata ↗
           </a>
+          <button class="action-btn">${msg('Anmelden zum Bearbeiten')}</button>
         </div>
       </div>
     `;

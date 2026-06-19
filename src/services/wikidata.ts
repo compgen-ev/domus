@@ -1,4 +1,4 @@
-import type { WikidataBuilding } from '../types/building';
+import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { getLocale } from '../locale';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
@@ -97,6 +97,140 @@ export async function fetchBuildings(
   }
 
   return buildings;
+}
+
+function buildDetailQuery(id: string, langs: string): string {
+  return `
+SELECT ?demolished ?heritageLabel
+  ?occupant ?occupantLabel ?occupStart ?occupEnd
+  ?owner ?ownerLabel ?ownerStart ?ownerEnd
+  ?address ?addrStart ?addrEnd
+WHERE {
+  BIND(wd:${id} AS ?item)
+  OPTIONAL { ?item wdt:P576 ?demolished . }
+  OPTIONAL {
+    ?item p:P1435 ?hStmt .
+    ?hStmt ps:P1435 ?heritage .
+  }
+  OPTIONAL {
+    ?item p:P466 ?occStmt .
+    ?occStmt ps:P466 ?occupant .
+    OPTIONAL { ?occStmt pq:P580 ?occupStart . }
+    OPTIONAL { ?occStmt pq:P582 ?occupEnd . }
+  }
+  OPTIONAL {
+    ?item p:P127 ?ownStmt .
+    ?ownStmt ps:P127 ?owner .
+    OPTIONAL { ?ownStmt pq:P580 ?ownerStart . }
+    OPTIONAL { ?ownStmt pq:P582 ?ownerEnd . }
+  }
+  OPTIONAL {
+    ?item p:P6375 ?addrStmt .
+    ?addrStmt ps:P6375 ?address .
+    OPTIONAL { ?addrStmt pq:P580 ?addrStart . }
+    OPTIONAL { ?addrStmt pq:P582 ?addrEnd . }
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
+}`;
+}
+
+interface DetailBinding {
+  demolished?: SparqlBinding;
+  heritageLabel?: SparqlBinding;
+  occupant?: SparqlBinding;
+  occupantLabel?: SparqlBinding;
+  occupStart?: SparqlBinding;
+  occupEnd?: SparqlBinding;
+  owner?: SparqlBinding;
+  ownerLabel?: SparqlBinding;
+  ownerStart?: SparqlBinding;
+  ownerEnd?: SparqlBinding;
+  address?: SparqlBinding;
+  addrStart?: SparqlBinding;
+  addrEnd?: SparqlBinding;
+}
+
+export async function fetchBuildingDetail(
+  id: string,
+  signal?: AbortSignal,
+): Promise<BuildingDetail> {
+  const locale = getLocale();
+  const fallback = locale === 'en' ? 'de' : 'en';
+  const langs = `${locale},${fallback},mul`;
+
+  const query = buildDetailQuery(id, langs);
+  const url = `${SPARQL_ENDPOINT}?query=${encodeURIComponent(query)}&format=json`;
+
+  const response = await fetch(url, {
+    headers: { Accept: 'application/sparql-results+json' },
+    signal,
+  });
+
+  if (!response.ok) throw new Error(`Wikidata SPARQL error: ${response.status}`);
+
+  const data: { results: { bindings: DetailBinding[] } } = await response.json();
+  const rows = data.results.bindings;
+
+  let demolished: string | undefined;
+  let heritage: string | undefined;
+  const occupants = new Map<string, PersonRef>();
+  const owners = new Map<string, PersonRef>();
+  const addresses = new Map<string, AddressEntry>();
+
+  for (const row of rows) {
+    if (row.demolished && !demolished) demolished = row.demolished.value;
+    if (row.heritageLabel && !heritage) heritage = row.heritageLabel.value;
+
+    if (row.occupant) {
+      const key = `${row.occupant.value}|${row.occupStart?.value ?? ''}|${row.occupEnd?.value ?? ''}`;
+      if (!occupants.has(key)) {
+        occupants.set(key, {
+          id: extractQid(row.occupant.value),
+          label: row.occupantLabel?.value ?? extractQid(row.occupant.value),
+          start: row.occupStart?.value,
+          end: row.occupEnd?.value,
+        });
+      }
+    }
+
+    if (row.owner) {
+      const key = `${row.owner.value}|${row.ownerStart?.value ?? ''}|${row.ownerEnd?.value ?? ''}`;
+      if (!owners.has(key)) {
+        owners.set(key, {
+          id: extractQid(row.owner.value),
+          label: row.ownerLabel?.value ?? extractQid(row.owner.value),
+          start: row.ownerStart?.value,
+          end: row.ownerEnd?.value,
+        });
+      }
+    }
+
+    if (row.address) {
+      const key = `${row.address.value}|${row.addrStart?.value ?? ''}|${row.addrEnd?.value ?? ''}`;
+      if (!addresses.has(key)) {
+        addresses.set(key, {
+          text: row.address.value,
+          start: row.addrStart?.value,
+          end: row.addrEnd?.value,
+        });
+      }
+    }
+  }
+
+  const byStart = (a: { start?: string }, b: { start?: string }) => {
+    if (!a.start && !b.start) return 0;
+    if (!a.start) return 1;
+    if (!b.start) return -1;
+    return a.start < b.start ? -1 : 1;
+  };
+
+  return {
+    demolished,
+    heritage,
+    occupants: [...occupants.values()].sort(byStart),
+    owners: [...owners.values()].sort(byStart),
+    addresses: [...addresses.values()].sort(byStart),
+  };
 }
 
 export function buildingsToGeoJSON(

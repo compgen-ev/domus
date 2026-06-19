@@ -3,7 +3,7 @@
 <file target-language="en" source-language="de" original="lit-localize-inputs" datatype="plaintext">
 <body>
 <trans-unit id="s9072a8014828ef62">
-  <source>Erbaut um <x id="0" equiv-text="${year}"/></source>
+  <source>Erbaut um <x id="0" equiv-text="${builtYear}"/></source>
   <target>Built around <x id="0" equiv-text="${year}"/></target>
 </trans-unit>
 <trans-unit id="sb2246a8686ca9805">
@@ -33,6 +33,26 @@
 <trans-unit id="s1722844cc298f67c">
   <source>Keine Ergebnisse</source>
   <target>No results found</target>
+</trans-unit>
+<trans-unit id="s3ef78d4ae86b5cf0">
+  <source>Abgerissen <x id="0" equiv-text="${demoYear}"/></source>
+  <target>Demolished <x id="0" equiv-text="${demoYear}"/></target>
+</trans-unit>
+<trans-unit id="sba7fb5a6fce4db8e">
+  <source>Adressgeschichte</source>
+  <target>Address history</target>
+</trans-unit>
+<trans-unit id="s15e891052d1332e3">
+  <source>Bewohner</source>
+  <target>Residents</target>
+</trans-unit>
+<trans-unit id="s53309a8a8d5de6b1">
+  <source>Eigentümer</source>
+  <target>Owners</target>
+</trans-unit>
+<trans-unit id="sf8d646badbc5add0">
+  <source>Anmelden zum Bearbeiten</source>
+  <target>Login to edit</target>
 </trans-unit>
 </body>
 </file>

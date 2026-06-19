@@ -1,11 +1,32 @@
 export interface WikidataBuilding {
-  id: string;        // Wikidata QID, e.g. "Q12345"
+  id: string;
   label: string;
-  type?: string;     // human-readable type label (e.g. "house", "church")
+  type?: string;
   lat: number;
   lng: number;
-  image?: string;    // Wikimedia Commons image URL
-  inception?: string; // ISO date string
+  image?: string;
+  inception?: string;
 }
 
 export type BuildingFeatureProperties = Omit<WikidataBuilding, 'lat' | 'lng'>;
+
+export interface PersonRef {
+  id: string;
+  label: string;
+  start?: string;
+  end?: string;
+}
+
+export interface AddressEntry {
+  text: string;
+  start?: string;
+  end?: string;
+}
+
+export interface BuildingDetail {
+  demolished?: string;
+  heritage?: string;
+  occupants: PersonRef[];
+  owners: PersonRef[];
+  addresses: AddressEntry[];
+}
