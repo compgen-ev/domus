@@ -1,4 +1,4 @@
-# House History
+# Domus
 
 A map that shows buildings from Wikidata. Zoom in past level 14 to see pins; click a pin for details. Early-stage frontend for a planned open data house history platform.
 
