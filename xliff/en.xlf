@@ -70,6 +70,18 @@
   <source>Vollständige Details</source>
   <target>Full details</target>
 </trans-unit>
+<trans-unit id="s91e3b1b0b5d5e5b0">
+  <source>Bearbeiten</source>
+  <target>Edit</target>
+</trans-unit>
+<trans-unit id="s5e8b3f7c1e2a3b4c">
+  <source>Anmelden</source>
+  <target>Sign in</target>
+</trans-unit>
+<trans-unit id="s7f9c4d8e2f3b5a6d">
+  <source>Abmelden</source>
+  <target>Sign out</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

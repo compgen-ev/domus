@@ -4,6 +4,7 @@ import { localized, msg, str } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
+import { login } from '../services/wikimedia-auth';
 
 function extractYear(iso: string): string {
   return iso.match(/^(-?\d{1,4})/)?.[1] ?? '';
@@ -261,6 +262,7 @@ export class BuildingPanel extends LitElement {
   @property({ attribute: false }) hasOhmFootprint = false;
   @property({ attribute: false }) ohmElementId: string | undefined;
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
+  @property({ attribute: false }) authenticated = false;
 
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building')) {
@@ -274,6 +276,19 @@ export class BuildingPanel extends LitElement {
 
   private _showDetail() {
     this.dispatchEvent(new CustomEvent('show-detail', { bubbles: true, composed: true }));
+  }
+
+  private _login() {
+    login(); // Redirects to OAuth, never resolves
+  }
+
+  private _logout() {
+    this.dispatchEvent(new CustomEvent('logout', { bubbles: true, composed: true }));
+  }
+
+  private _edit() {
+    // TODO: Open edit form
+    console.log('Edit clicked');
   }
 
   private _datesLine(): string {
@@ -394,7 +409,11 @@ export class BuildingPanel extends LitElement {
           <button class="detail-btn" @click=${this._showDetail}>
             ${msg('Vollständige Details')} →
           </button>
-          <button class="action-btn">${msg('Anmelden zum Bearbeiten')}</button>
+          ${this.authenticated ? html`
+            <button class="action-btn" @click=${this._edit}>${msg('Bearbeiten')}</button>
+          ` : html`
+            <button class="action-btn" @click=${this._login}>${msg('Anmelden zum Bearbeiten')}</button>
+          `}
         </div>
       </div>
     `;

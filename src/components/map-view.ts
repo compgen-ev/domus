@@ -86,6 +86,12 @@ export class MapView extends LitElement {
       opacity: 0;
     }
 
+    @media (max-width: 700px) {
+      .loading-indicator {
+        top: 64px;
+      }
+    }
+
     .spinner {
       width: 12px;
       height: 12px;
@@ -153,7 +159,11 @@ export class MapView extends LitElement {
       }),
       'bottom-right',
     );
-    this.map.addControl(new maplibregl.NavigationControl(), 'top-right');
+    this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    this.map.addControl(new maplibregl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+    }), 'top-right');
 
     this.map.on('load', () => this._onMapLoad());
     this.map.on('moveend', () => { saveView(this.map); this._scheduleFetch(); });
