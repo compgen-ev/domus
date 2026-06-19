@@ -380,6 +380,11 @@ export class BuildingPanel extends LitElement {
           <a class="ext-link" href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
             Wikidata ↗
           </a>
+          ${detail?.ohmId ? html`
+            <a class="ext-link" href="https://www.openhistoricalmap.org/relation/${detail.ohmId}" target="_blank" rel="noopener">
+              OHM ↗
+            </a>
+          ` : ''}
           <button class="detail-btn" @click=${this._showDetail}>
             ${msg('Vollständige Details')} →
           </button>

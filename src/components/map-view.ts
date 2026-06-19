@@ -1,9 +1,10 @@
-import { LitElement, html, css, unsafeCSS } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { LitElement, html, css, unsafeCSS, type PropertyValues } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import maplibregl, { type Map, type MapLayerMouseEvent, type GeoJSONSource } from 'maplibre-gl';
 import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
+import { fetchOhmRelationGeometry, fetchOhmByWikidataId } from '../services/ohm';
 import type { WikidataBuilding } from '../types/building';
 import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
@@ -101,13 +102,23 @@ export class MapView extends LitElement {
   `,
   ];
 
+  @property({ attribute: false }) ohmId: string | undefined = undefined;
+  @property({ attribute: false }) wikidataId: string | undefined = undefined;
+
   @state() private showHint = true;
   @state() private loading = false;
 
   private map!: Map;
   private debounceTimer = 0;
   private fetchController: AbortController | null = null;
+  private ohmController: AbortController | null = null;
   private resizeObserver!: ResizeObserver;
+
+  protected updated(changed: PropertyValues) {
+    if (changed.has('ohmId') || changed.has('wikidataId')) {
+      this._updateOhmFootprint();
+    }
+  }
 
   render() {
     return html`
@@ -154,10 +165,53 @@ export class MapView extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     this.resizeObserver?.disconnect();
+    this.ohmController?.abort();
     this.map?.remove();
   }
 
+  private async _updateOhmFootprint() {
+    this.ohmController?.abort();
+    const source = this.map?.getSource('ohm-footprint') as GeoJSONSource | undefined;
+    if (!source) return;
+
+    if (!this.ohmId && !this.wikidataId) {
+      source.setData({ type: 'FeatureCollection', features: [] });
+      return;
+    }
+
+    this.ohmController = new AbortController();
+    try {
+      const geojson = this.ohmId
+        ? await fetchOhmRelationGeometry(this.ohmId, this.ohmController.signal)
+        : await fetchOhmByWikidataId(this.wikidataId!, this.ohmController.signal);
+      source.setData(geojson);
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('OHM fetch failed:', err);
+      }
+    }
+  }
+
   private _onMapLoad() {
+    this.map.addSource('ohm-footprint', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    });
+
+    this.map.addLayer({
+      id: 'ohm-footprint-fill',
+      type: 'fill',
+      source: 'ohm-footprint',
+      paint: { 'fill-color': '#000052', 'fill-opacity': 0.12 },
+    });
+
+    this.map.addLayer({
+      id: 'ohm-footprint-outline',
+      type: 'line',
+      source: 'ohm-footprint',
+      paint: { 'line-color': '#000052', 'line-width': 2, 'line-opacity': 0.7 },
+    });
+
     this.map.addSource('buildings', {
       type: 'geojson',
       data: { type: 'FeatureCollection', features: [] },
@@ -223,6 +277,11 @@ export class MapView extends LitElement {
     });
 
     this._scheduleFetch();
+
+    // If ohmId/wikidataId were set before map loaded, fetch now
+    if (this.ohmId || this.wikidataId) {
+      this._updateOhmFootprint();
+    }
   }
 
   private _scheduleFetch() {

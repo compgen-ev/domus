@@ -46,12 +46,21 @@ export class AppRoot extends LitElement {
     .back-btn:hover { background: #f1f5f9; color: #0f172a; }
 
     .app-bar a {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 1.1rem;
       font-weight: 800;
       letter-spacing: -0.03em;
       color: #000052;
       text-decoration: none;
+    }
+
+    .app-bar a img {
+      height: 24px;
+      width: auto;
+      display: block;
     }
 
     map-view {
@@ -152,7 +161,7 @@ export class AppRoot extends LitElement {
         ${this.view === 'detail' ? html`
           <button class="back-btn" @click=${this._onBackToMap}>← ${msg('Zur Karte')}</button>
         ` : ''}
-        <a href="/">Domus</a>
+        <a href="/"><img src="/map/logo.svg" alt="">Domus</a>
       </div>
       ${this.view === 'detail'
         ? html`<building-page
@@ -162,6 +171,8 @@ export class AppRoot extends LitElement {
           ></building-page>`
         : html`
           <map-view
+            .ohmId=${this.buildingDetail?.ohmId}
+            .wikidataId=${this.selectedBuilding?.id}
             @building-selected=${this._onBuildingSelected}
           ></map-view>
           <building-panel

@@ -140,6 +140,7 @@ WHERE {
     ?item p:P88 ?commStmt .
     ?commStmt ps:P88 ?commissioned .
   }
+  OPTIONAL { ?item wdt:P8424 ?ohmId . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }`;
 }
@@ -163,6 +164,7 @@ interface DetailBinding {
   architectLabel?: SparqlBinding;
   commissioned?: SparqlBinding;
   commissionedLabel?: SparqlBinding;
+  ohmId?: SparqlBinding;
 }
 
 export async function fetchBuildingById(
@@ -229,6 +231,7 @@ export async function fetchBuildingDetail(
   const rows = data.results.bindings;
 
   let demolished: string | undefined;
+  let ohmId: string | undefined;
   const heritageSet = new Set<string>();
   const occupants = new Map<string, PersonRef>();
   const owners = new Map<string, PersonRef>();
@@ -238,6 +241,7 @@ export async function fetchBuildingDetail(
 
   for (const row of rows) {
     if (row.demolished && !demolished) demolished = row.demolished.value;
+    if (row.ohmId && !ohmId) ohmId = row.ohmId.value;
     if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
 
     if (row.occupant) {
@@ -305,6 +309,7 @@ export async function fetchBuildingDetail(
 
   return {
     demolished,
+    ohmId,
     heritages: [...heritageSet],
     architects: [...architects.values()],
     commissionedBy: [...commissionedBy.values()],

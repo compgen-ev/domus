@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 118 116.15674"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="logo.svg"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   width="118"
+   height="116.15674"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="3.9514146"
+     inkscape:cx="121.47548"
+     inkscape:cy="65.672683"
+     inkscape:window-width="1854"
+     inkscape:window-height="1131"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg3" />
+  <path
+     d="m 17,116.15674 h 84 q 17,0 17,-17 v -33 q 0,-14 -9.81596,-23.982332 L 74.42508,7.8432605 Q 59,-7.8432605 43.57492,7.8432605 L 9.81596,42.174408 Q 0,52.15674 0,66.15674 v 33 q 0,17 17,17 z"
+     fill="#000052"
+     stroke="none"
+     stroke-width="0"
+     stroke-linejoin="round"
+     stroke-linecap="round"
+     id="path1" />
+  <g
+     id="g3"
+     transform="matrix(0.54183199,0,0,0.54183199,4.01229,20.004753)"
+     style="fill:#ffffff;stroke-width:1.84559">
+    <path
+       d="M 31.623096,97.155921 70.904914,70.780986 Q 90,57.96 90,80.96 v 48 q 0,23 -19.095086,10.17901 L 31.623096,112.76408 Q 20,104.96 31.623096,97.155921 Z"
+       fill="#000052"
+       stroke="none"
+       stroke-width="0"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="path2"
+       style="fill:#ffffff" />
+    <path
+       d="M 109.6231,97.155921 148.90491,70.780986 Q 168,57.96 168,80.96 v 48 q 0,23 -19.09509,10.17901 L 109.6231,112.76408 Q 98,104.96 109.6231,97.155921 Z"
+       fill="#000052"
+       stroke="none"
+       stroke-width="0"
+       stroke-linejoin="round"
+       stroke-linecap="round"
+       id="path3"
+       style="fill:#ffffff" />
+  </g>
+</svg>

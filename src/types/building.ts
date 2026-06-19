@@ -31,4 +31,5 @@ export interface BuildingDetail {
   occupants: PersonRef[];
   owners: PersonRef[];
   addresses: AddressEntry[];
+  ohmId?: string;
 }
