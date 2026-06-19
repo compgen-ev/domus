@@ -282,10 +282,6 @@ export class BuildingPanel extends LitElement {
     login(); // Redirects to OAuth, never resolves
   }
 
-  private _logout() {
-    this.dispatchEvent(new CustomEvent('logout', { bubbles: true, composed: true }));
-  }
-
   private _edit() {
     // TODO: Open edit form
     console.log('Edit clicked');
