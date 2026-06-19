@@ -5,17 +5,33 @@ import maplibregl, { type Map, type MapLayerMouseEvent, type GeoJSONSource } fro
 import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
 import type { WikidataBuilding } from '../types/building';
-import './building-popup';
 import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
+import { baseStyles } from '../styles/shared';
 
 const MIN_ZOOM_FOR_BUILDINGS = 14;
 const DEBOUNCE_MS = 400;
+const MAP_STORAGE_KEY = 'domus.map';
+
+function loadSavedView(): { center: [number, number]; zoom: number } | null {
+  try {
+    const raw = localStorage.getItem(MAP_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveView(map: Map): void {
+  const { lng, lat } = map.getCenter();
+  localStorage.setItem(MAP_STORAGE_KEY, JSON.stringify({ center: [lng, lat], zoom: map.getZoom() }));
+}
 
 @localized()
 @customElement('map-view')
 export class MapView extends LitElement {
   static styles = [
+    baseStyles,
     unsafeCSS(maplibreCSS),
     css`
     :host {
@@ -37,7 +53,7 @@ export class MapView extends LitElement {
       color: #fff;
       padding: 6px 14px;
       border-radius: 20px;
-      font-family: sans-serif;
+      font-family: inherit;
       font-size: 13px;
       pointer-events: none;
       transition: opacity 0.3s;
@@ -54,7 +70,7 @@ export class MapView extends LitElement {
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.65);
       color: #fff;
-      font-family: sans-serif;
+      font-family: inherit;
       font-size: 12px;
       padding: 5px 12px 5px 10px;
       border-radius: 16px;
@@ -85,13 +101,13 @@ export class MapView extends LitElement {
   `,
   ];
 
-  @state() private selectedBuilding: WikidataBuilding | null = null;
   @state() private showHint = true;
   @state() private loading = false;
 
   private map!: Map;
   private debounceTimer = 0;
   private fetchController: AbortController | null = null;
+  private resizeObserver!: ResizeObserver;
 
   render() {
     return html`
@@ -104,23 +120,18 @@ export class MapView extends LitElement {
         <div class="spinner"></div>
         ${msg('Gebäude werden geladen …')}
       </div>
-      ${this.selectedBuilding
-        ? html`<building-popup
-            .building=${this.selectedBuilding}
-            @close=${this._closePopup}
-          ></building-popup>`
-        : ''}
     `;
   }
 
   firstUpdated() {
     const container = this.shadowRoot!.getElementById('map')!;
 
+    const saved = loadSavedView();
     this.map = new maplibregl.Map({
       container,
       style: 'https://tiles.openfreemap.org/styles/liberty',
-      center: [13.4, 52.52],
-      zoom: 12,
+      center: saved?.center ?? [13.4, 52.52],
+      zoom: saved?.zoom ?? 12,
       attributionControl: false,
     });
 
@@ -134,11 +145,15 @@ export class MapView extends LitElement {
     this.map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
     this.map.on('load', () => this._onMapLoad());
-    this.map.on('moveend', () => this._scheduleFetch());
+    this.map.on('moveend', () => { saveView(this.map); this._scheduleFetch(); });
+
+    this.resizeObserver = new ResizeObserver(() => this.map?.resize());
+    this.resizeObserver.observe(container);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this.resizeObserver?.disconnect();
     this.map?.remove();
   }
 
@@ -184,7 +199,7 @@ export class MapView extends LitElement {
       const feature = e.features?.[0];
       if (!feature) return;
       const p = feature.properties as Record<string, string | null>;
-      this.selectedBuilding = {
+      const building: WikidataBuilding = {
         id: p['id'] ?? '',
         label: p['label'] ?? '',
         type: p['type'] ?? undefined,
@@ -193,6 +208,11 @@ export class MapView extends LitElement {
         image: p['image'] ?? undefined,
         inception: p['inception'] ?? undefined,
       };
+      this.dispatchEvent(new CustomEvent<WikidataBuilding>('building-selected', {
+        bubbles: true,
+        composed: true,
+        detail: building,
+      }));
     });
 
     this.map.on('mouseenter', 'buildings-circle', () => {
@@ -256,9 +276,6 @@ export class MapView extends LitElement {
     if (camera) this.map.jumpTo(camera);
   }
 
-  private _closePopup() {
-    this.selectedBuilding = null;
-  }
 }
 
 declare global {

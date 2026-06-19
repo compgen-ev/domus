@@ -1,4 +1,5 @@
 import type { WikidataBuilding } from '../types/building';
+import { getLocale } from '../locale';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 
@@ -21,6 +22,9 @@ interface SparqlResult {
 }
 
 function buildQuery(west: number, south: number, east: number, north: number): string {
+  const locale = getLocale();
+  const fallback = locale === 'en' ? 'de' : 'en';
+  const langs = `${locale},${fallback},mul`;
   return `
 SELECT ?item ?itemLabel ?typeLabel ?coord ?image ?inception WHERE {
   SERVICE wikibase:box {
@@ -32,7 +36,7 @@ SELECT ?item ?itemLabel ?typeLabel ?coord ?image ?inception WHERE {
   OPTIONAL { ?item wdt:P31 ?type . }
   OPTIONAL { ?item wdt:P18 ?image . }
   OPTIONAL { ?item wdt:P571 ?inception . }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "en,de,nl,fr" . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }
 LIMIT 200`;
 }

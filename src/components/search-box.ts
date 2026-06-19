@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { searchPlaces, type NominatimResult } from '../services/nominatim';
+import { baseStyles } from '../styles/shared';
 
 const DEBOUNCE_MS = 400;
 
@@ -14,7 +15,7 @@ export interface PlaceSelectedEvent {
 @localized()
 @customElement('search-box')
 export class SearchBox extends LitElement {
-  static styles = css`
+  static styles = [baseStyles, css`
     :host {
       display: block;
       position: absolute;
@@ -38,7 +39,7 @@ export class SearchBox extends LitElement {
       outline: none;
       padding: 9px 12px;
       font-size: 14px;
-      font-family: sans-serif;
+      font-family: inherit;
       background: transparent;
       min-width: 0;
     }
@@ -69,7 +70,7 @@ export class SearchBox extends LitElement {
     .result-item {
       padding: 9px 12px;
       font-size: 13px;
-      font-family: sans-serif;
+      font-family: inherit;
       cursor: pointer;
       line-height: 1.3;
       border-bottom: 1px solid #f0f0f0;
@@ -87,10 +88,10 @@ export class SearchBox extends LitElement {
     .no-results {
       padding: 9px 12px;
       font-size: 13px;
-      font-family: sans-serif;
+      font-family: inherit;
       color: #888;
     }
-  `;
+  `];
 
   @state() private query = '';
   @state() private results: NominatimResult[] = [];
