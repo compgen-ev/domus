@@ -258,6 +258,9 @@ export class BuildingPanel extends LitElement {
   @property({ attribute: false }) building: WikidataBuilding | null = null;
   @property({ attribute: false }) detail: BuildingDetail | null = null;
   @property({ attribute: false }) detailLoading = false;
+  @property({ attribute: false }) hasOhmFootprint = false;
+  @property({ attribute: false }) ohmElementId: string | undefined;
+  @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
 
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building')) {
@@ -380,9 +383,12 @@ export class BuildingPanel extends LitElement {
           <a class="ext-link" href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
             Wikidata ↗
           </a>
-          ${detail?.ohmId ? html`
-            <a class="ext-link" href="https://www.openhistoricalmap.org/relation/${detail.ohmId}" target="_blank" rel="noopener">
-              OHM ↗
+          ${detail?.ohmId || (this.hasOhmFootprint && this.ohmElementId) ? html`
+            <a class="ext-link" href=${detail?.ohmId
+              ? `https://www.openhistoricalmap.org/relation/${detail.ohmId}`
+              : `https://www.openhistoricalmap.org/${this.ohmElementType}/${this.ohmElementId}`}
+              target="_blank" rel="noopener">
+              OpenHistoricalMap ↗
             </a>
           ` : ''}
           <button class="detail-btn" @click=${this._showDetail}>

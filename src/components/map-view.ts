@@ -4,7 +4,7 @@ import { localized, msg } from '@lit/localize';
 import maplibregl, { type Map, type MapLayerMouseEvent, type GeoJSONSource } from 'maplibre-gl';
 import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
-import { fetchOhmRelationGeometry, fetchOhmByWikidataId } from '../services/ohm';
+import { fetchOhmRelationGeometry, fetchOhmByWikidataId, type OhmFetchResult } from '../services/ohm';
 import type { WikidataBuilding } from '../types/building';
 import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
@@ -181,10 +181,21 @@ export class MapView extends LitElement {
 
     this.ohmController = new AbortController();
     try {
-      const geojson = this.ohmId
+      const result = this.ohmId
         ? await fetchOhmRelationGeometry(this.ohmId, this.ohmController.signal)
         : await fetchOhmByWikidataId(this.wikidataId!, this.ohmController.signal);
-      source.setData(geojson);
+      source.setData(result.geojson);
+
+      if (result.geojson.features.length > 0) {
+        this.dispatchEvent(new CustomEvent('ohm-data-loaded', {
+          bubbles: true,
+          composed: true,
+          detail: {
+            elementId: result.elementId,
+            elementType: result.elementType,
+          },
+        }));
+      }
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('OHM fetch failed:', err);

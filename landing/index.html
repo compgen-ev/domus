@@ -35,13 +35,28 @@
       max-width: 480px;
     }
 
+    .logo-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(1rem, 2.5vw, 1.8rem);
+      margin-bottom: 1rem;
+    }
+
+    .logo {
+      height: clamp(58px, 9.9vw, 99px);
+      width: auto;
+      flex-shrink: 0;
+      padding-bottom: clamp(3px, 0.8vw, 6px);
+    }
+
     h1 {
       font-size: clamp(3.5rem, 10vw, 6rem);
       font-weight: 800;
       letter-spacing: -0.03em;
       color: #000052;
       line-height: 1;
-      margin-bottom: 1rem;
+      margin: 0;
     }
 
     .tagline {
@@ -85,7 +100,10 @@
 <body>
   <main>
     <div class="hero">
-      <h1>Domus</h1>
+      <div class="logo-title">
+        <img src="/map/logo.svg" alt="" class="logo">
+        <h1>Domus</h1>
+      </div>
       <p class="tagline"
          data-de="Häusergeschichte erforschen und dokumentieren."
          data-en="Research and document the history of buildings.">

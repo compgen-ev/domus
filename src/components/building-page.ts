@@ -169,12 +169,35 @@ export class BuildingPage extends LitElement {
       }
 
       a.ext-link:hover { background: #000052; color: #fff; }
+
+      .back-btn {
+        background: #eef0fa;
+        color: #000052;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.35rem 0.875rem;
+        border-radius: 1rem;
+        margin-bottom: 1rem;
+        display: inline-block;
+      }
+
+      .back-btn:hover { background: #dde0f5; }
     `,
   ];
 
   @property({ attribute: false }) building: WikidataBuilding | null = null;
   @property({ attribute: false }) detail: BuildingDetail | null = null;
   @property({ attribute: false }) detailLoading = false;
+  @property({ attribute: false }) hasOhmFootprint = false;
+  @property({ attribute: false }) ohmElementId: string | undefined;
+  @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
+
+  private _backToMap() {
+    this.dispatchEvent(new CustomEvent('back-to-map', { bubbles: true, composed: true }));
+  }
 
   private _datesLine(): string {
     const builtYear = this.building?.inception ? extractYear(this.building.inception) : '';
@@ -237,6 +260,7 @@ export class BuildingPage extends LitElement {
       `) : ''}
 
       <div class="content">
+        <button class="back-btn" @click=${this._backToMap}>← ${msg('Zur Karte')}</button>
         <div class="badges">
           ${detail?.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
           ${type ? html`<span class="badge badge-type">${type}</span>` : ''}
@@ -279,6 +303,14 @@ export class BuildingPage extends LitElement {
           <a class="ext-link" href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
             Wikidata ↗
           </a>
+          ${detail?.ohmId || (this.hasOhmFootprint && this.ohmElementId) ? html`
+            <a class="ext-link" href=${detail?.ohmId
+              ? `https://www.openhistoricalmap.org/relation/${detail.ohmId}`
+              : `https://www.openhistoricalmap.org/${this.ohmElementType}/${this.ohmElementId}`}
+              target="_blank" rel="noopener">
+              OpenHistoricalMap ↗
+            </a>
+          ` : ''}
         </div>
       </div>
     `;

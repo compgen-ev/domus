@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import { localized } from '@lit/localize';
 import type { WikidataBuilding, BuildingDetail } from '../types/building';
 import { fetchBuildingById, fetchBuildingDetail } from '../services/wikidata';
 import './map-view';
@@ -58,9 +58,10 @@ export class AppRoot extends LitElement {
     }
 
     .app-bar a img {
-      height: 24px;
+      height: 20px;
       width: auto;
       display: block;
+      padding-bottom: 2px;
     }
 
     map-view {
@@ -74,6 +75,9 @@ export class AppRoot extends LitElement {
   @state() private buildingDetail: BuildingDetail | null = null;
   @state() private detailLoading = false;
   @state() private view: 'map' | 'detail' = 'map';
+  @state() private hasOhmFootprint = false;
+  @state() private ohmElementId: string | undefined;
+  @state() private ohmElementType: 'way' | 'relation' | undefined;
 
   private detailController: AbortController | null = null;
 
@@ -136,6 +140,9 @@ export class AppRoot extends LitElement {
   private _onBuildingSelected(e: CustomEvent<WikidataBuilding>) {
     this.selectedBuilding = e.detail;
     this.view = 'map';
+    this.hasOhmFootprint = false;
+    this.ohmElementId = undefined;
+    this.ohmElementType = undefined;
     history.pushState(null, '', `?id=${e.detail.id}`);
     this._fetchDetail(e.detail.id);
   }
@@ -143,8 +150,17 @@ export class AppRoot extends LitElement {
   private _onPanelClose() {
     this.selectedBuilding = null;
     this.buildingDetail = null;
+    this.hasOhmFootprint = false;
+    this.ohmElementId = undefined;
+    this.ohmElementType = undefined;
     this.view = 'map';
     history.pushState(null, '', location.pathname);
+  }
+
+  private _onOhmDataLoaded(e: CustomEvent<{ elementId?: string; elementType?: 'way' | 'relation' }>) {
+    this.hasOhmFootprint = true;
+    this.ohmElementId = e.detail.elementId;
+    this.ohmElementType = e.detail.elementType;
   }
 
   private _onShowDetail() {
@@ -158,9 +174,6 @@ export class AppRoot extends LitElement {
   render() {
     return html`
       <div class="app-bar">
-        ${this.view === 'detail' ? html`
-          <button class="back-btn" @click=${this._onBackToMap}>← ${msg('Zur Karte')}</button>
-        ` : ''}
         <a href="/"><img src="/map/logo.svg" alt="">Domus</a>
       </div>
       ${this.view === 'detail'
@@ -168,17 +181,25 @@ export class AppRoot extends LitElement {
             .building=${this.selectedBuilding}
             .detail=${this.buildingDetail}
             .detailLoading=${this.detailLoading}
+            .hasOhmFootprint=${this.hasOhmFootprint}
+            .ohmElementId=${this.ohmElementId}
+            .ohmElementType=${this.ohmElementType}
+            @back-to-map=${this._onBackToMap}
           ></building-page>`
         : html`
           <map-view
             .ohmId=${this.buildingDetail?.ohmId}
             .wikidataId=${this.selectedBuilding?.id}
             @building-selected=${this._onBuildingSelected}
+            @ohm-data-loaded=${this._onOhmDataLoaded}
           ></map-view>
           <building-panel
             .building=${this.selectedBuilding}
             .detail=${this.buildingDetail}
             .detailLoading=${this.detailLoading}
+            .hasOhmFootprint=${this.hasOhmFootprint}
+            .ohmElementId=${this.ohmElementId}
+            .ohmElementType=${this.ohmElementType}
             @close=${this._onPanelClose}
             @show-detail=${this._onShowDetail}
           ></building-panel>
