@@ -221,6 +221,8 @@ export class MapView extends LitElement {
     this.map.on('mouseleave', 'buildings-circle', () => {
       this.map.getCanvas().style.cursor = '';
     });
+
+    this._scheduleFetch();
   }
 
   private _scheduleFetch() {

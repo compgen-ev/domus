@@ -165,6 +165,48 @@ interface DetailBinding {
   commissionedLabel?: SparqlBinding;
 }
 
+export async function fetchBuildingById(
+  id: string,
+  signal?: AbortSignal,
+): Promise<WikidataBuilding | null> {
+  const locale = getLocale();
+  const fallback = locale === 'en' ? 'de' : 'en';
+  const langs = `${locale},${fallback},mul`;
+
+  const query = `
+SELECT ?itemLabel ?typeLabel ?coord ?image ?inception WHERE {
+  BIND(wd:${id} AS ?item)
+  OPTIONAL { ?item wdt:P625 ?coord . }
+  OPTIONAL { ?item wdt:P31 ?type . }
+  OPTIONAL { ?item wdt:P18 ?image . }
+  OPTIONAL { ?item wdt:P571 ?inception . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
+}
+LIMIT 1`;
+
+  const url = `${SPARQL_ENDPOINT}?query=${encodeURIComponent(query)}&format=json`;
+  const response = await fetch(url, {
+    headers: { Accept: 'application/sparql-results+json' },
+    signal,
+  });
+  if (!response.ok) throw new Error(`SPARQL error: ${response.status}`);
+
+  const data: SparqlResult = await response.json();
+  const row = data.results.bindings[0];
+  if (!row) return null;
+
+  const coords = row.coord ? parseCoord(row.coord.value) : null;
+  return {
+    id,
+    label: row.itemLabel?.value ?? id,
+    type: row.typeLabel?.value,
+    lat: coords?.lat ?? 0,
+    lng: coords?.lng ?? 0,
+    image: row.image?.value,
+    inception: row.inception?.value,
+  };
+}
+
 export async function fetchBuildingDetail(
   id: string,
   signal?: AbortSignal,

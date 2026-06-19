@@ -62,6 +62,14 @@
   <source>Bauherr</source>
   <target>Commissioned by</target>
 </trans-unit>
+<trans-unit id="se44152027a004877">
+  <source>Zur Karte</source>
+  <target>Back to map</target>
+</trans-unit>
+<trans-unit id="s6f21690e29034096">
+  <source>Vollständige Details</source>
+  <target>Full details</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

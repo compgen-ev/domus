@@ -1,9 +1,8 @@
 import { LitElement, html, css, type PropertyValues, type TemplateResult } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
-import { fetchBuildingDetail } from '../services/wikidata';
 import { baseStyles } from '../styles/shared';
 
 function extractYear(iso: string): string {
@@ -220,7 +219,7 @@ export class BuildingPanel extends LitElement {
         flex-wrap: wrap;
       }
 
-      a.ext-link, button.action-btn {
+      a.ext-link, button.detail-btn, button.action-btn {
         font-size: 0.8rem;
         padding: 0.35rem 0.875rem;
         border-radius: 1rem;
@@ -236,6 +235,15 @@ export class BuildingPanel extends LitElement {
 
       a.ext-link:hover { background: #000052; color: #fff; }
 
+      button.detail-btn {
+        background: #eef0fa;
+        color: #000052;
+        border: none;
+        font-weight: 600;
+      }
+
+      button.detail-btn:hover { background: #dde0f5; }
+
       button.action-btn {
         color: #fff;
         background: #000052;
@@ -248,11 +256,8 @@ export class BuildingPanel extends LitElement {
   ];
 
   @property({ attribute: false }) building: WikidataBuilding | null = null;
-
-  @state() private detail: BuildingDetail | null = null;
-  @state() private detailLoading = false;
-
-  private detailController: AbortController | null = null;
+  @property({ attribute: false }) detail: BuildingDetail | null = null;
+  @property({ attribute: false }) detailLoading = false;
 
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building')) {
@@ -260,37 +265,12 @@ export class BuildingPanel extends LitElement {
     }
   }
 
-  protected updated(changed: PropertyValues) {
-    if (changed.has('building')) {
-      this.detailController?.abort();
-      this.detail = null;
-      if (this.building) {
-        this.detailController = new AbortController();
-        this._loadDetail(this.building.id, this.detailController.signal);
-      }
-    }
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this.detailController?.abort();
-  }
-
-  private async _loadDetail(id: string, signal: AbortSignal) {
-    this.detailLoading = true;
-    try {
-      this.detail = await fetchBuildingDetail(id, signal);
-    } catch (err) {
-      if (err instanceof Error && err.name !== 'AbortError') {
-        console.error('Detail fetch failed:', err);
-      }
-    } finally {
-      this.detailLoading = false;
-    }
-  }
-
   private _close() {
     this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+  }
+
+  private _showDetail() {
+    this.dispatchEvent(new CustomEvent('show-detail', { bubbles: true, composed: true }));
   }
 
   private _datesLine(): string {
@@ -400,6 +380,9 @@ export class BuildingPanel extends LitElement {
           <a class="ext-link" href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
             Wikidata ↗
           </a>
+          <button class="detail-btn" @click=${this._showDetail}>
+            ${msg('Vollständige Details')} →
+          </button>
           <button class="action-btn">${msg('Anmelden zum Bearbeiten')}</button>
         </div>
       </div>

@@ -1,9 +1,13 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import type { WikidataBuilding } from '../types/building';
+import { localized, msg } from '@lit/localize';
+import type { WikidataBuilding, BuildingDetail } from '../types/building';
+import { fetchBuildingById, fetchBuildingDetail } from '../services/wikidata';
 import './map-view';
 import './building-panel';
+import './building-page';
 
+@localized()
 @customElement('app-root')
 export class AppRoot extends LitElement {
   static styles = css`
@@ -22,9 +26,24 @@ export class AppRoot extends LitElement {
       border-bottom: 1px solid #e2e8f0;
       display: flex;
       align-items: center;
+      gap: 0.5rem;
       padding: 0 1rem;
       z-index: 20;
     }
+
+    .back-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 0.875rem;
+      color: #64748b;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .back-btn:hover { background: #f1f5f9; color: #0f172a; }
 
     .app-bar a {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -43,19 +62,116 @@ export class AppRoot extends LitElement {
   `;
 
   @state() private selectedBuilding: WikidataBuilding | null = null;
+  @state() private buildingDetail: BuildingDetail | null = null;
+  @state() private detailLoading = false;
+  @state() private view: 'map' | 'detail' = 'map';
+
+  private detailController: AbortController | null = null;
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener('popstate', this._onPopState);
+    const id = new URLSearchParams(location.search).get('id');
+    if (id) this._loadBuildingById(id);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('popstate', this._onPopState);
+    this.detailController?.abort();
+  }
+
+  private _onPopState = () => {
+    const id = new URLSearchParams(location.search).get('id');
+    if (id) {
+      if (!this.selectedBuilding || this.selectedBuilding.id !== id) {
+        this._loadBuildingById(id);
+      }
+    } else {
+      this.selectedBuilding = null;
+      this.buildingDetail = null;
+      this.view = 'map';
+    }
+  };
+
+  private async _loadBuildingById(id: string) {
+    try {
+      const building = await fetchBuildingById(id);
+      if (building) {
+        this.selectedBuilding = building;
+        this._fetchDetail(id);
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('Failed to load building by ID:', err);
+      }
+    }
+  }
+
+  private _fetchDetail(id: string) {
+    this.detailController?.abort();
+    this.detailController = new AbortController();
+    this.buildingDetail = null;
+    this.detailLoading = true;
+    fetchBuildingDetail(id, this.detailController.signal).then((detail) => {
+      this.buildingDetail = detail;
+    }).catch((err) => {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('Detail fetch failed:', err);
+      }
+    }).finally(() => {
+      this.detailLoading = false;
+    });
+  }
+
+  private _onBuildingSelected(e: CustomEvent<WikidataBuilding>) {
+    this.selectedBuilding = e.detail;
+    this.view = 'map';
+    history.pushState(null, '', `?id=${e.detail.id}`);
+    this._fetchDetail(e.detail.id);
+  }
+
+  private _onPanelClose() {
+    this.selectedBuilding = null;
+    this.buildingDetail = null;
+    this.view = 'map';
+    history.pushState(null, '', location.pathname);
+  }
+
+  private _onShowDetail() {
+    this.view = 'detail';
+  }
+
+  private _onBackToMap() {
+    this.view = 'map';
+  }
 
   render() {
     return html`
       <div class="app-bar">
+        ${this.view === 'detail' ? html`
+          <button class="back-btn" @click=${this._onBackToMap}>← ${msg('Zur Karte')}</button>
+        ` : ''}
         <a href="/">Domus</a>
       </div>
-      <map-view
-        @building-selected=${(e: CustomEvent<WikidataBuilding>) => { this.selectedBuilding = e.detail; }}
-      ></map-view>
-      <building-panel
-        .building=${this.selectedBuilding}
-        @close=${() => { this.selectedBuilding = null; }}
-      ></building-panel>
+      ${this.view === 'detail'
+        ? html`<building-page
+            .building=${this.selectedBuilding}
+            .detail=${this.buildingDetail}
+            .detailLoading=${this.detailLoading}
+          ></building-page>`
+        : html`
+          <map-view
+            @building-selected=${this._onBuildingSelected}
+          ></map-view>
+          <building-panel
+            .building=${this.selectedBuilding}
+            .detail=${this.buildingDetail}
+            .detailLoading=${this.detailLoading}
+            @close=${this._onPanelClose}
+            @show-detail=${this._onShowDetail}
+          ></building-panel>
+        `}
     `;
   }
 }
