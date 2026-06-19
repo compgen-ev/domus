@@ -26,7 +26,7 @@ export class BuildingPanel extends LitElement {
       :host {
         display: block;
         position: fixed;
-        top: 0;
+        top: 44px;
         right: 0;
         bottom: 0;
         width: 400px;
