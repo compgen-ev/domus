@@ -15,6 +15,18 @@ interface CSRFTokenResponse {
   };
 }
 
+interface WikidataEntity {
+  claims?: Record<string, any[]>;
+}
+
+interface GetEntitiesResponse {
+  entities?: Record<string, WikidataEntity>;
+  error?: {
+    code: string;
+    info: string;
+  };
+}
+
 interface EditEntityResponse {
   success?: number;
   entity?: {
@@ -26,6 +38,43 @@ interface EditEntityResponse {
     info: string;
     messages?: Array<{ name: string; parameters: string[] }>;
   };
+}
+
+/**
+ * Fetches existing claims for an entity
+ */
+async function getEntityClaims(entityId: string, signal?: AbortSignal): Promise<Record<string, any[]>> {
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error('Not authenticated');
+  }
+
+  const url = new URL(WIKIDATA_API);
+  url.searchParams.set('action', 'wbgetentities');
+  url.searchParams.set('ids', entityId);
+  url.searchParams.set('props', 'claims');
+  url.searchParams.set('format', 'json');
+  url.searchParams.set('formatversion', '2');
+
+  const response = await fetch(url.toString(), {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch entity: ${response.status}`);
+  }
+
+  const data: GetEntitiesResponse = await response.json();
+
+  if (data.error) {
+    throw new Error(`Entity fetch error: ${data.error.code} - ${data.error.info}`);
+  }
+
+  const entity = data.entities?.[entityId];
+  return entity?.claims || {};
 }
 
 /**
@@ -70,9 +119,70 @@ async function getCSRFToken(signal?: AbortSignal): Promise<string> {
 }
 
 /**
- * Creates a Wikidata statement for a property
+ * Checks if a claim's value matches the given value
  */
-function createStatement(propertyId: string, value: string | WikidataItem, type: 'string' | 'time' | 'wikibase-item') {
+function claimValueMatches(claim: any, value: string | WikidataItem, type: 'string' | 'time' | 'wikibase-item'): boolean {
+  const mainsnak = claim.mainsnak;
+  if (!mainsnak || mainsnak.snaktype !== 'value') return false;
+
+  if (type === 'wikibase-item') {
+    const item = value as WikidataItem;
+    return mainsnak.datavalue?.value?.id === item.id;
+  } else if (type === 'time') {
+    const timeValue = value as string;
+    const normalizedValue = timeValue.startsWith('+') ? timeValue : `+${timeValue}`;
+    return mainsnak.datavalue?.value?.time === normalizedValue;
+  } else {
+    return mainsnak.datavalue?.value === value;
+  }
+}
+
+/**
+ * Appends a reference to an existing claim
+ */
+function appendReference(claim: any, referenceUrl: string): any {
+  const newReference = {
+    snaks: {
+      P854: [
+        {
+          snaktype: 'value',
+          property: 'P854',
+          datavalue: {
+            value: referenceUrl,
+            type: 'string',
+          },
+        },
+      ],
+    },
+  };
+
+  // Initialize references array if it doesn't exist
+  if (!claim.references) {
+    claim.references = [];
+  }
+
+  // Check if this URL already exists in references
+  const urlExists = claim.references.some((ref: any) =>
+    ref.snaks?.P854?.some((snak: any) => snak.datavalue?.value === referenceUrl)
+  );
+
+  // Only append if URL doesn't already exist
+  if (!urlExists) {
+    claim.references.push(newReference);
+  }
+
+  return claim;
+}
+
+/**
+ * Creates a Wikidata statement for a property with optional reference
+ */
+function createStatement(
+  propertyId: string,
+  value: string | WikidataItem,
+  type: 'string' | 'time' | 'wikibase-item',
+  referenceUrl?: string
+) {
   let datavalue;
 
   if (type === 'string') {
@@ -106,7 +216,7 @@ function createStatement(propertyId: string, value: string | WikidataItem, type:
     };
   }
 
-  return {
+  const statement: any = {
     mainsnak: {
       snaktype: 'value',
       property: propertyId,
@@ -115,6 +225,28 @@ function createStatement(propertyId: string, value: string | WikidataItem, type:
     type: 'statement',
     rank: 'normal',
   };
+
+  // Add reference if URL provided
+  if (referenceUrl) {
+    statement.references = [
+      {
+        snaks: {
+          P854: [
+            {
+              snaktype: 'value',
+              property: 'P854',
+              datavalue: {
+                value: referenceUrl,
+                type: 'string',
+              },
+            },
+          ],
+        },
+      },
+    ];
+  }
+
+  return statement;
 }
 
 export interface BuildingEditData {
@@ -123,6 +255,7 @@ export interface BuildingEditData {
   type?: WikidataItem;
   inception?: string;
   demolished?: string;
+  sourceUrl?: string;
   // Add more as needed
 }
 
@@ -163,6 +296,23 @@ export function validateEditData(data: BuildingEditData): { valid: boolean; erro
     }
   }
 
+  // Check if there are any non-empty changes to claims (not label)
+  const hasClaimChanges = (data.type !== undefined) ||
+                          (data.inception !== undefined && data.inception !== '') ||
+                          (data.demolished !== undefined && data.demolished !== '');
+
+  if (hasClaimChanges && !data.sourceUrl) {
+    errors.push('Source URL is required when editing building data');
+  }
+
+  if (data.sourceUrl) {
+    try {
+      new URL(data.sourceUrl);
+    } catch {
+      errors.push('Source URL must be a valid URL');
+    }
+  }
+
   return {
     valid: errors.length === 0,
     errors,
@@ -187,7 +337,8 @@ export async function editBuilding(
     throw new Error('Not authenticated');
   }
 
-  // Get CSRF token
+  // Get existing claims first, then CSRF token
+  const existingClaims = await getEntityClaims(editData.id, signal);
   const csrfToken = await getCSRFToken(signal);
 
   // Build the data object
@@ -206,22 +357,55 @@ export async function editBuilding(
     };
   }
 
-  // Update claims
+  // Update claims - merge references with existing claims
   data.claims = {};
 
   if (editData.type) {
     // P31 = instance of
-    data.claims.P31 = [createStatement('P31', editData.type, 'wikibase-item')];
+    const existing = existingClaims.P31 || [];
+    const matchingClaim = existing.find(claim =>
+      claimValueMatches(claim, editData.type!, 'wikibase-item')
+    );
+
+    if (matchingClaim && editData.sourceUrl) {
+      // Append reference to existing claim
+      data.claims.P31 = [appendReference({ ...matchingClaim }, editData.sourceUrl)];
+    } else {
+      // Create new claim
+      data.claims.P31 = [createStatement('P31', editData.type, 'wikibase-item', editData.sourceUrl)];
+    }
   }
 
   if (editData.inception) {
     // P571 = inception
-    data.claims.P571 = [createStatement('P571', editData.inception, 'time')];
+    const existing = existingClaims.P571 || [];
+    const matchingClaim = existing.find(claim =>
+      claimValueMatches(claim, editData.inception!, 'time')
+    );
+
+    if (matchingClaim && editData.sourceUrl) {
+      // Append reference to existing claim
+      data.claims.P571 = [appendReference({ ...matchingClaim }, editData.sourceUrl)];
+    } else {
+      // Create new claim
+      data.claims.P571 = [createStatement('P571', editData.inception, 'time', editData.sourceUrl)];
+    }
   }
 
   if (editData.demolished) {
     // P576 = dissolved, abolished or demolished
-    data.claims.P576 = [createStatement('P576', editData.demolished, 'time')];
+    const existing = existingClaims.P576 || [];
+    const matchingClaim = existing.find(claim =>
+      claimValueMatches(claim, editData.demolished!, 'time')
+    );
+
+    if (matchingClaim && editData.sourceUrl) {
+      // Append reference to existing claim
+      data.claims.P576 = [appendReference({ ...matchingClaim }, editData.sourceUrl)];
+    } else {
+      // Create new claim
+      data.claims.P576 = [createStatement('P576', editData.demolished, 'time', editData.sourceUrl)];
+    }
   }
 
   // Make the edit request

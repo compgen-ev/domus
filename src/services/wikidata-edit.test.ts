@@ -25,6 +25,7 @@ describe('validateEditData', () => {
         type: { id: 'Q3947', label: 'dwelling' },
         inception: '1950',
         demolished: '2000',
+        sourceUrl: 'https://example.com/source',
       };
       const result = validateEditData(data);
       expect(result.valid).toBe(true);
@@ -35,6 +36,7 @@ describe('validateEditData', () => {
       const data: BuildingEditData = {
         id: 'Q123',
         inception: '+1950-06-15T00:00:00Z',
+        sourceUrl: 'https://example.com/source',
       };
       const result = validateEditData(data);
       expect(result.valid).toBe(true);
@@ -44,6 +46,7 @@ describe('validateEditData', () => {
       const data: BuildingEditData = {
         id: 'Q123',
         inception: '-500',
+        sourceUrl: 'https://example.com/source',
       };
       const result = validateEditData(data);
       expect(result.valid).toBe(true);
@@ -158,6 +161,77 @@ describe('validateEditData', () => {
       expect(result.errors.length).toBeGreaterThan(1);
     });
   });
+
+  describe('source URL validation', () => {
+    it('requires source URL when editing building type', () => {
+      const data: BuildingEditData = {
+        id: 'Q123',
+        type: { id: 'Q3947', label: 'dwelling' },
+      };
+      const result = validateEditData(data);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Source URL is required when editing building data');
+    });
+
+    it('requires source URL when editing inception', () => {
+      const data: BuildingEditData = {
+        id: 'Q123',
+        inception: '1950',
+      };
+      const result = validateEditData(data);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Source URL is required when editing building data');
+    });
+
+    it('requires source URL when editing demolished', () => {
+      const data: BuildingEditData = {
+        id: 'Q123',
+        demolished: '2000',
+      };
+      const result = validateEditData(data);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Source URL is required when editing building data');
+    });
+
+    it('does not require source URL when only editing label', () => {
+      const data: BuildingEditData = {
+        id: 'Q123',
+        label: 'New Name',
+      };
+      const result = validateEditData(data);
+      expect(result.valid).toBe(true);
+    });
+
+    it('does not require source URL when clearing inception', () => {
+      const data: BuildingEditData = {
+        id: 'Q123',
+        inception: '',
+      };
+      const result = validateEditData(data);
+      expect(result.valid).toBe(true);
+    });
+
+    it('accepts valid source URL', () => {
+      const data: BuildingEditData = {
+        id: 'Q123',
+        inception: '1950',
+        sourceUrl: 'https://example.com/source',
+      };
+      const result = validateEditData(data);
+      expect(result.valid).toBe(true);
+    });
+
+    it('rejects invalid source URL', () => {
+      const data: BuildingEditData = {
+        id: 'Q123',
+        inception: '1950',
+        sourceUrl: 'not a url',
+      };
+      const result = validateEditData(data);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Source URL must be a valid URL');
+    });
+  });
 });
 
 describe('editBuilding', () => {
@@ -200,6 +274,14 @@ describe('editBuilding', () => {
 
   describe('CSRF token', () => {
     it('throws when CSRF token request fails', async () => {
+      // Mock entity fetch success first
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          entities: { Q123: { claims: {} } },
+        }),
+      });
+      // Then CSRF token failure
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -211,6 +293,14 @@ describe('editBuilding', () => {
     });
 
     it('throws when CSRF token response has error', async () => {
+      // Mock entity fetch success first
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          entities: { Q123: { claims: {} } },
+        }),
+      });
+      // Then CSRF token error
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -227,6 +317,14 @@ describe('editBuilding', () => {
     });
 
     it('throws when CSRF token is invalid', async () => {
+      // Mock entity fetch success first
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          entities: { Q123: { claims: {} } },
+        }),
+      });
+      // Then invalid CSRF token
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -244,6 +342,14 @@ describe('editBuilding', () => {
     });
 
     it('throws when CSRF token is missing', async () => {
+      // Mock entity fetch success first
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          entities: { Q123: { claims: {} } },
+        }),
+      });
+      // Then missing CSRF token
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -261,6 +367,13 @@ describe('editBuilding', () => {
 
   describe('edit request', () => {
     beforeEach(() => {
+      // Mock successful entity fetch
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          entities: { Q123: { claims: {} } },
+        }),
+      });
       // Mock successful CSRF token fetch
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -364,35 +477,33 @@ describe('editBuilding', () => {
       const data: BuildingEditData = { id: 'Q123' };
       await editBuilding(data);
 
-      // Check the edit request (second call)
-      expect(mockFetch).toHaveBeenCalledTimes(2);
-      const editCall = mockFetch.mock.calls[1];
+      // Check the edit request (third call after entity fetch and CSRF)
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+      const editCall = mockFetch.mock.calls[2];
       expect(editCall[1].headers.Authorization).toBe('Bearer mock-token');
     });
   });
 
   describe('abort signal', () => {
-    beforeEach(() => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          query: {
-            tokens: { csrftoken: 'token' },
-          },
-        }),
-      });
-    });
-
     it('passes abort signal to fetch requests', async () => {
       const controller = new AbortController();
       const data: BuildingEditData = { id: 'Q123' };
 
+      // Mock entity fetch
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          entities: { Q123: { claims: {} } },
+        }),
+      });
+      // Mock CSRF token fetch
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           query: { tokens: { csrftoken: 'token' } },
         }),
       });
+      // Mock edit request
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ success: 1, entity: { id: 'Q123' } }),

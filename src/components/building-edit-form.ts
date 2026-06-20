@@ -216,6 +216,7 @@ export class BuildingEditForm extends LitElement {
   @property({ attribute: false }) detail: BuildingDetail | null = null;
 
   @state() private sourceType: 'url' | 'archive' = 'url';
+  @state() private sourceUrl = '';
   @state() private formLabel = '';
   @state() private formType: WikidataItem | undefined;
   @state() private formInception = '';
@@ -292,6 +293,7 @@ export class BuildingEditForm extends LitElement {
       this.formType = this.building.type;
       this.formInception = this.building.inception || '';
       this.formDemolished = this.detail?.demolished || '';
+      this.sourceUrl = '';
       this.saveError = null;
     }
   }
@@ -313,6 +315,7 @@ export class BuildingEditForm extends LitElement {
         type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
         inception: this.formInception !== this.building.inception ? this.formInception : undefined,
         demolished: this.formDemolished !== this.detail?.demolished ? this.formDemolished : undefined,
+        sourceUrl: this.sourceUrl || undefined,
       };
 
       await editBuilding(editData);
@@ -462,11 +465,17 @@ export class BuildingEditForm extends LitElement {
           ${this.sourceType === 'url' ? html`
             <div class="field-group">
               <label>URL</label>
-              <input type="url" placeholder="https://">
+              <input
+                type="url"
+                placeholder="https://"
+                .value=${this.sourceUrl}
+                @input=${(e: Event) => this.sourceUrl = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}
+                required>
             </div>
             <div class="field-group">
               <label>${msg('Beschreibung / Seite')} (${msg('optional')})</label>
-              <input type="text">
+              <input type="text" ?disabled=${this.saving}>
             </div>
           ` : html`
             <div class="field-group">
