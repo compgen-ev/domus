@@ -132,7 +132,7 @@ export class BuildingPanel extends LitElement {
       }
 
       h2 {
-        font-size: var(--font-size-lg);
+        font-size: var(--font-size-2xl);
         font-weight: var(--font-weight-bold);
         color: var(--color-text-primary);
         line-height: var(--line-height-tight);
@@ -149,8 +149,8 @@ export class BuildingPanel extends LitElement {
         background: none;
         border: none;
         cursor: pointer;
-        color: var(--color-text-muted);
-        font-size: var(--font-size-base);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-lg);
         line-height: 1;
         padding: var(--space-1);
         border-radius: var(--radius-sm);
@@ -160,7 +160,7 @@ export class BuildingPanel extends LitElement {
 
       .close-btn:hover {
         background: var(--color-bg-tertiary);
-        color: var(--color-text-secondary);
+        color: var(--color-text-primary);
       }
 
       .body {
@@ -234,50 +234,70 @@ export class BuildingPanel extends LitElement {
       }
 
       .footer {
-        padding: var(--space-3) var(--space-4);
+        padding: var(--space-4);
         border-top: 1px solid var(--color-border-light);
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        gap: var(--space-3);
+      }
+
+      .footer-primary {
+        display: flex;
+        gap: var(--space-2);
+      }
+
+      .footer-tertiary {
+        display: flex;
         gap: var(--space-2);
         flex-wrap: wrap;
       }
 
-      a.ext-link, button.detail-btn, button.action-btn {
+      .footer-tertiary a {
         font-size: var(--font-size-sm);
-        padding: var(--space-2) var(--space-4);
-        border-radius: var(--radius-md);
+        color: var(--color-primary);
         text-decoration: none;
+        padding: var(--space-2) var(--space-4);
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-md);
+        background: transparent;
+        transition: all var(--transition-fast);
+      }
+
+      .footer-tertiary a:hover {
+        background: var(--color-primary);
+        color: white;
+      }
+
+      /* Primary action */
+      button.detail-btn {
+        flex: 1;
+        background: var(--color-accent);
+        color: var(--color-primary);
+        border: none;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-semibold);
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-md);
         cursor: pointer;
         transition: all var(--transition-fast);
       }
 
-      a.ext-link {
-        color: var(--color-primary);
-        border: 1px solid var(--color-primary);
-        background: transparent;
-      }
-
-      a.ext-link:hover {
-        background: var(--color-primary);
-        color: white;
-      }
-
-      button.detail-btn {
-        background: var(--color-accent);
-        color: var(--color-primary);
-        border: none;
-      }
-
       button.detail-btn:hover {
         background: var(--color-accent-dark);
-        color: var(--color-primary);
       }
 
+      /* Secondary action */
       button.action-btn {
+        flex: 1;
         color: white;
         background: var(--color-primary);
         border: none;
-        margin-left: auto;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-semibold);
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all var(--transition-fast);
       }
 
       button.action-btn:hover {
@@ -451,28 +471,32 @@ export class BuildingPanel extends LitElement {
         </div>
 
         <div class="footer">
-          <a class="ext-link" href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
-            Wikidata ↗
-          </a>
-          ${detail?.ohmId || (this.hasOhmFootprint && this.ohmElementId) ? html`
-            <a class="ext-link" href=${detail?.ohmId
-              ? `https://www.openhistoricalmap.org/relation/${detail.ohmId}`
-              : `https://www.openhistoricalmap.org/${this.ohmElementType}/${this.ohmElementId}`}
-              target="_blank" rel="noopener">
-              OpenHistoricalMap ↗
+          <div class="footer-primary">
+            <button class="detail-btn" @click=${this._showDetail}>
+              ${msg('Vollständige Details')} →
+            </button>
+            ${this.authenticated ? html`
+              <button class="action-btn" @click=${this._edit}>${msg('Bearbeiten')}</button>
+            ` : html`
+              <button class="action-btn" @click=${this._login}>${msg('Anmelden')}</button>
+            `}
+          </div>
+          <div class="footer-tertiary">
+            <a href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
+              Wikidata ↗
             </a>
-          ` : ''}
-          <app-button variant="outline" @click=${this._copyLink}>
-            ${this.linkCopied ? msg('Kopiert!') : msg('Link kopieren')}
-          </app-button>
-          <button class="detail-btn" @click=${this._showDetail}>
-            ${msg('Vollständige Details')} →
-          </button>
-          ${this.authenticated ? html`
-            <button class="action-btn" @click=${this._edit}>${msg('Bearbeiten')}</button>
-          ` : html`
-            <button class="action-btn" @click=${this._login}>${msg('Anmelden zum Bearbeiten')}</button>
-          `}
+            ${detail?.ohmId || (this.hasOhmFootprint && this.ohmElementId) ? html`
+              <a href=${detail?.ohmId
+                ? `https://www.openhistoricalmap.org/relation/${detail.ohmId}`
+                : `https://www.openhistoricalmap.org/${this.ohmElementType}/${this.ohmElementId}`}
+                target="_blank" rel="noopener">
+                OpenHistoricalMap ↗
+              </a>
+            ` : ''}
+            <a href="#" @click=${(e: Event) => { e.preventDefault(); this._copyLink(); }}>
+              ${this.linkCopied ? msg('Kopiert!') : msg('Link kopieren')}
+            </a>
+          </div>
         </div>
       </div>
     `;

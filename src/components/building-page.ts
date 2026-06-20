@@ -194,8 +194,8 @@ export class BuildingPage extends LitElement {
 
       .back-btn {
         background: transparent;
-        color: var(--color-text-secondary);
-        border: 1px solid var(--color-border);
+        color: var(--color-primary);
+        border: 1px solid var(--color-primary);
         cursor: pointer;
         font-size: var(--font-size-sm);
         font-weight: var(--font-weight-medium);
@@ -207,8 +207,8 @@ export class BuildingPage extends LitElement {
       }
 
       .back-btn:hover {
-        background: var(--color-bg-secondary);
-        border-color: var(--color-text-secondary);
+        background: var(--color-primary);
+        color: white;
       }
 
       .edit-btn {
