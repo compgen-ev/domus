@@ -1,7 +1,12 @@
+export interface WikidataItem {
+  id: string;
+  label: string;
+}
+
 export interface WikidataBuilding {
   id: string;
   label: string;
-  type?: string;
+  type?: WikidataItem;
   lat: number;
   lng: number;
   image?: string;

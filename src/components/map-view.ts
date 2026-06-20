@@ -110,6 +110,7 @@ export class MapView extends LitElement {
 
   @property({ attribute: false }) ohmId: string | undefined = undefined;
   @property({ attribute: false }) wikidataId: string | undefined = undefined;
+  @property({ attribute: false }) selectedBuilding: WikidataBuilding | null = null;
 
   @state() private showHint = true;
   @state() private loading = false;
@@ -119,10 +120,19 @@ export class MapView extends LitElement {
   private fetchController: AbortController | null = null;
   private ohmController: AbortController | null = null;
   private resizeObserver!: ResizeObserver;
+  private _shouldCenterOnBuilding = false;
 
   protected updated(changed: PropertyValues) {
     if (changed.has('ohmId') || changed.has('wikidataId')) {
       this._updateOhmFootprint();
+    }
+    if (changed.has('selectedBuilding') && this.selectedBuilding && this._shouldCenterOnBuilding) {
+      this.map.flyTo({
+        center: [this.selectedBuilding.lng, this.selectedBuilding.lat],
+        zoom: 17,
+        duration: 1000,
+      });
+      this._shouldCenterOnBuilding = false;
     }
   }
 
@@ -143,7 +153,13 @@ export class MapView extends LitElement {
   firstUpdated() {
     const container = this.shadowRoot!.getElementById('map')!;
 
-    const saved = loadSavedView();
+    // Check if URL has building ID - if so, don't restore saved view
+    const hasUrlId = new URLSearchParams(window.location.search).has('id');
+    if (hasUrlId) {
+      this._shouldCenterOnBuilding = true;
+    }
+
+    const saved = !hasUrlId ? loadSavedView() : null;
     this.map = new maplibregl.Map({
       container,
       style: 'https://tiles.openfreemap.org/styles/liberty',
@@ -277,7 +293,9 @@ export class MapView extends LitElement {
       const building: WikidataBuilding = {
         id: p['id'] ?? '',
         label: p['label'] ?? '',
-        type: p['type'] ?? undefined,
+        type: p['typeId'] && p['typeLabel']
+          ? { id: p['typeId'], label: p['typeLabel'] }
+          : undefined,
         lat: (feature.geometry as GeoJSON.Point).coordinates[1],
         lng: (feature.geometry as GeoJSON.Point).coordinates[0],
         image: p['image'] ?? undefined,

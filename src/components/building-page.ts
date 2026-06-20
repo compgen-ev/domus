@@ -1,4 +1,4 @@
-import { LitElement, html, css, type TemplateResult } from 'lit';
+import { LitElement, html, css, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
@@ -245,6 +245,15 @@ export class BuildingPage extends LitElement {
   @state() private editMode = false;
   @state() private linkCopied = false;
 
+  protected willUpdate(changed: PropertyValues) {
+    if (changed.has('building')) {
+      // Close edit mode when switching buildings
+      if (this.editMode) {
+        this.editMode = false;
+      }
+    }
+  }
+
   private _backToMap() {
     this.dispatchEvent(new CustomEvent('back-to-map', { bubbles: true, composed: true }));
   }
@@ -345,7 +354,7 @@ export class BuildingPage extends LitElement {
         <button class="back-btn" @click=${this._backToMap}>← ${msg('Zur Karte')}</button>
         <div class="badges">
           ${detail?.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
-          ${type ? html`<span class="badge badge-type">${type}</span>` : ''}
+          ${type ? html`<span class="badge badge-type">${type.label}</span>` : ''}
         </div>
         <h1>${label}</h1>
         ${datesLine ? html`<p class="dates">${datesLine}</p>` : ''}

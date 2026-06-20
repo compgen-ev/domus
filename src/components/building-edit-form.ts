@@ -1,7 +1,8 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import type { WikidataBuilding, BuildingDetail } from '../types/building';
+import { keyed } from 'lit/directives/keyed.js';
+import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/building';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 
@@ -205,6 +206,68 @@ export class BuildingEditForm extends LitElement {
 
   @state() private sourceType: 'url' | 'archive' = 'url';
 
+  // Common building types - Q-codes only
+  private readonly buildingTypeIds = [
+    'Q3947',      // dwelling
+    'Q188869',    // farmhouse
+    'Q1021106',   // apartment building
+    'Q20034440',  // single-family home
+    'Q16970',     // church building
+    'Q108325',    // chapel
+    'Q149566',    // school building
+    'Q25550691',  // town hall
+    'Q44494',     // mill
+    'Q162113',    // barn
+    'Q1662011',   // stable
+    'Q1662536',   // storehouse
+    'Q879050',    // manor house
+    'Q23413',     // palace
+    'Q23691',     // castle
+    'Q1542143',   // factory building
+    'Q656720',    // workshop
+    'Q27686',     // inn
+    'Q18543139',  // railway station building
+  ];
+
+  private _getTypeLabel(id: string): string {
+    switch (id) {
+      case 'Q3947': return msg('Wohnhaus');
+      case 'Q188869': return msg('Bauernhaus');
+      case 'Q1021106': return msg('Mehrfamilienhaus');
+      case 'Q20034440': return msg('Einfamilienhaus');
+      case 'Q16970': return msg('Kirchengebäude');
+      case 'Q108325': return msg('Kapelle');
+      case 'Q149566': return msg('Schulgebäude');
+      case 'Q25550691': return msg('Rathaus');
+      case 'Q44494': return msg('Mühle');
+      case 'Q162113': return msg('Scheune');
+      case 'Q1662011': return msg('Stall');
+      case 'Q1662536': return msg('Speicher');
+      case 'Q879050': return msg('Herrenhaus');
+      case 'Q23413': return msg('Schloss');
+      case 'Q23691': return msg('Burg');
+      case 'Q1542143': return msg('Fabrikgebäude');
+      case 'Q656720': return msg('Werkstatt');
+      case 'Q27686': return msg('Gasthaus');
+      case 'Q18543139': return msg('Bahnhofsgebäude');
+      default: return id; // Fallback to Q-code if unknown
+    }
+  }
+
+  private _getBuildingTypeOptions(): WikidataItem[] {
+    const currentType = this.building?.type;
+    const options = this.buildingTypeIds.map(id => ({
+      id,
+      label: this._getTypeLabel(id),
+    }));
+
+    // If current type exists and is not in predefined list, add it at the top
+    if (currentType && !this.buildingTypeIds.includes(currentType.id)) {
+      return [currentType, ...options];
+    }
+    return options;
+  }
+
   private _cancel() {
     this.dispatchEvent(new CustomEvent('cancel', { bubbles: true, composed: true }));
   }
@@ -216,10 +279,11 @@ export class BuildingEditForm extends LitElement {
 
   render() {
     if (!this.building) return html``;
+    const building = this.building;
 
-    return html`
+    return keyed(building.id, html`
       <div class="form-header">
-        <h2 class="form-title">${this.building.label} ${msg('bearbeiten')}</h2>
+        <h2 class="form-title">${building.label} ${msg('bearbeiten')}</h2>
         <p class="form-subtitle">${msg('Änderungen werden direkt in Wikidata gespeichert')}</p>
       </div>
 
@@ -231,22 +295,22 @@ export class BuildingEditForm extends LitElement {
           </div>
           <div class="field-group">
             <label>${msg('Name')}</label>
-            <input type="text" .value=${this.building.label}>
+            <input type="text" .value=${building.label}>
           </div>
           <div class="field-group">
             <label>${msg('Typ')}</label>
             <select>
-              <option>${msg('Haus')}</option>
-              <option>${msg('Bauernhaus')}</option>
-              <option>${msg('Mehrfamilienhaus')}</option>
-              <option>${msg('Mühle')}</option>
-              <option>${msg('Herrenhaus')}</option>
-              <option>${msg('Sonstiges')}</option>
+              <option value="" ?selected=${!building.type}>${msg('Nicht angegeben')}</option>
+              ${this._getBuildingTypeOptions().map(type => html`
+                <option value=${type.id} ?selected=${building.type?.id === type.id}>
+                  ${type.label}
+                </option>
+              `)}
             </select>
           </div>
           <div class="field-group">
             <label>${msg('Erbaut')}</label>
-            <input type="text" placeholder="YYYY" .value=${this.building.inception || ''}>
+            <input type="text" placeholder="YYYY" .value=${building.inception || ''}>
           </div>
           <div class="field-group">
             <label>${msg('Abgerissen')}</label>
@@ -349,7 +413,7 @@ export class BuildingEditForm extends LitElement {
         <button class="btn-secondary" @click=${this._cancel}>${msg('Abbrechen')}</button>
         <button class="btn-primary" @click=${this._save}>${msg('Änderungen speichern')}</button>
       </div>
-    `;
+    `);
   }
 }
 

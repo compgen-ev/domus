@@ -13,6 +13,7 @@ interface SparqlResult {
     bindings: Array<{
       item?: SparqlBinding;
       itemLabel?: SparqlBinding;
+      type?: SparqlBinding;
       typeLabel?: SparqlBinding;
       coord?: SparqlBinding;
       image?: SparqlBinding;
@@ -26,7 +27,7 @@ function buildQuery(west: number, south: number, east: number, north: number): s
   const fallback = locale === 'en' ? 'de' : 'en';
   const langs = `${locale},${fallback},mul`;
   return `
-SELECT ?item ?itemLabel ?typeLabel ?coord ?image ?inception WHERE {
+SELECT ?item ?itemLabel ?type ?typeLabel ?coord ?image ?inception WHERE {
   SERVICE wikibase:box {
     ?item wdt:P625 ?coord .
     bd:serviceParam wikibase:cornerSouthWest "Point(${west} ${south})"^^geo:wktLiteral .
@@ -88,7 +89,9 @@ export async function fetchBuildings(
     buildings.push({
       id,
       label: row.itemLabel?.value ?? id,
-      type: row.typeLabel?.value,
+      type: row.type?.value && row.typeLabel?.value
+        ? { id: extractQid(row.type.value), label: row.typeLabel.value }
+        : undefined,
       lat: coords.lat,
       lng: coords.lng,
       image: row.image?.value,
@@ -176,7 +179,7 @@ export async function fetchBuildingById(
   const langs = `${locale},${fallback},mul`;
 
   const query = `
-SELECT ?itemLabel ?typeLabel ?coord ?image ?inception WHERE {
+SELECT ?itemLabel ?type ?typeLabel ?coord ?image ?inception WHERE {
   BIND(wd:${id} AS ?item)
   OPTIONAL { ?item wdt:P625 ?coord . }
   OPTIONAL { ?item wdt:P31 ?type . }
@@ -201,7 +204,9 @@ LIMIT 1`;
   return {
     id,
     label: row.itemLabel?.value ?? id,
-    type: row.typeLabel?.value,
+    type: row.type?.value && row.typeLabel?.value
+      ? { id: extractQid(row.type.value), label: row.typeLabel.value }
+      : undefined,
     lat: coords?.lat ?? 0,
     lng: coords?.lng ?? 0,
     image: row.image?.value,
@@ -330,7 +335,8 @@ export function buildingsToGeoJSON(
       properties: {
         id: b.id,
         label: b.label,
-        type: b.type ?? null,
+        typeId: b.type?.id ?? null,
+        typeLabel: b.type?.label ?? null,
         image: b.image ?? null,
         inception: b.inception ?? null,
       },

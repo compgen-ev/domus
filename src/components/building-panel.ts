@@ -320,6 +320,10 @@ export class BuildingPanel extends LitElement {
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building')) {
       this.toggleAttribute('open', this.building !== null);
+      // Close edit mode when switching buildings
+      if (this.editMode) {
+        this.editMode = false;
+      }
     }
   }
 
@@ -430,7 +434,7 @@ export class BuildingPanel extends LitElement {
           <div class="title">
             <div class="badges">
               ${detail?.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
-              ${type ? html`<span class="badge badge-type">${type}</span>` : ''}
+              ${type ? html`<span class="badge badge-type">${type.label}</span>` : ''}
             </div>
             <h2>${label}</h2>
             ${datesLine ? html`<p class="dates">${datesLine}</p>` : ''}

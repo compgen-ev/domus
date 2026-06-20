@@ -272,6 +272,7 @@ export class AppRoot extends LitElement {
           <map-view
             .ohmId=${this.buildingDetail?.ohmId}
             .wikidataId=${this.selectedBuilding?.id}
+            .selectedBuilding=${this.selectedBuilding}
             @building-selected=${this._onBuildingSelected}
             @ohm-data-loaded=${this._onOhmDataLoaded}
           ></map-view>

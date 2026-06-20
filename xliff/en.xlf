@@ -2,10 +2,6 @@
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
 <file target-language="en" source-language="de" original="lit-localize-inputs" datatype="plaintext">
 <body>
-<trans-unit id="s9072a8014828ef62">
-  <source>Erbaut um <x id="0" equiv-text="${builtYear}"/></source>
-  <target>Built around <x id="0" equiv-text="${year}"/></target>
-</trans-unit>
 <trans-unit id="sb2246a8686ca9805">
   <source>Schließen</source>
   <target>Close</target>
@@ -35,7 +31,7 @@
   <target>No results found</target>
 </trans-unit>
 <trans-unit id="s3ef78d4ae86b5cf0">
-  <source>Abgerissen <x id="0" equiv-text="${demoYear}"/></source>
+  <source>Abgerissen <x id="0" equiv-text="${demoDate}"/></source>
   <target>Demolished <x id="0" equiv-text="${demoYear}"/></target>
 </trans-unit>
 <trans-unit id="sba7fb5a6fce4db8e">
@@ -49,10 +45,6 @@
 <trans-unit id="s53309a8a8d5de6b1">
   <source>Eigentümer</source>
   <target>Owners</target>
-</trans-unit>
-<trans-unit id="sf8d646badbc5add0">
-  <source>Anmelden zum Bearbeiten</source>
-  <target>Login to edit</target>
 </trans-unit>
 <trans-unit id="s7a09c81d25b6650c">
   <source>Architekt</source>
@@ -70,125 +62,165 @@
   <source>Vollständige Details</source>
   <target>Full details</target>
 </trans-unit>
-<trans-unit id="s91e3b1b0b5d5e5b0">
-  <source>Bearbeiten</source>
-  <target>Edit</target>
-</trans-unit>
-<trans-unit id="s5e8b3f7c1e2a3b4c">
-  <source>Anmelden</source>
-  <target>Sign in</target>
-</trans-unit>
-<trans-unit id="s7f9c4d8e2f3b5a6d">
+<trans-unit id="sf7421fc8f5906183">
   <source>Abmelden</source>
-  <target>Sign out</target>
 </trans-unit>
-<trans-unit id="sa1b2c3d4e5f6g7h8">
-  <source>bearbeiten</source>
-  <target>edit</target>
+<trans-unit id="s55dd3f9792622892">
+  <source>Wohnhaus</source>
+  <target>dwelling</target>
 </trans-unit>
-<trans-unit id="sb2c3d4e5f6g7h8i9">
-  <source>Änderungen werden direkt in Wikidata gespeichert</source>
-  <target>Changes are saved directly to Wikidata</target>
-</trans-unit>
-<trans-unit id="sc3d4e5f6g7h8i9j0">
-  <source>Grunddaten</source>
-  <target>Basic facts</target>
-</trans-unit>
-<trans-unit id="sd4e5f6g7h8i9j0k1">
-  <source>Name</source>
-  <target>Name</target>
-</trans-unit>
-<trans-unit id="se5f6g7h8i9j0k1l2">
-  <source>Typ</source>
-  <target>Type</target>
-</trans-unit>
-<trans-unit id="sf6g7h8i9j0k1l2m3">
-  <source>Haus</source>
-  <target>House</target>
-</trans-unit>
-<trans-unit id="sg7h8i9j0k1l2m3n4">
+<trans-unit id="s719aed90ca970e21">
   <source>Bauernhaus</source>
-  <target>Farmhouse</target>
+  <target>farmhouse</target>
 </trans-unit>
-<trans-unit id="sh8i9j0k1l2m3n4o5">
+<trans-unit id="s7853cd3e5261d9bd">
   <source>Mehrfamilienhaus</source>
-  <target>Apartment building</target>
+  <target>apartment building</target>
 </trans-unit>
-<trans-unit id="si9j0k1l2m3n4o5p6">
+<trans-unit id="s5f165beb369f0683">
+  <source>Einfamilienhaus</source>
+  <target>single-family home</target>
+</trans-unit>
+<trans-unit id="s963da6a7c5e0505d">
+  <source>Kirchengebäude</source>
+  <target>church building</target>
+</trans-unit>
+<trans-unit id="sb5088a3ea6204b35">
+  <source>Kapelle</source>
+  <target>chapel</target>
+</trans-unit>
+<trans-unit id="sd564eb488bf5d0a6">
+  <source>Schulgebäude</source>
+  <target>school building</target>
+</trans-unit>
+<trans-unit id="s44f36f40012fc283">
+  <source>Rathaus</source>
+  <target>town hall</target>
+</trans-unit>
+<trans-unit id="sb1bf75328f23b09f">
   <source>Mühle</source>
-  <target>Mill</target>
+  <target>mill</target>
 </trans-unit>
-<trans-unit id="sj0k1l2m3n4o5p6q7">
+<trans-unit id="sf8cb2cd240cf85fe">
+  <source>Scheune</source>
+  <target>barn</target>
+</trans-unit>
+<trans-unit id="sae3e7b13b7dda419">
+  <source>Stall</source>
+  <target>stable</target>
+</trans-unit>
+<trans-unit id="s9b1798eaf9a35020">
+  <source>Speicher</source>
+  <target>storehouse</target>
+</trans-unit>
+<trans-unit id="s3970e58b8b555b2e">
   <source>Herrenhaus</source>
-  <target>Manor</target>
+  <target>manor house</target>
 </trans-unit>
-<trans-unit id="sk1l2m3n4o5p6q7r8">
-  <source>Sonstiges</source>
-  <target>Other</target>
+<trans-unit id="sdb67c11a9963d876">
+  <source>Schloss</source>
+  <target>palace</target>
 </trans-unit>
-<trans-unit id="sl2m3n4o5p6q7r8s9">
+<trans-unit id="s29ffc0a7e41b1293">
+  <source>Burg</source>
+  <target>castle</target>
+</trans-unit>
+<trans-unit id="s85546e59713decd2">
+  <source>Fabrikgebäude</source>
+  <target>factory building</target>
+</trans-unit>
+<trans-unit id="s6462ab62317a6960">
+  <source>Werkstatt</source>
+  <target>workshop</target>
+</trans-unit>
+<trans-unit id="s3231b1e375964aa1">
+  <source>Gasthaus</source>
+  <target>inn</target>
+</trans-unit>
+<trans-unit id="sc612568f2c4e26fe">
+  <source>Bahnhofsgebäude</source>
+  <target>railway station building</target>
+</trans-unit>
+<trans-unit id="s69114a08a226ef10">
+  <source>bearbeiten</source>
+</trans-unit>
+<trans-unit id="sedef3f1c298f0e41">
+  <source>Änderungen werden direkt in Wikidata gespeichert</source>
+</trans-unit>
+<trans-unit id="s53fd721f3db25629">
+  <source>Grunddaten</source>
+</trans-unit>
+<trans-unit id="sef49aec68fd1dc66">
+  <source>Name</source>
+</trans-unit>
+<trans-unit id="s6d31f019e246475a">
+  <source>Typ</source>
+</trans-unit>
+<trans-unit id="se674f7b423636551">
+  <source>Nicht angegeben</source>
+</trans-unit>
+<trans-unit id="sdd77a2e76f19d546">
   <source>Erbaut</source>
-  <target>Built</target>
 </trans-unit>
-<trans-unit id="sm3n4o5p6q7r8s9t0">
+<trans-unit id="sa18c90603ced585a">
   <source>Abgerissen</source>
-  <target>Demolished</target>
 </trans-unit>
-<trans-unit id="sn4o5p6q7r8s9t0u1">
+<trans-unit id="s17d17e75fbaef51b">
   <source>Hinzufügen</source>
-  <target>Add</target>
 </trans-unit>
-<trans-unit id="so5p6q7r8s9t0u1v2">
+<trans-unit id="s4e287322844a54e9">
   <source>Ereignisse</source>
-  <target>Events</target>
 </trans-unit>
-<trans-unit id="sp6q7r8s9t0u1v2w3">
+<trans-unit id="s3e0e43ed02917d0b">
   <source>Externe Links</source>
-  <target>External links</target>
 </trans-unit>
-<trans-unit id="sq7r8s9t0u1v2w3x4">
+<trans-unit id="s6671de71472fcccd">
   <source>Quelle</source>
-  <target>Source</target>
 </trans-unit>
-<trans-unit id="sr8s9t0u1v2w3x4y5">
+<trans-unit id="s838dde43b1c54274">
   <source>erforderlich</source>
-  <target>required</target>
 </trans-unit>
-<trans-unit id="ss9t0u1v2w3x4y5z6">
+<trans-unit id="s4690da7c59d3d34a">
   <source>Alle Änderungen müssen mit einer Quelle belegt werden.</source>
-  <target>All changes must be backed by a source.</target>
 </trans-unit>
-<trans-unit id="st0u1v2w3x4y5z6a7">
+<trans-unit id="se081e28821f8e8ad">
   <source>Online-Quelle</source>
-  <target>Online source</target>
 </trans-unit>
-<trans-unit id="su1v2w3x4y5z6a7b8">
+<trans-unit id="sfceb32307b0eb5a7">
   <source>Archivdokument</source>
-  <target>Archive document</target>
 </trans-unit>
-<trans-unit id="sv2w3x4y5z6a7b8c9">
+<trans-unit id="sca50427382d6f6f5">
   <source>Beschreibung / Seite</source>
-  <target>Description / Page</target>
 </trans-unit>
-<trans-unit id="sw3x4y5z6a7b8c9d0">
+<trans-unit id="s629576c6b305d539">
   <source>optional</source>
-  <target>optional</target>
 </trans-unit>
-<trans-unit id="sx4y5z6a7b8c9d0e1">
+<trans-unit id="sb4585348a9b331e9">
   <source>Archivname</source>
-  <target>Archive name</target>
 </trans-unit>
-<trans-unit id="sy5z6a7b8c9d0e1f2">
+<trans-unit id="se96379c0e1acaefa">
   <source>Signatur</source>
-  <target>Call number</target>
 </trans-unit>
-<trans-unit id="sz6a7b8c9d0e1f2g3">
+<trans-unit id="s8f411426731b6d29">
   <source>Abbrechen</source>
-  <target>Cancel</target>
 </trans-unit>
-<trans-unit id="sa7b8c9d0e1f2g3h4">
+<trans-unit id="seee4a895389c5cfc">
   <source>Änderungen speichern</source>
-  <target>Save changes</target>
+</trans-unit>
+<trans-unit id="s9ea3cac85e289524">
+  <source>Erbaut <x id="0" equiv-text="${builtDate}"/></source>
+</trans-unit>
+<trans-unit id="sf02e2d7a0a9611f0">
+  <source>Bearbeiten</source>
+</trans-unit>
+<trans-unit id="s4827a17f7be6ee2f">
+  <source>Anmelden</source>
+</trans-unit>
+<trans-unit id="s35a70342f8310bc4">
+  <source>Kopiert!</source>
+</trans-unit>
+<trans-unit id="s9c9c9456be08b662">
+  <source>Link kopieren</source>
 </trans-unit>
 </body>
 </file>
