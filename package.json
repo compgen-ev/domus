@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "lit-localize build && tsc && vite build && mkdir -p dist && cp landing/index.html dist/index.html",
-    "preview": "vite preview --outDir dist"
+    "preview": "vite preview --outDir dist",
+    "test": "vitest",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@lit/localize": "^0.12.2",
@@ -15,8 +17,11 @@
   },
   "devDependencies": {
     "@lit/localize-tools": "^0.8.2",
+    "@vitest/ui": "^4.1.9",
+    "happy-dom": "^20.10.6",
     "playwright": "^1.60.0",
     "typescript": "^5.6.3",
-    "vite": "^6.0.3"
+    "vite": "^6.0.3",
+    "vitest": "^4.1.9"
   }
 }

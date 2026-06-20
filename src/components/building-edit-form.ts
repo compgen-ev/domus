@@ -1,10 +1,11 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/building';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
+import { editBuilding, type BuildingEditData } from '../services/wikidata-edit';
 
 @localized()
 @customElement('building-edit-form')
@@ -40,6 +41,16 @@ export class BuildingEditForm extends LitElement {
         font-size: var(--font-size-sm);
         color: var(--color-text-tertiary);
         margin: 0;
+      }
+
+      .error-message {
+        margin-top: var(--space-3);
+        padding: var(--space-3);
+        background: #fee;
+        border: 1px solid #f88;
+        border-radius: var(--radius-md);
+        color: #c00;
+        font-size: var(--font-size-sm);
       }
 
       .form-body {
@@ -205,6 +216,12 @@ export class BuildingEditForm extends LitElement {
   @property({ attribute: false }) detail: BuildingDetail | null = null;
 
   @state() private sourceType: 'url' | 'archive' = 'url';
+  @state() private formLabel = '';
+  @state() private formType: WikidataItem | undefined;
+  @state() private formInception = '';
+  @state() private formDemolished = '';
+  @state() private saving = false;
+  @state() private saveError: string | null = null;
 
   // Common building types - Q-codes only
   private readonly buildingTypeIds = [
@@ -268,13 +285,50 @@ export class BuildingEditForm extends LitElement {
     return options;
   }
 
+  protected willUpdate(changed: PropertyValues) {
+    // Reset form state when building changes
+    if (changed.has('building') && this.building) {
+      this.formLabel = this.building.label;
+      this.formType = this.building.type;
+      this.formInception = this.building.inception || '';
+      this.formDemolished = this.detail?.demolished || '';
+      this.saveError = null;
+    }
+  }
+
   private _cancel() {
     this.dispatchEvent(new CustomEvent('cancel', { bubbles: true, composed: true }));
   }
 
-  private _save() {
-    // TODO: Implement Wikidata write
-    console.log('Save clicked');
+  private async _save() {
+    if (!this.building) return;
+
+    this.saving = true;
+    this.saveError = null;
+
+    try {
+      const editData: BuildingEditData = {
+        id: this.building.id,
+        label: this.formLabel !== this.building.label ? this.formLabel : undefined,
+        type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
+        inception: this.formInception !== this.building.inception ? this.formInception : undefined,
+        demolished: this.formDemolished !== this.detail?.demolished ? this.formDemolished : undefined,
+      };
+
+      await editBuilding(editData);
+
+      // Success - dispatch event to notify parent
+      this.dispatchEvent(new CustomEvent('save-success', {
+        bubbles: true,
+        composed: true,
+        detail: { buildingId: this.building.id },
+      }));
+    } catch (err) {
+      this.saveError = err instanceof Error ? err.message : 'Unknown error';
+      console.error('Save failed:', err);
+    } finally {
+      this.saving = false;
+    }
   }
 
   render() {
@@ -285,6 +339,9 @@ export class BuildingEditForm extends LitElement {
       <div class="form-header">
         <h2 class="form-title">${building.label} ${msg('bearbeiten')}</h2>
         <p class="form-subtitle">${msg('Änderungen werden direkt in Wikidata gespeichert')}</p>
+        ${this.saveError ? html`
+          <div class="error-message" role="alert">${this.saveError}</div>
+        ` : ''}
       </div>
 
       <div class="form-body">
@@ -295,14 +352,23 @@ export class BuildingEditForm extends LitElement {
           </div>
           <div class="field-group">
             <label>${msg('Name')}</label>
-            <input type="text" .value=${building.label}>
+            <input
+              type="text"
+              .value=${this.formLabel}
+              @input=${(e: Event) => this.formLabel = (e.target as HTMLInputElement).value}
+              ?disabled=${this.saving}>
           </div>
           <div class="field-group">
             <label>${msg('Typ')}</label>
-            <select>
-              <option value="" ?selected=${!building.type}>${msg('Nicht angegeben')}</option>
+            <select
+              @change=${(e: Event) => {
+                const value = (e.target as HTMLSelectElement).value;
+                this.formType = value ? this._getBuildingTypeOptions().find(t => t.id === value) : undefined;
+              }}
+              ?disabled=${this.saving}>
+              <option value="" ?selected=${!this.formType}>${msg('Nicht angegeben')}</option>
               ${this._getBuildingTypeOptions().map(type => html`
-                <option value=${type.id} ?selected=${building.type?.id === type.id}>
+                <option value=${type.id} ?selected=${this.formType?.id === type.id}>
                   ${type.label}
                 </option>
               `)}
@@ -310,11 +376,21 @@ export class BuildingEditForm extends LitElement {
           </div>
           <div class="field-group">
             <label>${msg('Erbaut')}</label>
-            <input type="text" placeholder="YYYY" .value=${building.inception || ''}>
+            <input
+              type="text"
+              placeholder="YYYY"
+              .value=${this.formInception}
+              @input=${(e: Event) => this.formInception = (e.target as HTMLInputElement).value}
+              ?disabled=${this.saving}>
           </div>
           <div class="field-group">
             <label>${msg('Abgerissen')}</label>
-            <input type="text" placeholder="YYYY" .value=${this.detail?.demolished || ''}>
+            <input
+              type="text"
+              placeholder="YYYY"
+              .value=${this.formDemolished}
+              @input=${(e: Event) => this.formDemolished = (e.target as HTMLInputElement).value}
+              ?disabled=${this.saving}>
           </div>
         </div>
 
@@ -410,8 +486,12 @@ export class BuildingEditForm extends LitElement {
       </div>
 
       <div class="form-footer">
-        <button class="btn-secondary" @click=${this._cancel}>${msg('Abbrechen')}</button>
-        <button class="btn-primary" @click=${this._save}>${msg('Änderungen speichern')}</button>
+        <button class="btn-secondary" @click=${this._cancel} ?disabled=${this.saving}>
+          ${msg('Abbrechen')}
+        </button>
+        <button class="btn-primary" @click=${this._save} ?disabled=${this.saving}>
+          ${this.saving ? msg('Wird gespeichert …') : msg('Änderungen speichern')}
+        </button>
       </div>
     `);
   }

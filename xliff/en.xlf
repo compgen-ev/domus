@@ -222,6 +222,10 @@
 <trans-unit id="s9c9c9456be08b662">
   <source>Link kopieren</source>
 </trans-unit>
+<trans-unit id="s1f94e54a994bcb76">
+  <source>Wird gespeichert …</source>
+  <target>Saving…</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
