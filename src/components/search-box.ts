@@ -3,6 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { searchPlaces, type NominatimResult } from '../services/nominatim';
 import { baseStyles } from '../styles/shared';
+import { inputStyles } from '../styles/design-tokens';
 
 const DEBOUNCE_MS = 400;
 
@@ -15,21 +16,21 @@ export interface PlaceSelectedEvent {
 @localized()
 @customElement('search-box')
 export class SearchBox extends LitElement {
-  static styles = [baseStyles, css`
+  static styles = [baseStyles, inputStyles, css`
     :host {
       display: block;
       position: absolute;
-      top: 12px;
-      left: 12px;
-      z-index: 10;
+      top: var(--space-3);
+      left: var(--space-3);
+      z-index: var(--z-dropdown);
       width: 280px;
     }
 
     .input-row {
       display: flex;
-      background: #fff;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      background: var(--color-bg-primary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
       overflow: hidden;
     }
 
@@ -37,8 +38,8 @@ export class SearchBox extends LitElement {
       flex: 1;
       border: none;
       outline: none;
-      padding: 9px 12px;
-      font-size: 14px;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--font-size-sm);
       font-family: inherit;
       background: transparent;
       min-width: 0;
@@ -48,33 +49,35 @@ export class SearchBox extends LitElement {
       border: none;
       background: none;
       cursor: pointer;
-      padding: 0 11px;
-      color: #555;
+      padding: 0 var(--space-3);
+      color: var(--color-text-muted);
       font-size: 22px;
       display: flex;
       align-items: center;
+      transition: color var(--transition-fast);
     }
 
     button.search-btn:hover {
-      color: #111;
+      color: var(--color-text-primary);
     }
 
     .results {
-      margin-top: 4px;
-      background: #fff;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      margin-top: var(--space-1);
+      background: var(--color-bg-primary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
       overflow: hidden;
     }
 
     .result-item {
-      padding: 9px 12px;
-      font-size: 13px;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--font-size-sm);
       font-family: inherit;
       cursor: pointer;
-      line-height: 1.3;
-      border-bottom: 1px solid #f0f0f0;
-      color: #222;
+      line-height: var(--line-height-normal);
+      border-bottom: 1px solid var(--color-border-light);
+      color: var(--color-text-primary);
+      transition: background var(--transition-fast);
     }
 
     .result-item:last-child {
@@ -82,14 +85,14 @@ export class SearchBox extends LitElement {
     }
 
     .result-item:hover {
-      background: #f5f5f5;
+      background: var(--color-bg-secondary);
     }
 
     .no-results {
-      padding: 9px 12px;
-      font-size: 13px;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--font-size-sm);
       font-family: inherit;
-      color: #888;
+      color: var(--color-text-muted);
     }
   `];
 

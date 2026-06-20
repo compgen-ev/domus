@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
+import { designTokens, buttonStyles } from '../styles/design-tokens';
 import type { WikidataBuilding, BuildingDetail } from '../types/building';
 import { fetchBuildingById, fetchBuildingDetail } from '../services/wikidata';
 import { handleOAuthCallback, isAuthenticated, logout, login } from '../services/wikimedia-auth';
@@ -12,24 +13,28 @@ import './building-page';
 @customElement('app-root')
 export class AppRoot extends LitElement {
   static styles = css`
+    ${designTokens}
+    ${buttonStyles}
+
     :host {
       display: flex;
       flex-direction: column;
       width: 100dvw;
       height: 100dvh;
       overflow: hidden;
+      font-family: var(--font-family);
     }
 
     .app-bar {
-      height: 44px;
+      height: var(--appbar-height);
       flex-shrink: 0;
-      background: #fff;
-      border-bottom: 1px solid #e2e8f0;
+      background: var(--color-bg-primary);
+      border-bottom: 1px solid var(--color-border);
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0 1rem;
-      z-index: 20;
+      gap: var(--space-3);
+      padding: 0 var(--space-4);
+      z-index: var(--z-sticky);
       justify-content: space-between;
     }
 
@@ -37,25 +42,27 @@ export class AppRoot extends LitElement {
       background: none;
       border: none;
       cursor: pointer;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 0.875rem;
-      color: #64748b;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-tertiary);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
       white-space: nowrap;
+      transition: all var(--transition-fast);
     }
 
-    .back-btn:hover { background: #f1f5f9; color: #0f172a; }
+    .back-btn:hover {
+      background: var(--color-bg-tertiary);
+      color: var(--color-text-primary);
+    }
 
     .app-bar a {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 1.1rem;
-      font-weight: 800;
+      gap: var(--space-2);
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-bold);
       letter-spacing: -0.03em;
-      color: #000052;
+      color: var(--color-primary);
       text-decoration: none;
     }
 
@@ -69,43 +76,38 @@ export class AppRoot extends LitElement {
     .auth-section {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: var(--space-3);
     }
 
     .sign-in-btn {
-      background: #000052;
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 0.875rem;
-      font-weight: 600;
-      padding: 0.4rem 1rem;
-      border-radius: 6px;
+      background: var(--color-primary);
+      color: white;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
       white-space: nowrap;
+      transition: background var(--transition-fast);
     }
 
-    .sign-in-btn:hover { background: #00003a; }
-
-    .user-name {
-      font-size: 0.875rem;
-      color: #475569;
-      font-weight: 500;
+    .sign-in-btn:hover {
+      background: var(--color-primary-hover);
     }
 
     .sign-out-btn {
-      background: none;
-      border: 1px solid #cbd5e1;
-      cursor: pointer;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 0.8rem;
-      color: #64748b;
-      padding: 0.3rem 0.75rem;
-      border-radius: 4px;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      color: var(--color-text-tertiary);
+      padding: var(--space-2) var(--space-3);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-sm);
       white-space: nowrap;
+      transition: all var(--transition-fast);
     }
 
-    .sign-out-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+    .sign-out-btn:hover {
+      background: var(--color-bg-secondary);
+      border-color: var(--color-text-muted);
+    }
 
     map-view {
       flex: 1;

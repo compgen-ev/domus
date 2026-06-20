@@ -3,12 +3,15 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import type { WikidataBuilding, BuildingDetail } from '../types/building';
 import { baseStyles } from '../styles/shared';
+import { buttonStyles, inputStyles } from '../styles/design-tokens';
 
 @localized()
 @customElement('building-edit-form')
 export class BuildingEditForm extends LitElement {
   static styles = [
     baseStyles,
+    buttonStyles,
+    inputStyles,
     css`
       :host {
         display: block;
@@ -17,92 +20,87 @@ export class BuildingEditForm extends LitElement {
       }
 
       .form-header {
-        padding: 1rem 1rem 0.5rem;
-        border-bottom: 1px solid #e2e8f0;
+        padding: var(--space-4) var(--space-4) var(--space-2);
+        border-bottom: 1px solid var(--color-border);
         position: sticky;
         top: 0;
-        background: #fff;
-        z-index: 10;
+        background: var(--color-bg-primary);
+        z-index: var(--z-sticky);
       }
 
       .form-title {
-        font-size: 1rem;
-        font-weight: 700;
-        color: #0f172a;
-        margin: 0 0 0.25rem;
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
+        margin: 0 0 var(--space-1);
       }
 
       .form-subtitle {
-        font-size: 0.8rem;
-        color: #64748b;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-tertiary);
         margin: 0;
       }
 
       .form-body {
-        padding: 1rem;
+        padding: var(--space-4);
       }
 
       .section {
-        margin-bottom: 2rem;
+        margin-bottom: var(--space-10);
       }
 
       .section-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 0.75rem;
+        margin-bottom: var(--space-2);
       }
 
-      .section-title {
-        font-size: 0.875rem;
-        font-weight: 700;
-        color: #1e293b;
+      h3 {
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-text-primary);
         margin: 0;
       }
 
       .add-btn {
         background: none;
-        border: 1px dashed #cbd5e1;
-        color: #000052;
-        font-size: 0.8rem;
-        font-weight: 600;
-        padding: 0.3rem 0.75rem;
-        border-radius: 4px;
+        border: 1.5px dashed var(--color-text-muted);
+        color: var(--color-primary);
+        font-size: var(--font-size-sm);
+        padding: var(--space-2) var(--space-3);
+        border-radius: var(--radius-sm);
         cursor: pointer;
         font-family: inherit;
+        transition: all var(--transition-fast);
       }
 
       .add-btn:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
+        background: var(--color-bg-secondary);
+        border-color: var(--color-primary);
+        border-style: solid;
       }
 
       .field-group {
-        margin-bottom: 1rem;
-      }
-
-      label {
-        display: block;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #475569;
-        margin-bottom: 0.3rem;
+        margin-bottom: var(--space-4);
       }
 
       input, textarea, select {
         width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
+        padding: var(--space-2);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
         font-family: inherit;
-        font-size: 0.875rem;
-        color: #0f172a;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-primary);
+        box-sizing: border-box;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
       }
 
       input:focus, textarea:focus, select:focus {
         outline: none;
-        border-color: #000052;
-        box-shadow: 0 0 0 3px rgba(0, 0, 82, 0.1);
+        border-color: var(--color-border-focus);
+        box-shadow: var(--shadow-focus);
       }
 
       textarea {
@@ -111,62 +109,63 @@ export class BuildingEditForm extends LitElement {
       }
 
       .source-section {
-        background: #fef3c7;
-        border: 2px solid #f59e0b;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-top: 2rem;
+        background: var(--color-accent-light);
+        border: 2px solid var(--color-accent);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-top: var(--space-8);
+        box-sizing: border-box;
       }
 
-      .source-section .section-title {
-        color: #92400e;
-        margin-bottom: 0.5rem;
+      .source-section h3 {
+        color: var(--color-primary);
+        margin-bottom: var(--space-2);
       }
 
       .source-note {
-        font-size: 0.8rem;
-        color: #92400e;
-        margin: 0 0 1rem;
+        font-size: var(--font-size-sm);
+        color: var(--color-primary);
+        margin: 0 0 var(--space-4);
       }
 
       .source-type-picker {
         display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
       }
 
       .source-type-btn {
         flex: 1;
-        padding: 0.5rem;
-        border: 2px solid #fbbf24;
-        background: #fff;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #92400e;
+        padding: var(--space-2);
+        border: 2px solid var(--color-accent);
+        background: var(--color-bg-primary);
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-sm);
+        color: var(--color-primary);
         cursor: pointer;
         font-family: inherit;
+        transition: all var(--transition-fast);
       }
 
       .source-type-btn.active {
-        background: #fbbf24;
-        color: #fff;
+        background: var(--color-accent);
+        color: var(--color-primary);
       }
 
       .form-footer {
         position: sticky;
         bottom: 0;
-        background: #fff;
-        border-top: 1px solid #e2e8f0;
-        padding: 1rem;
+        background: var(--color-bg-primary);
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-4);
         display: flex;
-        gap: 0.75rem;
+        gap: var(--space-3);
       }
 
       .btn-primary {
         flex: 1;
-        background: #000052;
-        color: #fff;
+        background: var(--color-primary);
+        color: white;
         border: none;
         padding: 0.65rem;
         border-radius: 6px;
@@ -176,7 +175,7 @@ export class BuildingEditForm extends LitElement {
         font-family: inherit;
       }
 
-      .btn-primary:hover { background: #00003a; }
+      .btn-primary:hover { background: var(--color-primary-hover); }
       .btn-primary:disabled {
         background: #cbd5e1;
         cursor: not-allowed;
@@ -186,7 +185,7 @@ export class BuildingEditForm extends LitElement {
         padding: 0.65rem 1.25rem;
         background: none;
         border: 1px solid #cbd5e1;
-        color: #64748b;
+        color: var(--color-text-tertiary);
         border-radius: 6px;
         font-size: 0.9rem;
         font-weight: 600;
@@ -195,8 +194,8 @@ export class BuildingEditForm extends LitElement {
       }
 
       .btn-secondary:hover {
-        background: #f8fafc;
-        border-color: #94a3b8;
+        background: var(--color-bg-secondary);
+        border-color: var(--color-text-muted);
       }
     `,
   ];
@@ -228,7 +227,7 @@ export class BuildingEditForm extends LitElement {
         <!-- Section 1: Basic Facts -->
         <div class="section">
           <div class="section-header">
-            <h3 class="section-title">${msg('Grunddaten')}</h3>
+            <h3 >${msg('Grunddaten')}</h3>
           </div>
           <div class="field-group">
             <label>${msg('Name')}</label>
@@ -258,7 +257,7 @@ export class BuildingEditForm extends LitElement {
         <!-- Section 2: Address History -->
         <div class="section">
           <div class="section-header">
-            <h3 class="section-title">${msg('Adressgeschichte')}</h3>
+            <h3 >${msg('Adressgeschichte')}</h3>
             <button class="add-btn">+ ${msg('Hinzufügen')}</button>
           </div>
           <!-- TODO: List existing addresses -->
@@ -267,7 +266,7 @@ export class BuildingEditForm extends LitElement {
         <!-- Section 3: Residents -->
         <div class="section">
           <div class="section-header">
-            <h3 class="section-title">${msg('Bewohner')}</h3>
+            <h3 >${msg('Bewohner')}</h3>
             <button class="add-btn">+ ${msg('Hinzufügen')}</button>
           </div>
           <!-- TODO: List existing residents -->
@@ -276,7 +275,7 @@ export class BuildingEditForm extends LitElement {
         <!-- Section 4: Owners -->
         <div class="section">
           <div class="section-header">
-            <h3 class="section-title">${msg('Eigentümer')}</h3>
+            <h3 >${msg('Eigentümer')}</h3>
             <button class="add-btn">+ ${msg('Hinzufügen')}</button>
           </div>
           <!-- TODO: List existing owners -->
@@ -285,7 +284,7 @@ export class BuildingEditForm extends LitElement {
         <!-- Section 5: Events -->
         <div class="section">
           <div class="section-header">
-            <h3 class="section-title">${msg('Ereignisse')}</h3>
+            <h3 >${msg('Ereignisse')}</h3>
             <button class="add-btn">+ ${msg('Hinzufügen')}</button>
           </div>
           <!-- TODO: List existing events -->
@@ -294,7 +293,7 @@ export class BuildingEditForm extends LitElement {
         <!-- Section 6: External Links -->
         <div class="section">
           <div class="section-header">
-            <h3 class="section-title">${msg('Externe Links')}</h3>
+            <h3 >${msg('Externe Links')}</h3>
           </div>
           <div class="field-group">
             <label>OpenHistoricalMap Relation ID</label>
@@ -304,7 +303,7 @@ export class BuildingEditForm extends LitElement {
 
         <!-- Source (required) -->
         <div class="source-section">
-          <h3 class="section-title">${msg('Quelle')} (${msg('erforderlich')})</h3>
+          <h3 >${msg('Quelle')} (${msg('erforderlich')})</h3>
           <p class="source-note">${msg('Alle Änderungen müssen mit einer Quelle belegt werden.')}</p>
 
           <div class="source-type-picker">

@@ -51,7 +51,7 @@ export class MapView extends LitElement {
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.6);
-      color: #fff;
+      color: white;
       padding: 6px 14px;
       border-radius: 20px;
       font-family: inherit;
@@ -70,7 +70,7 @@ export class MapView extends LitElement {
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0, 0, 0, 0.65);
-      color: #fff;
+      color: white;
       font-family: inherit;
       font-size: 12px;
       padding: 5px 12px 5px 10px;
@@ -96,7 +96,7 @@ export class MapView extends LitElement {
       width: 12px;
       height: 12px;
       border: 2px solid rgba(255, 255, 255, 0.35);
-      border-top-color: #fff;
+      border-top-color: white;
       border-radius: 50%;
       animation: spin 0.7s linear infinite;
       flex-shrink: 0;
@@ -223,14 +223,14 @@ export class MapView extends LitElement {
       id: 'ohm-footprint-fill',
       type: 'fill',
       source: 'ohm-footprint',
-      paint: { 'fill-color': '#000052', 'fill-opacity': 0.12 },
+      paint: { 'fill-color': 'var(--color-primary)', 'fill-opacity': 0.12 },
     });
 
     this.map.addLayer({
       id: 'ohm-footprint-outline',
       type: 'line',
       source: 'ohm-footprint',
-      paint: { 'line-color': '#000052', 'line-width': 2, 'line-opacity': 0.7 },
+      paint: { 'line-color': 'var(--color-primary)', 'line-width': 2, 'line-opacity': 0.7 },
     });
 
     this.map.addSource('buildings', {
@@ -245,7 +245,7 @@ export class MapView extends LitElement {
       paint: {
         'circle-radius': 7,
         'circle-color': '#c0392b',
-        'circle-stroke-color': '#fff',
+        'circle-stroke-color': 'var(--color-bg-primary)',
         'circle-stroke-width': 1.5,
         'circle-opacity': 0.85,
       },
@@ -265,7 +265,7 @@ export class MapView extends LitElement {
       },
       paint: {
         'text-color': '#1a1a1a',
-        'text-halo-color': '#fff',
+        'text-halo-color': 'var(--color-bg-primary)',
         'text-halo-width': 1.5,
       },
     });

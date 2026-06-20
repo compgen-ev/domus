@@ -4,11 +4,33 @@ import { localized, msg, str } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
+import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import { login } from '../services/wikimedia-auth';
 import './building-edit-form';
 
+function formatDate(iso: string): string {
+  // Wikidata dates: +YYYY-MM-DDT00:00:00Z
+  // Show precision based on data: year-only, year-month, or full date
+  const match = iso.match(/^[+-]?(\d{1,4})-(\d{2})-(\d{2})/);
+  if (!match) return iso;
+
+  const [, year, month, day] = match;
+
+  // If day/month are 00, unknown precision
+  if (month === '00') return year;
+  if (day === '00') return `${month}.${year}`;
+
+  // If both are 01, likely fake precision (default placeholder)
+  if (month === '01' && day === '01') return year;
+
+  // If only day is 01, treat as month precision (01 is common placeholder)
+  if (day === '01') return `${month}.${year}`;
+
+  return `${day}.${month}.${year}`;
+}
+
 function extractYear(iso: string): string {
-  return iso.match(/^(-?\d{1,4})/)?.[1] ?? '';
+  return iso.match(/^[+-]?(\d{1,4})/)?.[1] ?? '';
 }
 
 function yearRange(start?: string, end?: string): string {
@@ -23,19 +45,21 @@ function yearRange(start?: string, end?: string): string {
 export class BuildingPanel extends LitElement {
   static styles = [
     baseStyles,
+    buttonStyles,
+    badgeStyles,
     css`
       :host {
         display: block;
         position: fixed;
-        top: 44px;
+        top: var(--appbar-height);
         right: 0;
         bottom: 0;
-        width: 400px;
-        background: #fff;
-        border-left: 1px solid #e2e8f0;
+        width: var(--panel-width-desktop);
+        background: var(--color-bg-primary);
+        border-left: 1px solid var(--color-border);
         transform: translateX(100%);
-        transition: transform 0.3s ease;
-        z-index: 10;
+        transition: transform var(--transition-slow);
+        z-index: var(--z-dropdown);
         overflow: hidden;
       }
 
@@ -48,9 +72,9 @@ export class BuildingPanel extends LitElement {
           top: auto;
           left: 0;
           width: 100%;
-          height: 70vh;
+          height: var(--panel-height-mobile);
           border-left: none;
-          box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+          box-shadow: var(--shadow-lg);
           transform: translateY(100%);
         }
 
@@ -72,7 +96,7 @@ export class BuildingPanel extends LitElement {
         height: 180px;
         flex-shrink: 0;
         overflow: hidden;
-        background: #f1f5f9;
+        background: var(--color-bg-tertiary);
       }
 
       .image-wrap img {
@@ -85,8 +109,8 @@ export class BuildingPanel extends LitElement {
       .header {
         display: flex;
         align-items: flex-start;
-        gap: 0.5rem;
-        padding: 1rem 1rem 0;
+        gap: var(--space-3);
+        padding: var(--space-4) var(--space-4) 0;
       }
 
       .title { flex: 1; min-width: 0; }
@@ -94,71 +118,65 @@ export class BuildingPanel extends LitElement {
       .badges {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px;
-        margin-bottom: 0.4rem;
+        gap: var(--space-1);
+        margin-bottom: var(--space-2);
       }
 
-      .badge {
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: #fff;
-        padding: 2px 7px;
-        border-radius: 10px;
-        display: inline-block;
+      .badge-type {
+        background: var(--color-primary);
+        color: white;
       }
-
-      .badge-type { background: #000052; }
-      .badge-heritage { background: #b45309; }
 
       h2 {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #0f172a;
-        line-height: 1.3;
-        margin: 0 0 0.25rem;
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
+        line-height: var(--line-height-tight);
+        margin: 0 0 var(--space-1);
       }
 
       .dates {
-        font-size: 0.85rem;
-        color: #64748b;
-        margin: 0;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-tertiary);
+        margin: 0 0 var(--space-4);
       }
 
       .close-btn {
         background: none;
         border: none;
         cursor: pointer;
-        color: #94a3b8;
-        font-size: 1rem;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-base);
         line-height: 1;
-        padding: 0.25rem;
-        border-radius: 4px;
+        padding: var(--space-1);
+        border-radius: var(--radius-sm);
         flex-shrink: 0;
-        font-family: inherit;
+        transition: all var(--transition-fast);
       }
 
-      .close-btn:hover { background: #f1f5f9; color: #475569; }
+      .close-btn:hover {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-secondary);
+      }
 
       .body {
-        padding: 0.75rem 1rem;
+        padding: var(--space-5) var(--space-4);
         flex: 1;
       }
 
       .skeleton {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        padding: 0.5rem 0;
+        gap: var(--space-2);
+        padding: var(--space-2) 0;
       }
 
       .skel-line {
         height: 12px;
-        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background: linear-gradient(90deg, var(--color-bg-tertiary) 25%, var(--color-border) 50%, var(--color-bg-tertiary) 75%);
         background-size: 200% 100%;
         animation: shimmer 1.2s infinite;
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
       }
 
       @keyframes shimmer {
@@ -167,27 +185,25 @@ export class BuildingPanel extends LitElement {
       }
 
       .section {
-        margin-bottom: 1rem;
+        margin-bottom: var(--space-8);
       }
 
-      .section-title {
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #94a3b8;
-        margin: 0 0 0.4rem;
+      h3 {
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-text-primary);
+        margin: 0 0 var(--space-2);
       }
 
       .entry {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        gap: 0.5rem;
-        padding: 0.3rem 0;
-        border-bottom: 1px solid #f8fafc;
-        font-size: 0.875rem;
-        color: #1e293b;
+        gap: var(--space-3);
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--color-border-light);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-primary);
       }
 
       .entry:last-child { border-bottom: none; }
@@ -195,8 +211,8 @@ export class BuildingPanel extends LitElement {
       .entry-label { flex: 1; min-width: 0; }
 
       .entry-dates {
-        font-size: 0.8rem;
-        color: #94a3b8;
+        font-size: var(--font-size-xs);
+        color: var(--color-text-muted);
         white-space: nowrap;
         flex-shrink: 0;
       }
@@ -204,8 +220,9 @@ export class BuildingPanel extends LitElement {
       .entry-label a {
         color: inherit;
         text-decoration: underline;
-        text-decoration-color: #cbd5e1;
+        text-decoration-color: var(--color-border);
         text-underline-offset: 2px;
+        transition: text-decoration-color var(--transition-fast);
       }
 
       .entry-label a:hover {
@@ -213,47 +230,55 @@ export class BuildingPanel extends LitElement {
       }
 
       .footer {
-        padding: 0.75rem 1rem;
-        border-top: 1px solid #f1f5f9;
+        padding: var(--space-3) var(--space-4);
+        border-top: 1px solid var(--color-border-light);
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: var(--space-2);
         flex-wrap: wrap;
       }
 
       a.ext-link, button.detail-btn, button.action-btn {
-        font-size: 0.8rem;
-        padding: 0.35rem 0.875rem;
-        border-radius: 1rem;
+        font-size: var(--font-size-sm);
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-md);
         text-decoration: none;
         cursor: pointer;
-        font-family: inherit;
+        transition: all var(--transition-fast);
       }
 
       a.ext-link {
-        color: #000052;
-        border: 1px solid #000052;
+        color: var(--color-primary);
+        border: 1px solid var(--color-primary);
+        background: transparent;
       }
 
-      a.ext-link:hover { background: #000052; color: #fff; }
+      a.ext-link:hover {
+        background: var(--color-primary);
+        color: white;
+      }
 
       button.detail-btn {
-        background: #eef0fa;
-        color: #000052;
+        background: var(--color-accent);
+        color: var(--color-primary);
         border: none;
-        font-weight: 600;
       }
 
-      button.detail-btn:hover { background: #dde0f5; }
+      button.detail-btn:hover {
+        background: var(--color-accent-dark);
+        color: var(--color-primary);
+      }
 
       button.action-btn {
-        color: #fff;
-        background: #000052;
+        color: white;
+        background: var(--color-primary);
         border: none;
         margin-left: auto;
       }
 
-      button.action-btn:hover { background: #00003a; }
+      button.action-btn:hover {
+        background: var(--color-primary-hover);
+      }
     `,
   ];
 
@@ -294,11 +319,11 @@ export class BuildingPanel extends LitElement {
   }
 
   private _datesLine(): string {
-    const builtYear = this.building?.inception ? extractYear(this.building.inception) : '';
-    const demoYear = this.detail?.demolished ? extractYear(this.detail.demolished) : '';
-    if (builtYear && demoYear) return `${builtYear}–${demoYear}`;
-    if (builtYear) return msg(str`Erbaut um ${builtYear}`);
-    if (demoYear) return msg(str`Abgerissen ${demoYear}`);
+    const builtDate = this.building?.inception ? formatDate(this.building.inception) : '';
+    const demoDate = this.detail?.demolished ? formatDate(this.detail.demolished) : '';
+    if (builtDate && demoDate) return `${builtDate}–${demoDate}`;
+    if (builtDate) return msg(str`Erbaut ${builtDate}`);
+    if (demoDate) return msg(str`Abgerissen ${demoDate}`);
     return '';
   }
 
@@ -308,7 +333,7 @@ export class BuildingPanel extends LitElement {
   ): TemplateResult {
     return html`
       <div class="section">
-        <p class="section-title">${title}</p>
+        <h3>${title}</h3>
         ${items.map(({ primary, href, range }) => html`
           <div class="entry">
             <span class="entry-label">

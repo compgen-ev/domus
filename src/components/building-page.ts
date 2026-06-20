@@ -4,10 +4,32 @@ import { localized, msg, str } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
+import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import './building-edit-form';
 
+function formatDate(iso: string): string {
+  // Wikidata dates: +YYYY-MM-DDT00:00:00Z
+  // Show precision based on data: year-only, year-month, or full date
+  const match = iso.match(/^[+-]?(\d{1,4})-(\d{2})-(\d{2})/);
+  if (!match) return iso;
+
+  const [, year, month, day] = match;
+
+  // If day/month are 00, unknown precision
+  if (month === '00') return year;
+  if (day === '00') return `${month}.${year}`;
+
+  // If both are 01, likely fake precision (default placeholder)
+  if (month === '01' && day === '01') return year;
+
+  // If only day is 01, treat as month precision (01 is common placeholder)
+  if (day === '01') return `${month}.${year}`;
+
+  return `${day}.${month}.${year}`;
+}
+
 function extractYear(iso: string): string {
-  return iso.match(/^(-?\d{1,4})/)?.[1] ?? '';
+  return iso.match(/^[+-]?(\d{1,4})/)?.[1] ?? '';
 }
 
 function yearRange(start?: string, end?: string): string {
@@ -22,19 +44,21 @@ function yearRange(start?: string, end?: string): string {
 export class BuildingPage extends LitElement {
   static styles = [
     baseStyles,
+    buttonStyles,
+    badgeStyles,
     css`
       :host {
         display: block;
         flex: 1;
         overflow-y: auto;
-        background: #fff;
+        background: var(--color-bg-primary);
         min-height: 0;
       }
 
       .hero {
         width: 100%;
         height: 280px;
-        background: #f1f5f9;
+        background: var(--color-bg-tertiary);
         overflow: hidden;
         flex-shrink: 0;
       }
@@ -47,68 +71,58 @@ export class BuildingPage extends LitElement {
       }
 
       .content {
-        max-width: 680px;
+        max-width: var(--content-max-width);
         margin: 0 auto;
-        padding: 1.75rem 1.25rem 4rem;
+        padding: var(--space-6) var(--space-5) var(--space-12);
       }
 
       .badges {
         display: flex;
         flex-wrap: wrap;
-        gap: 4px;
-        margin-bottom: 0.75rem;
+        gap: var(--space-1);
+        margin-bottom: var(--space-3);
       }
 
-      .badge {
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: #fff;
-        padding: 2px 7px;
-        border-radius: 10px;
+      .badge-type {
+        background: var(--color-primary);
+        color: white;
       }
-
-      .badge-type { background: #000052; }
-      .badge-heritage { background: #b45309; }
 
       h1 {
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: #0f172a;
-        line-height: 1.2;
-        margin: 0 0 0.35rem;
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
+        line-height: var(--line-height-tight);
+        margin: 0 0 var(--space-2);
         letter-spacing: -0.02em;
       }
 
       .dates {
-        font-size: 0.9rem;
-        color: #64748b;
-        margin: 0 0 2rem;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-tertiary);
+        margin: 0 0 var(--space-8);
       }
 
       .section {
-        margin-bottom: 1.5rem;
+        margin-bottom: var(--space-10);
       }
 
-      .section-title {
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #94a3b8;
-        margin: 0 0 0.5rem;
+      h3 {
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-text-primary);
+        margin: 0 0 var(--space-2);
       }
 
       .entry {
         display: flex;
         justify-content: space-between;
         align-items: baseline;
-        gap: 0.5rem;
-        padding: 0.4rem 0;
-        border-bottom: 1px solid #f1f5f9;
-        font-size: 0.9375rem;
-        color: #1e293b;
+        gap: var(--space-3);
+        padding: var(--space-2) 0;
+        border-bottom: 1px solid var(--color-border-light);
+        font-size: var(--font-size-base);
+        color: var(--color-text-primary);
       }
 
       .entry:last-child { border-bottom: none; }
@@ -118,15 +132,16 @@ export class BuildingPage extends LitElement {
       .entry-label a {
         color: inherit;
         text-decoration: underline;
-        text-decoration-color: #cbd5e1;
+        text-decoration-color: var(--color-border);
         text-underline-offset: 2px;
+        transition: text-decoration-color var(--transition-fast);
       }
 
       .entry-label a:hover { text-decoration-color: currentColor; }
 
       .entry-dates {
-        font-size: 0.85rem;
-        color: #94a3b8;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
         white-space: nowrap;
         flex-shrink: 0;
       }
@@ -134,16 +149,16 @@ export class BuildingPage extends LitElement {
       .skeleton {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        padding: 0.5rem 0 2rem;
+        gap: var(--space-3);
+        padding: var(--space-2) 0 var(--space-8);
       }
 
       .skel-line {
         height: 14px;
-        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background: linear-gradient(90deg, var(--color-bg-tertiary) 25%, var(--color-border) 50%, var(--color-bg-tertiary) 75%);
         background-size: 200% 100%;
         animation: shimmer 1.2s infinite;
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
       }
 
       @keyframes shimmer {
@@ -152,54 +167,62 @@ export class BuildingPage extends LitElement {
       }
 
       .footer {
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid #f1f5f9;
+        margin-top: var(--space-8);
+        padding-top: var(--space-4);
+        border-top: 1px solid var(--color-border-light);
         display: flex;
-        gap: 0.5rem;
+        gap: var(--space-2);
         flex-wrap: wrap;
       }
 
       a.ext-link {
-        font-size: 0.8rem;
-        color: #000052;
+        font-size: var(--font-size-sm);
+        color: var(--color-primary);
         text-decoration: none;
-        padding: 0.35rem 0.875rem;
-        border: 1px solid #000052;
-        border-radius: 1rem;
+        padding: var(--space-2) var(--space-4);
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-md);
+        transition: all var(--transition-fast);
       }
 
-      a.ext-link:hover { background: #000052; color: #fff; }
+      a.ext-link:hover {
+        background: var(--color-primary);
+        color: white;
+      }
 
       .back-btn {
-        background: #eef0fa;
-        color: #000052;
-        border: none;
+        background: transparent;
+        color: var(--color-text-secondary);
+        border: 1px solid var(--color-border);
         cursor: pointer;
-        font-family: inherit;
-        font-size: 0.8rem;
-        font-weight: 600;
-        padding: 0.35rem 0.875rem;
-        border-radius: 1rem;
-        margin-bottom: 1rem;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--space-6);
         display: inline-block;
+        transition: all var(--transition-fast);
       }
 
-      .back-btn:hover { background: #dde0f5; }
+      .back-btn:hover {
+        background: var(--color-bg-secondary);
+        border-color: var(--color-text-secondary);
+      }
 
       .edit-btn {
-        background: #000052;
-        color: #fff;
+        background: var(--color-primary);
+        color: white;
         border: none;
         cursor: pointer;
-        font-family: inherit;
-        font-size: 0.8rem;
-        font-weight: 600;
-        padding: 0.35rem 0.875rem;
-        border-radius: 1rem;
+        font-size: var(--font-size-sm);
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-md);
+        transition: background var(--transition-fast);
       }
 
-      .edit-btn:hover { background: #00003a; }
+      .edit-btn:hover {
+        background: var(--color-primary-hover);
+      }
 
       .edit-wrapper {
         max-width: 680px;
@@ -232,11 +255,11 @@ export class BuildingPage extends LitElement {
   }
 
   private _datesLine(): string {
-    const builtYear = this.building?.inception ? extractYear(this.building.inception) : '';
-    const demoYear = this.detail?.demolished ? extractYear(this.detail.demolished) : '';
-    if (builtYear && demoYear) return `${builtYear}–${demoYear}`;
-    if (builtYear) return msg(str`Erbaut um ${builtYear}`);
-    if (demoYear) return msg(str`Abgerissen ${demoYear}`);
+    const builtDate = this.building?.inception ? formatDate(this.building.inception) : '';
+    const demoDate = this.detail?.demolished ? formatDate(this.detail.demolished) : '';
+    if (builtDate && demoDate) return `${builtDate}–${demoDate}`;
+    if (builtDate) return msg(str`Erbaut ${builtDate}`);
+    if (demoDate) return msg(str`Abgerissen ${demoDate}`);
     return '';
   }
 
@@ -246,7 +269,7 @@ export class BuildingPage extends LitElement {
   ): TemplateResult {
     return html`
       <div class="section">
-        <p class="section-title">${title}</p>
+        <h3>${title}</h3>
         ${items.map(({ primary, href, range }) => html`
           <div class="entry">
             <span class="entry-label">
