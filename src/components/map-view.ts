@@ -223,14 +223,14 @@ export class MapView extends LitElement {
       id: 'ohm-footprint-fill',
       type: 'fill',
       source: 'ohm-footprint',
-      paint: { 'fill-color': 'var(--color-primary)', 'fill-opacity': 0.12 },
+      paint: { 'fill-color': '#000052', 'fill-opacity': 0.12 },
     });
 
     this.map.addLayer({
       id: 'ohm-footprint-outline',
       type: 'line',
       source: 'ohm-footprint',
-      paint: { 'line-color': 'var(--color-primary)', 'line-width': 2, 'line-opacity': 0.7 },
+      paint: { 'line-color': '#000052', 'line-width': 2, 'line-opacity': 0.7 },
     });
 
     this.map.addSource('buildings', {
@@ -245,7 +245,7 @@ export class MapView extends LitElement {
       paint: {
         'circle-radius': 7,
         'circle-color': '#c0392b',
-        'circle-stroke-color': 'var(--color-bg-primary)',
+        'circle-stroke-color': '#ffffff',
         'circle-stroke-width': 1.5,
         'circle-opacity': 0.85,
       },
@@ -265,7 +265,7 @@ export class MapView extends LitElement {
       },
       paint: {
         'text-color': '#1a1a1a',
-        'text-halo-color': 'var(--color-bg-primary)',
+        'text-halo-color': '#ffffff',
         'text-halo-width': 1.5,
       },
     });
