@@ -7,6 +7,7 @@ import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import { login } from '../services/wikimedia-auth';
 import './building-edit-form';
+import './app-button';
 
 function formatDate(iso: string): string {
   // Wikidata dates: +YYYY-MM-DDT00:00:00Z
@@ -110,16 +111,19 @@ export class BuildingPanel extends LitElement {
         display: flex;
         align-items: flex-start;
         gap: var(--space-3);
-        padding: var(--space-4) var(--space-4) 0;
+        padding: var(--space-6) var(--space-4) 0;
       }
 
-      .title { flex: 1; min-width: 0; }
+      .title {
+        flex: 1;
+        min-width: 0;
+      }
 
       .badges {
         display: flex;
         flex-wrap: wrap;
         gap: var(--space-1);
-        margin-bottom: var(--space-2);
+        margin-bottom: var(--space-6);
       }
 
       .badge-type {
@@ -291,6 +295,7 @@ export class BuildingPanel extends LitElement {
   @property({ attribute: false }) authenticated = false;
 
   @state() private editMode = false;
+  @state() private linkCopied = false;
 
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building')) {
@@ -316,6 +321,18 @@ export class BuildingPanel extends LitElement {
 
   private _cancelEdit() {
     this.editMode = false;
+  }
+
+  private async _copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this.linkCopied = true;
+      setTimeout(() => {
+        this.linkCopied = false;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
   }
 
   private _datesLine(): string {
@@ -445,6 +462,9 @@ export class BuildingPanel extends LitElement {
               OpenHistoricalMap ↗
             </a>
           ` : ''}
+          <app-button variant="outline" @click=${this._copyLink}>
+            ${this.linkCopied ? msg('Kopiert!') : msg('Link kopieren')}
+          </app-button>
           <button class="detail-btn" @click=${this._showDetail}>
             ${msg('Vollständige Details')} →
           </button>

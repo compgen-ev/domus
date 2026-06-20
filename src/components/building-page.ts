@@ -6,6 +6,7 @@ import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import './building-edit-form';
+import './app-button';
 
 function formatDate(iso: string): string {
   // Wikidata dates: +YYYY-MM-DDT00:00:00Z
@@ -182,6 +183,7 @@ export class BuildingPage extends LitElement {
         padding: var(--space-2) var(--space-4);
         border: 1px solid var(--color-primary);
         border-radius: var(--radius-md);
+        background: transparent;
         transition: all var(--transition-fast);
       }
 
@@ -241,6 +243,7 @@ export class BuildingPage extends LitElement {
   @property({ attribute: false }) authenticated = false;
 
   @state() private editMode = false;
+  @state() private linkCopied = false;
 
   private _backToMap() {
     this.dispatchEvent(new CustomEvent('back-to-map', { bubbles: true, composed: true }));
@@ -252,6 +255,18 @@ export class BuildingPage extends LitElement {
 
   private _cancelEdit() {
     this.editMode = false;
+  }
+
+  private async _copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      this.linkCopied = true;
+      setTimeout(() => {
+        this.linkCopied = false;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
   }
 
   private _datesLine(): string {
@@ -378,6 +393,9 @@ export class BuildingPage extends LitElement {
               OpenHistoricalMap ↗
             </a>
           ` : ''}
+          <app-button variant="outline" @click=${this._copyLink}>
+            ${this.linkCopied ? msg('Kopiert!') : msg('Link kopieren')}
+          </app-button>
           ${this.authenticated ? html`
             <button class="edit-btn" @click=${this._edit}>${msg('Bearbeiten')}</button>
           ` : ''}

@@ -168,7 +168,7 @@ export class BuildingEditForm extends LitElement {
         color: white;
         border: none;
         padding: 0.65rem;
-        border-radius: 6px;
+        border-radius: var(--radius-md);
         font-size: 0.9rem;
         font-weight: 600;
         cursor: pointer;
@@ -177,16 +177,16 @@ export class BuildingEditForm extends LitElement {
 
       .btn-primary:hover { background: var(--color-primary-hover); }
       .btn-primary:disabled {
-        background: #cbd5e1;
+        background: var(--color-border);
         cursor: not-allowed;
       }
 
       .btn-secondary {
         padding: 0.65rem 1.25rem;
         background: none;
-        border: 1px solid #cbd5e1;
+        border: 1px solid var(--color-border);
         color: var(--color-text-tertiary);
-        border-radius: 6px;
+        border-radius: var(--radius-md);
         font-size: 0.9rem;
         font-weight: 600;
         cursor: pointer;
