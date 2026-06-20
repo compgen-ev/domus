@@ -55,6 +55,7 @@ async function getEntityClaims(entityId: string, signal?: AbortSignal): Promise<
   url.searchParams.set('props', 'claims');
   url.searchParams.set('format', 'json');
   url.searchParams.set('formatversion', '2');
+  url.searchParams.set('origin', '*');
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -92,6 +93,7 @@ async function getCSRFToken(signal?: AbortSignal): Promise<string> {
   url.searchParams.set('type', 'csrf');
   url.searchParams.set('format', 'json');
   url.searchParams.set('formatversion', '2');
+  url.searchParams.set('origin', '*');
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -417,6 +419,7 @@ export async function editBuilding(
   formData.append('format', 'json');
   formData.append('formatversion', '2');
   formData.append('summary', 'Updated via Domus');
+  formData.append('origin', '*');
 
   const response = await fetch(WIKIDATA_API, {
     method: 'POST',
