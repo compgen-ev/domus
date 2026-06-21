@@ -11,7 +11,7 @@
  */
 
 import type { WikidataItem } from '../types/building';
-import { getAccessToken } from './wikimedia-auth';
+import { getValidAccessToken } from './wikimedia-auth';
 import { parseDate } from '../utils/dates';
 
 const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
@@ -136,9 +136,9 @@ export async function editBuilding(
     throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
   }
 
-  const token = getAccessToken();
+  const token = await getValidAccessToken();
   if (!token) {
-    throw new Error('Not authenticated');
+    throw new Error('Not authenticated - please log in again');
   }
 
   console.log('Using REST API to edit building:', editData.id);

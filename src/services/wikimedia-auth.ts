@@ -1,5 +1,5 @@
 import type { OAuthConfig } from './oauth';
-import { initiateLogin, handleCallback, getStoredToken, clearStoredToken } from './oauth';
+import { initiateLogin, handleCallback, getStoredToken, clearStoredToken, getValidToken } from './oauth';
 
 // Wikimedia OAuth 2.0 config
 // Use production consumer for domus.genealogy.net, dev consumer for localhost
@@ -21,8 +21,20 @@ export function logout(): void {
   clearStoredToken(WIKIMEDIA_CONFIG.clientId);
 }
 
+/**
+ * Get the current access token (synchronous, does not auto-refresh)
+ * For API calls, prefer getValidAccessToken() which auto-refreshes
+ */
 export function getAccessToken(): string | null {
   return getStoredToken(WIKIMEDIA_CONFIG.clientId);
+}
+
+/**
+ * Get a valid access token, automatically refreshing if needed
+ * Use this for API calls to ensure token is fresh
+ */
+export async function getValidAccessToken(): Promise<string | null> {
+  return getValidToken(WIKIMEDIA_CONFIG);
 }
 
 export function isAuthenticated(): boolean {
