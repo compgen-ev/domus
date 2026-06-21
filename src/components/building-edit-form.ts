@@ -6,6 +6,7 @@ import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/bu
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData } from '../services/wikidata-edit-rest';
+import './entity-search';
 
 @localized()
 @customElement('building-edit-form')
@@ -272,6 +273,11 @@ export class BuildingEditForm extends LitElement {
   @state() private formType: WikidataItem | undefined;
   @state() private formInception = '';
   @state() private formDemolished = '';
+  @state() private formAddress = '';
+  @state() private formArchitect: WikidataItem | undefined;
+  @state() private formCommissionedBy: WikidataItem | undefined;
+  @state() private formOwner: WikidataItem | undefined;
+  @state() private formOccupant: WikidataItem | undefined;
   @state() private saving = false;
   @state() private saveError: string | null = null;
   @state() private saveErrorDetails: any = null;
@@ -377,6 +383,11 @@ export class BuildingEditForm extends LitElement {
       type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
       inception: this.formInception !== this.building.inception ? this.formInception : undefined,
       demolished: this.formDemolished !== this.detail?.demolished ? this.formDemolished : undefined,
+      address: this.formAddress || undefined,
+      architect: this.formArchitect || undefined,
+      commissionedBy: this.formCommissionedBy || undefined,
+      owner: this.formOwner || undefined,
+      occupant: this.formOccupant || undefined,
       sourceUrl: this.sourceUrl || undefined,
     };
 
@@ -402,6 +413,11 @@ export class BuildingEditForm extends LitElement {
           hasType: !!editData.type,
           hasInception: !!editData.inception,
           hasDemolished: !!editData.demolished,
+          hasAddress: !!editData.address,
+          hasArchitect: !!editData.architect,
+          hasCommissionedBy: !!editData.commissionedBy,
+          hasOwner: !!editData.owner,
+          hasOccupant: !!editData.occupant,
           hasSourceUrl: !!editData.sourceUrl,
         },
       };
@@ -487,40 +503,104 @@ export class BuildingEditForm extends LitElement {
           </div>
         </div>
 
-        <!-- Section 2: Address History -->
+        <!-- Section 2: Address -->
         <div class="section">
           <div class="section-header">
-            <h3 >${msg('Adressgeschichte')}</h3>
-            <button class="add-btn">+ ${msg('Hinzufügen')}</button>
+            <h3 >${msg('Adresse')}</h3>
           </div>
-          <!-- TODO: List existing addresses -->
+          ${this.detail?.addresses && this.detail.addresses.length > 0 ? html`
+            <div style="margin-bottom: var(--space-3); font-size: var(--font-size-sm); color: var(--color-text-muted);">
+              ${msg('Vorhandene Adressen:')} ${this.detail.addresses.map(a => a.text).join(', ')}
+            </div>
+          ` : ''}
+          <div class="field-group">
+            <label>${msg('Neue Adresse hinzufügen')}</label>
+            <input
+              type="text"
+              placeholder="${msg('z.B. Hauptstraße 1')}"
+              .value=${this.formAddress}
+              @input=${(e: Event) => this.formAddress = (e.target as HTMLInputElement).value}
+              ?disabled=${this.saving}>
+          </div>
         </div>
 
-        <!-- Section 3: Residents -->
+        <!-- Section 3: People -->
         <div class="section">
           <div class="section-header">
-            <h3 >${msg('Bewohner')}</h3>
-            <button class="add-btn">+ ${msg('Hinzufügen')}</button>
+            <h3 >${msg('Personen & Organisationen')}</h3>
           </div>
-          <!-- TODO: List existing residents -->
-        </div>
 
-        <!-- Section 4: Owners -->
-        <div class="section">
-          <div class="section-header">
-            <h3 >${msg('Eigentümer')}</h3>
-            <button class="add-btn">+ ${msg('Hinzufügen')}</button>
+          <div class="field-group">
+            <label>${msg('Architekt hinzufügen')}</label>
+            ${this.detail?.architects && this.detail.architects.length > 0 ? html`
+              <div style="margin-bottom: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                ${msg('Vorhanden:')} ${this.detail.architects.map(a => a.label).join(', ')}
+              </div>
+            ` : ''}
+            <entity-search
+              placeholder="${msg('Architekt suchen...')}"
+              @select=${(e: CustomEvent) => this.formArchitect = e.detail}
+            ></entity-search>
+            ${this.formArchitect ? html`
+              <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
+                ${msg('Ausgewählt:')} ${this.formArchitect.label}
+              </div>
+            ` : ''}
           </div>
-          <!-- TODO: List existing owners -->
-        </div>
 
-        <!-- Section 5: Events -->
-        <div class="section">
-          <div class="section-header">
-            <h3 >${msg('Ereignisse')}</h3>
-            <button class="add-btn">+ ${msg('Hinzufügen')}</button>
+          <div class="field-group">
+            <label>${msg('Bauherr hinzufügen')}</label>
+            ${this.detail?.commissionedBy && this.detail.commissionedBy.length > 0 ? html`
+              <div style="margin-bottom: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                ${msg('Vorhanden:')} ${this.detail.commissionedBy.map(c => c.label).join(', ')}
+              </div>
+            ` : ''}
+            <entity-search
+              placeholder="${msg('Bauherr suchen...')}"
+              @select=${(e: CustomEvent) => this.formCommissionedBy = e.detail}
+            ></entity-search>
+            ${this.formCommissionedBy ? html`
+              <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
+                ${msg('Ausgewählt:')} ${this.formCommissionedBy.label}
+              </div>
+            ` : ''}
           </div>
-          <!-- TODO: List existing events -->
+
+          <div class="field-group">
+            <label>${msg('Eigentümer hinzufügen')}</label>
+            ${this.detail?.owners && this.detail.owners.length > 0 ? html`
+              <div style="margin-bottom: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                ${msg('Vorhanden:')} ${this.detail.owners.map(o => o.label).join(', ')}
+              </div>
+            ` : ''}
+            <entity-search
+              placeholder="${msg('Eigentümer suchen...')}"
+              @select=${(e: CustomEvent) => this.formOwner = e.detail}
+            ></entity-search>
+            ${this.formOwner ? html`
+              <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
+                ${msg('Ausgewählt:')} ${this.formOwner.label}
+              </div>
+            ` : ''}
+          </div>
+
+          <div class="field-group">
+            <label>${msg('Bewohner hinzufügen')}</label>
+            ${this.detail?.occupants && this.detail.occupants.length > 0 ? html`
+              <div style="margin-bottom: var(--space-2); font-size: var(--font-size-xs); color: var(--color-text-muted);">
+                ${msg('Vorhanden:')} ${this.detail.occupants.map(o => o.label).join(', ')}
+              </div>
+            ` : ''}
+            <entity-search
+              placeholder="${msg('Bewohner suchen...')}"
+              @select=${(e: CustomEvent) => this.formOccupant = e.detail}
+            ></entity-search>
+            ${this.formOccupant ? html`
+              <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
+                ${msg('Ausgewählt:')} ${this.formOccupant.label}
+              </div>
+            ` : ''}
+          </div>
         </div>
 
         <!-- Section 6: External Links -->

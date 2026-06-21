@@ -22,6 +22,11 @@ export interface BuildingEditData {
   type?: WikidataItem;
   inception?: string;
   demolished?: string;
+  address?: string;
+  architect?: WikidataItem;
+  commissionedBy?: WikidataItem;
+  owner?: WikidataItem;
+  occupant?: WikidataItem;
   sourceUrl?: string;
 }
 
@@ -46,17 +51,17 @@ export function validateEditData(data: BuildingEditData): { valid: boolean; erro
   }
 
   if (data.inception) {
-    const yearMatch = data.inception.match(/^[+-]?\d{1,4}$/);
-    const isoMatch = data.inception.match(/^[+-]?\d{1,4}-\d{2}-\d{2}T/);
-    if (!yearMatch && !isoMatch) {
+    // Try to parse as user input (YYYY, YYYY-MM, YYYY-MM-DD)
+    const parsed = parseDate(data.inception);
+    if (!parsed) {
       errors.push('Inception must be a year (YYYY) or ISO date');
     }
   }
 
   if (data.demolished) {
-    const yearMatch = data.demolished.match(/^[+-]?\d{1,4}$/);
-    const isoMatch = data.demolished.match(/^[+-]?\d{1,4}-\d{2}-\d{2}T/);
-    if (!yearMatch && !isoMatch) {
+    // Try to parse as user input (YYYY, YYYY-MM, YYYY-MM-DD)
+    const parsed = parseDate(data.demolished);
+    if (!parsed) {
       errors.push('Demolished date must be a year (YYYY) or ISO date');
     }
   }
@@ -64,7 +69,12 @@ export function validateEditData(data: BuildingEditData): { valid: boolean; erro
   // Check if there are any non-empty changes to claims
   const hasClaimChanges = (data.type !== undefined) ||
                           (data.inception !== undefined && data.inception !== '') ||
-                          (data.demolished !== undefined && data.demolished !== '');
+                          (data.demolished !== undefined && data.demolished !== '') ||
+                          (data.address !== undefined && data.address !== '') ||
+                          (data.architect !== undefined) ||
+                          (data.commissionedBy !== undefined) ||
+                          (data.owner !== undefined) ||
+                          (data.occupant !== undefined);
 
   if (hasClaimChanges && !data.sourceUrl) {
     errors.push('Source URL is required when editing building data');
@@ -264,6 +274,134 @@ export async function editBuilding(
         op: existingStatements.length > 0 ? 'replace' : 'add',
         path: '/statements/P576',
         value: [newStatement],
+      });
+    }
+  }
+
+  // Handle address (P6375 - monolingual text)
+  if (editData.address) {
+    const existingStatements = item.statements?.P6375 || [];
+    // Check for duplicate (compare text content)
+    const isDuplicate = existingStatements.some((stmt: any) =>
+      stmt.value?.content?.text === editData.address
+    );
+
+    if (!isDuplicate) {
+      const newStatement = {
+        property: { id: 'P6375' },
+        value: {
+          type: 'value',
+          content: {
+            text: editData.address,
+            language: 'de',  // German language code
+          },
+        },
+        ...(editData.sourceUrl && {
+          references: [createReference(editData.sourceUrl)],
+        }),
+      };
+
+      patchOps.push({
+        op: 'add',
+        path: '/statements/P6375/-',
+        value: newStatement,
+      });
+    }
+  }
+
+  // Handle architect (P84 - wikibase-item)
+  if (editData.architect) {
+    const existingStatements = item.statements?.P84 || [];
+    // Check for duplicate
+    const isDuplicate = existingStatements.some((stmt: any) =>
+      stmt.value?.content === editData.architect!.id
+    );
+
+    if (!isDuplicate) {
+      const newStatement = {
+        property: { id: 'P84' },
+        value: createStatementValue(editData.architect, 'wikibase-item'),
+        ...(editData.sourceUrl && {
+          references: [createReference(editData.sourceUrl)],
+        }),
+      };
+
+      patchOps.push({
+        op: 'add',
+        path: '/statements/P84/-',
+        value: newStatement,
+      });
+    }
+  }
+
+  // Handle commissioned by (P88 - wikibase-item)
+  if (editData.commissionedBy) {
+    const existingStatements = item.statements?.P88 || [];
+    const isDuplicate = existingStatements.some((stmt: any) =>
+      stmt.value?.content === editData.commissionedBy!.id
+    );
+
+    if (!isDuplicate) {
+      const newStatement = {
+        property: { id: 'P88' },
+        value: createStatementValue(editData.commissionedBy, 'wikibase-item'),
+        ...(editData.sourceUrl && {
+          references: [createReference(editData.sourceUrl)],
+        }),
+      };
+
+      patchOps.push({
+        op: 'add',
+        path: '/statements/P88/-',
+        value: newStatement,
+      });
+    }
+  }
+
+  // Handle owner (P127 - wikibase-item)
+  if (editData.owner) {
+    const existingStatements = item.statements?.P127 || [];
+    const isDuplicate = existingStatements.some((stmt: any) =>
+      stmt.value?.content === editData.owner!.id
+    );
+
+    if (!isDuplicate) {
+      const newStatement = {
+        property: { id: 'P127' },
+        value: createStatementValue(editData.owner, 'wikibase-item'),
+        ...(editData.sourceUrl && {
+          references: [createReference(editData.sourceUrl)],
+        }),
+      };
+
+      patchOps.push({
+        op: 'add',
+        path: '/statements/P127/-',
+        value: newStatement,
+      });
+    }
+  }
+
+  // Handle occupant (P466 - wikibase-item)
+  if (editData.occupant) {
+    const existingStatements = item.statements?.P466 || [];
+    const isDuplicate = existingStatements.some((stmt: any) =>
+      stmt.value?.content === editData.occupant!.id
+    );
+
+    if (!isDuplicate) {
+      const newStatement = {
+        property: { id: 'P466' },
+        value: createStatementValue(editData.occupant, 'wikibase-item'),
+        ...(editData.sourceUrl && {
+          references: [createReference(editData.sourceUrl)],
+        }),
+      };
+
+      patchOps.push({
+        op: 'add',
+        path: '/statements/P466/-',
+        value: newStatement,
       });
     }
   }
