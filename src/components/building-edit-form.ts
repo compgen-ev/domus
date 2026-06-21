@@ -425,7 +425,7 @@ export class BuildingEditForm extends LitElement {
             ${this.saveErrorDetails ? html`
               <div class="error-details">
                 <details>
-                  <summary>🐛 Debug details</summary>
+                  <summary>Debug details</summary>
                   <div class="error-details-content">${JSON.stringify(this.saveErrorDetails, null, 2)}</div>
                   <button class="copy-btn" @click=${this._copyErrorDetails}>
                     Copy to clipboard
