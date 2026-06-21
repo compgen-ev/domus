@@ -1,6 +1,6 @@
 import { LitElement, html, css, type TemplateResult, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { localized, msg, str } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
@@ -64,7 +64,7 @@ export class BuildingPage extends LitElement {
         margin-bottom: var(--space-3);
       }
 
-      .badge-type {
+      .badge-heritage {
         background: var(--color-primary);
         color: white;
       }
@@ -78,14 +78,29 @@ export class BuildingPage extends LitElement {
         letter-spacing: -0.02em;
       }
 
-      .dates {
-        font-size: var(--font-size-sm);
-        color: var(--color-text-tertiary);
+      .type-label {
+        font-size: var(--font-size-base);
+        color: var(--color-text-secondary);
         margin: 0 0 var(--space-8);
       }
 
       .section {
         margin-bottom: var(--space-10);
+      }
+
+      .dates-section {
+        margin-bottom: var(--space-10);
+      }
+
+      .date-item {
+        font-size: var(--font-size-base);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-3);
+      }
+
+      .date-label {
+        color: var(--color-text-secondary);
+        margin-right: var(--space-2);
       }
 
       h3 {
@@ -274,15 +289,6 @@ export class BuildingPage extends LitElement {
     }
   }
 
-  private _datesLine(): string {
-    const builtDate = this.building?.inception ? formatDate(this.building.inception) : '';
-    const demoDate = this.detail?.demolished ? formatDate(this.detail.demolished) : '';
-    if (builtDate && demoDate) return `${builtDate}–${demoDate}`;
-    if (builtDate) return msg(str`Erbaut ${builtDate}`);
-    if (demoDate) return msg(str`Abgerissen ${demoDate}`);
-    return '';
-  }
-
   private _renderSection(
     title: string,
     items: Array<{ primary: string; href?: string; range?: string }>,
@@ -327,7 +333,6 @@ export class BuildingPage extends LitElement {
     if (!this.building) return html``;
     const { label, type, image, id } = this.building;
     const { detail, detailLoading } = this;
-    const datesLine = this._datesLine();
 
     if (this.editMode) {
       return html`
@@ -349,12 +354,13 @@ export class BuildingPage extends LitElement {
 
       <div class="content">
         <button class="back-btn" @click=${this._backToMap}>← ${msg('Zur Karte')}</button>
-        <div class="badges">
-          ${detail?.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
-          ${type ? html`<span class="badge badge-type">${type.label}</span>` : ''}
-        </div>
+        ${detail?.heritages && detail.heritages.length > 0 ? html`
+          <div class="badges">
+            ${detail.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
+          </div>
+        ` : ''}
         <h1>${label}</h1>
-        ${datesLine ? html`<p class="dates">${datesLine}</p>` : ''}
+        ${type ? html`<p class="type-label">${type.label}</p>` : ''}
 
         ${detailLoading ? html`
           <div class="skeleton">
@@ -364,6 +370,24 @@ export class BuildingPage extends LitElement {
             <div class="skel-line" style="width:35%; margin-top:8px"></div>
             <div class="skel-line" style="width:80%"></div>
             <div class="skel-line" style="width:55%"></div>
+          </div>
+        ` : ''}
+
+        ${this.building.inception || detail?.demolished ? html`
+          <div class="dates-section">
+            <h3>${msg('Daten')}</h3>
+            ${this.building.inception ? html`
+              <div class="date-item">
+                <span class="date-label">${msg('Erbaut')}</span>
+                <span>${formatDate(this.building.inception)}</span>
+              </div>
+            ` : ''}
+            ${detail?.demolished ? html`
+              <div class="date-item">
+                <span class="date-label">${msg('Abgerissen')}</span>
+                <span>${formatDate(detail.demolished)}</span>
+              </div>
+            ` : ''}
           </div>
         ` : ''}
 

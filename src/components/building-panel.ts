@@ -1,6 +1,6 @@
 import { LitElement, html, css, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { localized, msg, str } from '@lit/localize';
+import { localized, msg } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
@@ -106,7 +106,7 @@ export class BuildingPanel extends LitElement {
         margin-bottom: var(--space-6);
       }
 
-      .badge-type {
+      .badge-heritage {
         background: var(--color-primary);
         color: white;
       }
@@ -119,9 +119,9 @@ export class BuildingPanel extends LitElement {
         margin: 0 0 var(--space-1);
       }
 
-      .dates {
-        font-size: var(--font-size-sm);
-        color: var(--color-text-tertiary);
+      .type-label {
+        font-size: var(--font-size-base);
+        color: var(--color-text-secondary);
         margin: 0 0 var(--space-4);
       }
 
@@ -172,6 +172,21 @@ export class BuildingPanel extends LitElement {
         margin-bottom: var(--space-8);
       }
 
+      .dates-section {
+        margin-bottom: var(--space-8);
+      }
+
+      .date-item {
+        font-size: var(--font-size-base);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-2);
+      }
+
+      .date-label {
+        color: var(--color-text-secondary);
+        margin-right: var(--space-2);
+      }
+
       h3 {
         font-size: var(--font-size-base);
         font-weight: var(--font-weight-semibold);
@@ -186,7 +201,7 @@ export class BuildingPanel extends LitElement {
         gap: var(--space-3);
         padding: var(--space-2) 0;
         border-bottom: 1px solid var(--color-border-light);
-        font-size: var(--font-size-sm);
+        font-size: var(--font-size-base);
         color: var(--color-text-primary);
       }
 
@@ -195,7 +210,7 @@ export class BuildingPanel extends LitElement {
       .entry-label { flex: 1; min-width: 0; }
 
       .entry-dates {
-        font-size: var(--font-size-xs);
+        font-size: var(--font-size-sm);
         color: var(--color-text-muted);
         white-space: nowrap;
         flex-shrink: 0;
@@ -355,15 +370,6 @@ export class BuildingPanel extends LitElement {
     }
   }
 
-  private _datesLine(): string {
-    const builtDate = this.building?.inception ? formatDate(this.building.inception) : '';
-    const demoDate = this.detail?.demolished ? formatDate(this.detail.demolished) : '';
-    if (builtDate && demoDate) return `${builtDate}–${demoDate}`;
-    if (builtDate) return msg(str`Erbaut ${builtDate}`);
-    if (demoDate) return msg(str`Abgerissen ${demoDate}`);
-    return '';
-  }
-
   private _renderSection(
     title: string,
     items: Array<{ primary: string; href?: string; range?: string }>,
@@ -408,7 +414,6 @@ export class BuildingPanel extends LitElement {
     if (!this.building) return html`<div class="panel"></div>`;
     const { label, type, image, id } = this.building;
     const { detail, detailLoading } = this;
-    const datesLine = this._datesLine();
 
     if (this.editMode) {
       return html`
@@ -429,12 +434,13 @@ export class BuildingPanel extends LitElement {
 
         <div class="header">
           <div class="title">
-            <div class="badges">
-              ${detail?.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
-              ${type ? html`<span class="badge badge-type">${type.label}</span>` : ''}
-            </div>
+            ${detail?.heritages && detail.heritages.length > 0 ? html`
+              <div class="badges">
+                ${detail.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
+              </div>
+            ` : ''}
             <h2>${label}</h2>
-            ${datesLine ? html`<p class="dates">${datesLine}</p>` : ''}
+            ${type ? html`<p class="type-label">${type.label}</p>` : ''}
           </div>
           <button class="close-btn" @click=${this._close} aria-label=${msg('Schließen')}>✕</button>
         </div>
@@ -447,6 +453,24 @@ export class BuildingPanel extends LitElement {
               <div class="skel-line" style="width:65%"></div>
               <div class="skel-line" style="width:40%; margin-top:8px"></div>
               <div class="skel-line" style="width:72%"></div>
+            </div>
+          ` : ''}
+
+          ${this.building.inception || detail?.demolished ? html`
+            <div class="dates-section">
+              <h3>${msg('Daten')}</h3>
+              ${this.building.inception ? html`
+                <div class="date-item">
+                  <span class="date-label">${msg('Erbaut')}</span>
+                  <span>${formatDate(this.building.inception)}</span>
+                </div>
+              ` : ''}
+              ${detail?.demolished ? html`
+                <div class="date-item">
+                  <span class="date-label">${msg('Abgerissen')}</span>
+                  <span>${formatDate(detail.demolished)}</span>
+                </div>
+              ` : ''}
             </div>
           ` : ''}
 

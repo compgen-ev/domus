@@ -7,13 +7,14 @@ export const designTokens = css`
     /* Primary (CompGen Blue) */
     --color-primary: #000052;
     --color-primary-hover: #00003a;
-    --color-primary-light: #eef0fa;
+    --color-prima
+    ry-light: #eef0fa;
     --color-primary-lighter: #f8f9fd;
 
     /* Accent (Gold) */
-    --color-accent: #ffd700;
-    --color-accent-dark: #e6c200;
-    --color-accent-light: #fff4cc;
+    --color-accent: #f2c14e;
+    --color-accent-dark: color-mix(in srgb, var(--color-accent) 85%, black);
+    --color-accent-light: color-mix(in srgb, var(--color-accent) 20%, white);
 
     /* Neutrals */
     --color-text-primary: #0f172a;
