@@ -246,6 +246,22 @@ export class BuildingPage extends LitElement {
     this.editMode = false;
   }
 
+  private _onSaveSuccess() {
+    this.editMode = false;
+    // Dispatch event to parent to re-fetch building data
+    this.dispatchEvent(new CustomEvent('save-success-refresh', { bubbles: true, composed: true }));
+    // Show toast notification
+    this._showToast(msg('Änderungen gespeichert'));
+  }
+
+  private _showToast(message: string) {
+    this.dispatchEvent(new CustomEvent('show-toast', {
+      bubbles: true,
+      composed: true,
+      detail: { message }
+    }));
+  }
+
   private async _copyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -320,6 +336,7 @@ export class BuildingPage extends LitElement {
             .building=${this.building}
             .detail=${this.detail}
             @cancel=${this._cancelEdit}
+            @save-success=${this._onSaveSuccess}
           ></building-edit-form>
         </div>
       `;

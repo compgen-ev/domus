@@ -8,6 +8,7 @@ import { handleOAuthCallback, isAuthenticated, logout, login } from '../services
 import './map-view';
 import './building-panel';
 import './building-page';
+import './app-toast';
 
 @localized()
 @customElement('app-root')
@@ -245,6 +246,20 @@ export class AppRoot extends LitElement {
     this.view = 'map';
   }
 
+  private _onSaveSuccessRefresh() {
+    // Re-fetch building data after successful edit
+    if (this.selectedBuilding) {
+      this._loadBuildingById(this.selectedBuilding.id);
+    }
+  }
+
+  private _onShowToast(e: CustomEvent<{ message: string }>) {
+    const toast = this.shadowRoot?.querySelector('app-toast');
+    if (toast) {
+      (toast as any).show(e.detail.message);
+    }
+  }
+
   render() {
     return html`
       <div class="app-bar">
@@ -267,6 +282,8 @@ export class AppRoot extends LitElement {
             .ohmElementType=${this.ohmElementType}
             .authenticated=${this.authenticated}
             @back-to-map=${this._onBackToMap}
+            @save-success-refresh=${this._onSaveSuccessRefresh}
+            @show-toast=${this._onShowToast}
           ></building-page>`
         : html`
           <map-view
@@ -287,8 +304,11 @@ export class AppRoot extends LitElement {
             @close=${this._onPanelClose}
             @show-detail=${this._onShowDetail}
             @logout=${this._onLogout}
+            @save-success-refresh=${this._onSaveSuccessRefresh}
+            @show-toast=${this._onShowToast}
           ></building-panel>
         `}
+      <app-toast></app-toast>
     `;
   }
 }

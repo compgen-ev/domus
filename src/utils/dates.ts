@@ -10,6 +10,15 @@ export interface WikidataTime {
 }
 
 const PROLEPTIC_GREGORIAN = 'http://www.wikidata.org/entity/Q1985727';
+const PROLEPTIC_JULIAN = 'http://www.wikidata.org/entity/Q1985786';
+
+/**
+ * Get the appropriate calendar model based on year
+ * Wikidata convention: Julian before 1583, Gregorian from 1583 onwards
+ */
+function getCalendarModel(year: number): string {
+  return year < 1583 ? PROLEPTIC_JULIAN : PROLEPTIC_GREGORIAN;
+}
 
 /**
  * Parse user input into Wikidata time format
@@ -25,10 +34,11 @@ export function parseDate(input: string): WikidataTime | null {
   if (yearMatch) {
     const [, sign, year] = yearMatch;
     const paddedYear = year.padStart(4, '0');
+    const yearNum = parseInt(year, 10) * (sign === '-' ? -1 : 1);
     return {
       time: `${sign || '+'}${paddedYear}-00-00T00:00:00Z`,
       precision: 9,
-      calendarmodel: PROLEPTIC_GREGORIAN,
+      calendarmodel: getCalendarModel(yearNum),
     };
   }
 
@@ -39,10 +49,11 @@ export function parseDate(input: string): WikidataTime | null {
     const paddedYear = year.padStart(4, '0');
     const monthNum = parseInt(month, 10);
     if (monthNum < 1 || monthNum > 12) return null;
+    const yearNum = parseInt(year, 10) * (sign === '-' ? -1 : 1);
     return {
       time: `${sign || '+'}${paddedYear}-${month}-00T00:00:00Z`,
       precision: 10,
-      calendarmodel: PROLEPTIC_GREGORIAN,
+      calendarmodel: getCalendarModel(yearNum),
     };
   }
 
@@ -55,10 +66,11 @@ export function parseDate(input: string): WikidataTime | null {
     const dayNum = parseInt(day, 10);
     if (monthNum < 1 || monthNum > 12) return null;
     if (dayNum < 1 || dayNum > 31) return null;
+    const yearNum = parseInt(year, 10) * (sign === '-' ? -1 : 1);
     return {
       time: `${sign || '+'}${paddedYear}-${month}-${day}T00:00:00Z`,
       precision: 11,
-      calendarmodel: PROLEPTIC_GREGORIAN,
+      calendarmodel: getCalendarModel(yearNum),
     };
   }
 

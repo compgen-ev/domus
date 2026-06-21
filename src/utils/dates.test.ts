@@ -26,7 +26,7 @@ describe('parseDate', () => {
       expect(result).toEqual({
         time: '-0500-00-00T00:00:00Z',
         precision: 9,
-        calendarmodel: 'http://www.wikidata.org/entity/Q1985727',
+        calendarmodel: 'http://www.wikidata.org/entity/Q1985786', // Julian for BCE
       });
     });
 
@@ -297,5 +297,38 @@ describe('round-trip (parse → format)', () => {
     expect(parsed).not.toBeNull();
     const formatted = formatDate(parsed!.time);
     expect(formatted).toBe('-500');
+  });
+});
+
+describe('calendar model selection', () => {
+  const JULIAN = 'http://www.wikidata.org/entity/Q1985786';
+  const GREGORIAN = 'http://www.wikidata.org/entity/Q1985727';
+
+  it('uses Julian calendar for year 1582 and before', () => {
+    expect(parseDate('1582')?.calendarmodel).toBe(JULIAN);
+    expect(parseDate('1500')?.calendarmodel).toBe(JULIAN);
+    expect(parseDate('1000')?.calendarmodel).toBe(JULIAN);
+    expect(parseDate('1')?.calendarmodel).toBe(JULIAN);
+  });
+
+  it('uses Gregorian calendar for year 1583 and after', () => {
+    expect(parseDate('1583')?.calendarmodel).toBe(GREGORIAN);
+    expect(parseDate('1600')?.calendarmodel).toBe(GREGORIAN);
+    expect(parseDate('2000')?.calendarmodel).toBe(GREGORIAN);
+  });
+
+  it('uses Julian calendar for BCE dates', () => {
+    expect(parseDate('-500')?.calendarmodel).toBe(JULIAN);
+    expect(parseDate('-100')?.calendarmodel).toBe(JULIAN);
+  });
+
+  it('uses correct calendar for year-month format', () => {
+    expect(parseDate('1582-12')?.calendarmodel).toBe(JULIAN);
+    expect(parseDate('1583-01')?.calendarmodel).toBe(GREGORIAN);
+  });
+
+  it('uses correct calendar for full date format', () => {
+    expect(parseDate('1582-12-31')?.calendarmodel).toBe(JULIAN);
+    expect(parseDate('1583-01-01')?.calendarmodel).toBe(GREGORIAN);
   });
 });
