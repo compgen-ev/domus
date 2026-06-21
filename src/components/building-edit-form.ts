@@ -5,7 +5,7 @@ import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/building';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
-import { editBuilding, type BuildingEditData } from '../services/wikidata-edit';
+import { editBuilding, type BuildingEditData } from '../services/wikidata-edit-rest';
 
 @localized()
 @customElement('building-edit-form')
