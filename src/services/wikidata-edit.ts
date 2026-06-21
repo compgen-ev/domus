@@ -3,6 +3,12 @@ import { getAccessToken } from './wikimedia-auth';
 
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 
+// Get the current origin for CORS requests
+// Use specific origin instead of * to allow CSRF tokens
+function getOrigin(): string {
+  return `${window.location.protocol}//${window.location.host}`;
+}
+
 interface CSRFTokenResponse {
   query?: {
     tokens?: {
@@ -55,7 +61,7 @@ async function getEntityClaims(entityId: string, signal?: AbortSignal): Promise<
   url.searchParams.set('props', 'claims');
   url.searchParams.set('format', 'json');
   url.searchParams.set('formatversion', '2');
-  // No origin parameter needed with OAuth
+  url.searchParams.set('origin', getOrigin());
 
   const response = await fetch(url.toString(), {
     headers: {
@@ -93,7 +99,7 @@ async function getCSRFToken(signal?: AbortSignal): Promise<string> {
   url.searchParams.set('type', 'csrf');
   url.searchParams.set('format', 'json');
   url.searchParams.set('formatversion', '2');
-  // No origin parameter needed with OAuth
+  url.searchParams.set('origin', getOrigin());
 
   console.log('Fetching CSRF token with OAuth token:', {
     tokenLength: token.length,
@@ -428,7 +434,7 @@ export async function editBuilding(
   formData.append('format', 'json');
   formData.append('formatversion', '2');
   formData.append('summary', 'Updated via Domus');
-  // No origin parameter needed with OAuth
+  formData.append('origin', getOrigin());
 
   const response = await fetch(WIKIDATA_API, {
     method: 'POST',
