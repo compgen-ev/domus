@@ -169,17 +169,19 @@ export async function editBuilding(
         value: createReference(editData.sourceUrl),
       });
     } else {
-      // Replace all P31 statements with new one
+      // Add or replace P31 statements
+      const newStatement = {
+        property: { id: 'P31' },
+        value: createStatementValue(editData.type, 'wikibase-item'),
+        ...(editData.sourceUrl && {
+          references: [createReference(editData.sourceUrl)],
+        }),
+      };
+
       patchOps.push({
-        op: 'replace',
+        op: existingStatements.length > 0 ? 'replace' : 'add',
         path: '/statements/P31',
-        value: [{
-          property: { id: 'P31' },
-          value: createStatementValue(editData.type, 'wikibase-item'),
-          ...(editData.sourceUrl && {
-            references: [createReference(editData.sourceUrl)],
-          }),
-        }],
+        value: [newStatement],
       });
     }
   }
@@ -199,16 +201,18 @@ export async function editBuilding(
         value: createReference(editData.sourceUrl),
       });
     } else {
+      const newStatement = {
+        property: { id: 'P571' },
+        value: createStatementValue(editData.inception, 'time'),
+        ...(editData.sourceUrl && {
+          references: [createReference(editData.sourceUrl)],
+        }),
+      };
+
       patchOps.push({
-        op: 'replace',
+        op: existingStatements.length > 0 ? 'replace' : 'add',
         path: '/statements/P571',
-        value: [{
-          property: { id: 'P571' },
-          value: createStatementValue(editData.inception, 'time'),
-          ...(editData.sourceUrl && {
-            references: [createReference(editData.sourceUrl)],
-          }),
-        }],
+        value: [newStatement],
       });
     }
   }
@@ -228,16 +232,18 @@ export async function editBuilding(
         value: createReference(editData.sourceUrl),
       });
     } else {
+      const newStatement = {
+        property: { id: 'P576' },
+        value: createStatementValue(editData.demolished, 'time'),
+        ...(editData.sourceUrl && {
+          references: [createReference(editData.sourceUrl)],
+        }),
+      };
+
       patchOps.push({
-        op: 'replace',
+        op: existingStatements.length > 0 ? 'replace' : 'add',
         path: '/statements/P576',
-        value: [{
-          property: { id: 'P576' },
-          value: createStatementValue(editData.demolished, 'time'),
-          ...(editData.sourceUrl && {
-            references: [createReference(editData.sourceUrl)],
-          }),
-        }],
+        value: [newStatement],
       });
     }
   }
