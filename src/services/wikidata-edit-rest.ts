@@ -1,3 +1,15 @@
+/**
+ * Wikidata REST API client for editing building entities
+ *
+ * API Documentation & OpenAPI Spec:
+ * https://www.wikidata.org/w/rest.php/wikibase/v1/openapi.json
+ *
+ * Schema reference:
+ * - Statement: .components.schemas.Statement
+ * - Reference: .components.schemas.Statement.properties.references.items
+ * - Value types: "value", "somevalue", "novalue"
+ */
+
 import type { WikidataItem } from '../types/building';
 import { getAccessToken } from './wikimedia-auth';
 import { parseDate } from '../utils/dates';
@@ -102,9 +114,12 @@ function createStatementValue(value: string | WikidataItem, type: 'string' | 'ti
  */
 function createReference(referenceUrl: string) {
   return {
-    parts: {
-      P854: [{ type: 'value', content: referenceUrl }], // P854 = reference URL
-    },
+    parts: [
+      {
+        property: { id: 'P854' }, // P854 = reference URL
+        value: { type: 'value', content: referenceUrl },
+      },
+    ],
   };
 }
 
