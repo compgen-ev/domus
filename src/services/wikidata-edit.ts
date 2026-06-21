@@ -95,6 +95,12 @@ async function getCSRFToken(signal?: AbortSignal): Promise<string> {
   url.searchParams.set('formatversion', '2');
   url.searchParams.set('origin', '*');
 
+  console.log('Fetching CSRF token with OAuth token:', {
+    tokenLength: token.length,
+    tokenPrefix: token.substring(0, 20) + '...',
+    url: url.toString(),
+  });
+
   const response = await fetch(url.toString(), {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -103,10 +109,12 @@ async function getCSRFToken(signal?: AbortSignal): Promise<string> {
   });
 
   if (!response.ok) {
+    console.error('CSRF token request failed:', response.status, response.statusText);
     throw new Error(`Failed to get CSRF token: ${response.status}`);
   }
 
   const data: CSRFTokenResponse = await response.json();
+  console.log('CSRF token response:', data);
 
   if (data.error) {
     throw new Error(`CSRF token error: ${data.error.code} - ${data.error.info}`);
@@ -114,6 +122,7 @@ async function getCSRFToken(signal?: AbortSignal): Promise<string> {
 
   const csrfToken = data.query?.tokens?.csrftoken;
   if (!csrfToken || csrfToken === '+\\') {
+    console.error('Invalid CSRF token - API thinks we are not authenticated');
     throw new Error('Invalid CSRF token received');
   }
 

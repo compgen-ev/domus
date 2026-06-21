@@ -120,6 +120,12 @@ export async function handleCallback(config: OAuthConfig): Promise<TokenResponse
   }
 
   const token = data as unknown as TokenResponse;
+  console.log('OAuth token received:', {
+    expires_in: token.expires_in,
+    expires_in_hours: token.expires_in ? token.expires_in / 3600 : null,
+    has_refresh_token: !!token.refresh_token,
+  });
+
   sessionStorage.setItem(k(config.clientId, 'token'), token.access_token);
   return token;
 }
