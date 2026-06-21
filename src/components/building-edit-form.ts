@@ -471,7 +471,7 @@ export class BuildingEditForm extends LitElement {
             <label>${msg('Erbaut')}</label>
             <input
               type="text"
-              placeholder="YYYY"
+              placeholder="YYYY / YYYY-MM / YYYY-MM-DD"
               .value=${this.formInception}
               @input=${(e: Event) => this.formInception = (e.target as HTMLInputElement).value}
               ?disabled=${this.saving}>
@@ -480,7 +480,7 @@ export class BuildingEditForm extends LitElement {
             <label>${msg('Abgerissen')}</label>
             <input
               type="text"
-              placeholder="YYYY"
+              placeholder="YYYY / YYYY-MM / YYYY-MM-DD"
               .value=${this.formDemolished}
               @input=${(e: Event) => this.formDemolished = (e.target as HTMLInputElement).value}
               ?disabled=${this.saving}>

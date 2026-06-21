@@ -1,5 +1,6 @@
 import type { WikidataItem } from '../types/building';
 import { getAccessToken } from './wikimedia-auth';
+import { parseDate } from '../utils/dates';
 
 const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
 
@@ -78,12 +79,16 @@ function createStatementValue(value: string | WikidataItem, type: 'string' | 'ti
   if (type === 'string') {
     return { type: 'value', content: value as string };
   } else if (type === 'time') {
-    const timeValue = value as string;
+    const parsed = parseDate(value as string);
+    if (!parsed) {
+      throw new Error(`Invalid date format: ${value}`);
+    }
     return {
       type: 'value',
       content: {
-        time: timeValue.startsWith('+') ? timeValue : `+${timeValue}`,
-        precision: 9, // Year precision
+        time: parsed.time,
+        precision: parsed.precision,
+        calendarmodel: parsed.calendarmodel,
       },
     };
   } else if (type === 'wikibase-item') {
@@ -267,12 +272,17 @@ export async function editBuilding(
     signal,
   });
 
+  const result = await patchResponse.json();
+  console.log('PATCH response:', patchResponse.status, result);
+
   if (!patchResponse.ok) {
-    const errorData = await patchResponse.json().catch(() => null);
-    console.error('PATCH failed:', patchResponse.status, errorData);
-    throw new Error(`Edit failed: ${errorData?.message || patchResponse.status}`);
+    console.error('PATCH failed:', {
+      status: patchResponse.status,
+      result,
+      sentPatch: patchOps,
+    });
+    throw new Error(`Edit failed: ${result?.message || result?.error || patchResponse.status}`);
   }
 
-  const result = await patchResponse.json();
   console.log('Edit successful:', result);
 }

@@ -5,29 +5,9 @@ import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
+import { formatDate } from '../utils/dates';
 import './building-edit-form';
 import './app-button';
-
-function formatDate(iso: string): string {
-  // Wikidata dates: +YYYY-MM-DDT00:00:00Z
-  // Show precision based on data: year-only, year-month, or full date
-  const match = iso.match(/^[+-]?(\d{1,4})-(\d{2})-(\d{2})/);
-  if (!match) return iso;
-
-  const [, year, month, day] = match;
-
-  // If day/month are 00, unknown precision
-  if (month === '00') return year;
-  if (day === '00') return `${month}.${year}`;
-
-  // If both are 01, likely fake precision (default placeholder)
-  if (month === '01' && day === '01') return year;
-
-  // If only day is 01, treat as month precision (01 is common placeholder)
-  if (day === '01') return `${month}.${year}`;
-
-  return `${day}.${month}.${year}`;
-}
 
 function extractYear(iso: string): string {
   return iso.match(/^[+-]?(\d{1,4})/)?.[1] ?? '';
