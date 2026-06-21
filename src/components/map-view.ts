@@ -119,12 +119,13 @@ export class MapView extends LitElement {
   private debounceTimer = 0;
   private fetchController: AbortController | null = null;
   private ohmController: AbortController | null = null;
+  private ohmDebounceTimer: number | null = null;
   private resizeObserver!: ResizeObserver;
   private _shouldCenterOnBuilding = false;
 
   protected updated(changed: PropertyValues) {
     if (changed.has('ohmId') || changed.has('wikidataId')) {
-      this._updateOhmFootprint();
+      this._scheduleOhmFetch();
     }
     if (changed.has('selectedBuilding') && this.selectedBuilding && this._shouldCenterOnBuilding) {
       this.map.flyTo({
@@ -193,6 +194,15 @@ export class MapView extends LitElement {
     this.resizeObserver?.disconnect();
     this.ohmController?.abort();
     this.map?.remove();
+  }
+
+  private _scheduleOhmFetch() {
+    if (this.ohmDebounceTimer) {
+      clearTimeout(this.ohmDebounceTimer);
+    }
+    this.ohmDebounceTimer = window.setTimeout(() => {
+      this._updateOhmFootprint();
+    }, 100); // 100ms debounce to prevent duplicate queries
   }
 
   private async _updateOhmFootprint() {
@@ -319,7 +329,7 @@ export class MapView extends LitElement {
 
     // If ohmId/wikidataId were set before map loaded, fetch now
     if (this.ohmId || this.wikidataId) {
-      this._updateOhmFootprint();
+      this._scheduleOhmFetch();
     }
   }
 
