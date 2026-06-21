@@ -53,6 +53,57 @@ export class BuildingEditForm extends LitElement {
         font-size: var(--font-size-sm);
       }
 
+      .error-details {
+        margin-top: var(--space-2);
+        padding-top: var(--space-2);
+        border-top: 1px solid #fcc;
+      }
+
+      .error-details summary {
+        cursor: pointer;
+        font-size: var(--font-size-xs);
+        color: #a00;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: var(--space-1);
+      }
+
+      .error-details summary:hover {
+        color: #c00;
+      }
+
+      .error-details-content {
+        margin-top: var(--space-2);
+        padding: var(--space-2);
+        background: #fff;
+        border: 1px solid #fcc;
+        border-radius: var(--radius-sm);
+        font-family: monospace;
+        font-size: 11px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .copy-btn {
+        margin-top: var(--space-2);
+        padding: var(--space-1) var(--space-2);
+        background: #fff;
+        border: 1px solid #fcc;
+        border-radius: var(--radius-sm);
+        color: #c00;
+        font-size: var(--font-size-xs);
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .copy-btn:hover {
+        background: #fff5f5;
+      }
+
       .form-body {
         padding: var(--space-4);
       }
@@ -223,6 +274,7 @@ export class BuildingEditForm extends LitElement {
   @state() private formDemolished = '';
   @state() private saving = false;
   @state() private saveError: string | null = null;
+  @state() private saveErrorDetails: any = null;
 
   // Common building types - Q-codes only
   private readonly buildingTypeIds = [
@@ -295,6 +347,7 @@ export class BuildingEditForm extends LitElement {
       this.formDemolished = this.detail?.demolished || '';
       this.sourceUrl = '';
       this.saveError = null;
+      this.saveErrorDetails = null;
     }
   }
 
@@ -302,22 +355,32 @@ export class BuildingEditForm extends LitElement {
     this.dispatchEvent(new CustomEvent('cancel', { bubbles: true, composed: true }));
   }
 
+  private async _copyErrorDetails() {
+    if (!this.saveErrorDetails) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(this.saveErrorDetails, null, 2));
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  }
+
   private async _save() {
     if (!this.building) return;
 
     this.saving = true;
     this.saveError = null;
+    this.saveErrorDetails = null;
+
+    const editData: BuildingEditData = {
+      id: this.building.id,
+      label: this.formLabel !== this.building.label ? this.formLabel : undefined,
+      type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
+      inception: this.formInception !== this.building.inception ? this.formInception : undefined,
+      demolished: this.formDemolished !== this.detail?.demolished ? this.formDemolished : undefined,
+      sourceUrl: this.sourceUrl || undefined,
+    };
 
     try {
-      const editData: BuildingEditData = {
-        id: this.building.id,
-        label: this.formLabel !== this.building.label ? this.formLabel : undefined,
-        type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
-        inception: this.formInception !== this.building.inception ? this.formInception : undefined,
-        demolished: this.formDemolished !== this.detail?.demolished ? this.formDemolished : undefined,
-        sourceUrl: this.sourceUrl || undefined,
-      };
-
       await editBuilding(editData);
 
       // Success - dispatch event to notify parent
@@ -328,6 +391,20 @@ export class BuildingEditForm extends LitElement {
       }));
     } catch (err) {
       this.saveError = err instanceof Error ? err.message : 'Unknown error';
+      this.saveErrorDetails = {
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+        name: err instanceof Error ? err.name : 'Error',
+        timestamp: new Date().toISOString(),
+        editData: {
+          id: editData.id,
+          hasLabel: !!editData.label,
+          hasType: !!editData.type,
+          hasInception: !!editData.inception,
+          hasDemolished: !!editData.demolished,
+          hasSourceUrl: !!editData.sourceUrl,
+        },
+      };
       console.error('Save failed:', err);
     } finally {
       this.saving = false;
@@ -343,7 +420,20 @@ export class BuildingEditForm extends LitElement {
         <h2 class="form-title">${building.label} ${msg('bearbeiten')}</h2>
         <p class="form-subtitle">${msg('Änderungen werden direkt in Wikidata gespeichert')}</p>
         ${this.saveError ? html`
-          <div class="error-message" role="alert">${this.saveError}</div>
+          <div class="error-message" role="alert">
+            ${this.saveError}
+            ${this.saveErrorDetails ? html`
+              <div class="error-details">
+                <details>
+                  <summary>🐛 Debug details</summary>
+                  <div class="error-details-content">${JSON.stringify(this.saveErrorDetails, null, 2)}</div>
+                  <button class="copy-btn" @click=${this._copyErrorDetails}>
+                    Copy to clipboard
+                  </button>
+                </details>
+              </div>
+            ` : ''}
+          </div>
         ` : ''}
       </div>
 
