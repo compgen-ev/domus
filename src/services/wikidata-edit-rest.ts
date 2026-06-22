@@ -503,13 +503,14 @@ export async function editBuilding(
 
   // Make the PATCH request
   const patchUrl = `${WIKIDATA_REST_API}/entities/items/${editData.id}`;
+  const requestBody = { patch: patchOps, comment: 'Updated via Domus' };
   const patchResponse = await fetch(patchUrl, {
     method: 'PATCH',
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ patch: patchOps, comment: 'Updated via Domus' }),
+    body: JSON.stringify(requestBody),
     signal,
   });
 
@@ -519,8 +520,8 @@ export async function editBuilding(
   if (!patchResponse.ok) {
     console.error('PATCH failed:', {
       status: patchResponse.status,
-      result,
-      sentPatch: patchOps,
+      request: requestBody,
+      response: result,
     });
     throw new Error(`Edit failed: ${result?.message || result?.error || patchResponse.status}`);
   }

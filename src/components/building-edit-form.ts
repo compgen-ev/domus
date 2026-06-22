@@ -8,8 +8,10 @@ import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData } from '../services/wikidata-edit-rest';
 import './entity-search';
 import './app-button';
+import './icon';
 import IconCheck from '~icons/mdi/check';
 import IconClose from '~icons/mdi/close';
+import IconUnfoldMore from '~icons/mdi/unfold-more-horizontal';
 
 @localized()
 @customElement('building-edit-form')
@@ -485,7 +487,7 @@ export class BuildingEditForm extends LitElement {
             ${this.saveErrorDetails ? html`
               <div class="error-details">
                 <details>
-                  <summary>Debug details</summary>
+                  <summary><domus-icon .svg=${IconUnfoldMore}></domus-icon> Debug details</summary>
                   <div class="error-details-content">${JSON.stringify(this.saveErrorDetails, null, 2)}</div>
                   <button class="copy-btn" @click=${this._copyErrorDetails}>
                     Copy to clipboard
