@@ -183,8 +183,9 @@ export async function editBuilding(
 
   // Update label if provided
   if (editData.label !== undefined) {
+    const hasGermanLabel = item.labels?.de !== undefined;
     patchOps.push({
-      op: 'replace',
+      op: hasGermanLabel ? 'replace' : 'add',
       path: '/labels/de',
       value: { language: 'de', value: editData.label },
     });
@@ -199,8 +200,9 @@ export async function editBuilding(
       .map(a => ({ language: 'de', value: a }));
 
     if (aliasArray.length > 0) {
+      const hasExistingAliases = item.aliases?.de && item.aliases.de.length > 0;
       patchOps.push({
-        op: 'replace',
+        op: hasExistingAliases ? 'replace' : 'add',
         path: '/aliases/de',
         value: aliasArray,
       });
@@ -216,11 +218,14 @@ export async function editBuilding(
 
     if (matchingIdx >= 0 && editData.sourceUrl) {
       // Add reference to existing statement
-      const refPath = `/statements/P31/${matchingIdx}/references/-`;
+      const existingRefs = existingStatements[matchingIdx].references || [];
+      const refPath = existingRefs.length > 0
+        ? `/statements/P31/${matchingIdx}/references/-`
+        : `/statements/P31/${matchingIdx}/references`;
       patchOps.push({
         op: 'add',
         path: refPath,
-        value: createReference(editData.sourceUrl),
+        value: existingRefs.length > 0 ? createReference(editData.sourceUrl) : [createReference(editData.sourceUrl)],
       });
     } else {
       // Add or replace P31 statements
@@ -248,11 +253,14 @@ export async function editBuilding(
     );
 
     if (matchingIdx >= 0 && editData.sourceUrl) {
-      const refPath = `/statements/P571/${matchingIdx}/references/-`;
+      const existingRefs = existingStatements[matchingIdx].references || [];
+      const refPath = existingRefs.length > 0
+        ? `/statements/P571/${matchingIdx}/references/-`
+        : `/statements/P571/${matchingIdx}/references`;
       patchOps.push({
         op: 'add',
         path: refPath,
-        value: createReference(editData.sourceUrl),
+        value: existingRefs.length > 0 ? createReference(editData.sourceUrl) : [createReference(editData.sourceUrl)],
       });
     } else {
       const newStatement = {
@@ -279,11 +287,14 @@ export async function editBuilding(
     );
 
     if (matchingIdx >= 0 && editData.sourceUrl) {
-      const refPath = `/statements/P576/${matchingIdx}/references/-`;
+      const existingRefs = existingStatements[matchingIdx].references || [];
+      const refPath = existingRefs.length > 0
+        ? `/statements/P576/${matchingIdx}/references/-`
+        : `/statements/P576/${matchingIdx}/references`;
       patchOps.push({
         op: 'add',
         path: refPath,
-        value: createReference(editData.sourceUrl),
+        value: existingRefs.length > 0 ? createReference(editData.sourceUrl) : [createReference(editData.sourceUrl)],
       });
     } else {
       const newStatement = {
@@ -345,9 +356,9 @@ export async function editBuilding(
       };
 
       patchOps.push({
-        op: 'add',
-        path: '/statements/P6375/-',
-        value: newStatement,
+        op: existingStatements.length > 0 ? 'add' : 'add',
+        path: existingStatements.length > 0 ? '/statements/P6375/-' : '/statements/P6375',
+        value: existingStatements.length > 0 ? newStatement : [newStatement],
       });
     }
   }
@@ -371,8 +382,8 @@ export async function editBuilding(
 
       patchOps.push({
         op: 'add',
-        path: '/statements/P84/-',
-        value: newStatement,
+        path: existingStatements.length > 0 ? '/statements/P84/-' : '/statements/P84',
+        value: existingStatements.length > 0 ? newStatement : [newStatement],
       });
     }
   }
@@ -395,8 +406,8 @@ export async function editBuilding(
 
       patchOps.push({
         op: 'add',
-        path: '/statements/P88/-',
-        value: newStatement,
+        path: existingStatements.length > 0 ? '/statements/P88/-' : '/statements/P88',
+        value: existingStatements.length > 0 ? newStatement : [newStatement],
       });
     }
   }
@@ -436,8 +447,8 @@ export async function editBuilding(
 
       patchOps.push({
         op: 'add',
-        path: '/statements/P127/-',
-        value: newStatement,
+        path: existingStatements.length > 0 ? '/statements/P127/-' : '/statements/P127',
+        value: existingStatements.length > 0 ? newStatement : [newStatement],
       });
     }
   }
@@ -477,8 +488,8 @@ export async function editBuilding(
 
       patchOps.push({
         op: 'add',
-        path: '/statements/P466/-',
-        value: newStatement,
+        path: existingStatements.length > 0 ? '/statements/P466/-' : '/statements/P466',
+        value: existingStatements.length > 0 ? newStatement : [newStatement],
       });
     }
   }
