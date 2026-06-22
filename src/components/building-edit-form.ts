@@ -7,6 +7,9 @@ import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData } from '../services/wikidata-edit-rest';
 import './entity-search';
+import './app-button';
+import IconCheck from '~icons/mdi/check';
+import IconClose from '~icons/mdi/close';
 
 @localized()
 @customElement('building-edit-form')
@@ -669,10 +672,10 @@ export class BuildingEditForm extends LitElement {
       </div>
 
       <div class="form-footer">
-        <button class="btn-secondary" @click=${this._cancel} ?disabled=${this.saving}>
+        <app-button variant="secondary" .leadingIcon=${IconClose} @click=${this._cancel} ?disabled=${this.saving}>
           ${msg('Abbrechen')}
-        </button>
-        <button class="btn-primary" @click=${this._save} ?disabled=${this.saving}>
+        </app-button>
+        <app-button variant="primary" .leadingIcon=${IconCheck} @click=${this._save} ?disabled=${this.saving}>
           ${this.saving ? msg('Wird gespeichert …') : msg('Änderungen speichern')}
         </button>
       </div>

@@ -8,7 +8,10 @@ import { fetchOhmRelationGeometry, fetchOhmByWikidataId } from '../services/ohm'
 import type { WikidataBuilding } from '../types/building';
 import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
-import { baseStyles } from '../styles/shared';
+import { baseStyles, iconButtonStyles } from '../styles/shared';
+import './icon';
+import IconEye from '~icons/mdi/eye';
+import IconEyeOff from '~icons/mdi/eye-off';
 
 const MIN_ZOOM_FOR_BUILDINGS = 14;
 const DEBOUNCE_MS = 400;
@@ -33,6 +36,7 @@ function saveView(map: Map): void {
 export class MapView extends LitElement {
   static styles = [
     baseStyles,
+    iconButtonStyles,
     unsafeCSS(maplibreCSS),
     css`
     :host {
@@ -92,6 +96,50 @@ export class MapView extends LitElement {
       }
     }
 
+    .time-controls {
+      position: absolute;
+      bottom: var(--space-3);
+      left: var(--space-3);
+      background: var(--color-bg-primary);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      min-width: 200px;
+      z-index: var(--z-dropdown);
+    }
+
+    .time-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .time-header h4 {
+      margin: 0;
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-text-primary);
+    }
+
+    .year-input {
+      width: 80px;
+      padding: var(--space-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-size: var(--font-size-sm);
+      text-align: center;
+      font-family: inherit;
+    }
+
+    .year-slider {
+      width: 100%;
+      margin: var(--space-1) 0;
+    }
+
     .spinner {
       width: 12px;
       height: 12px;
@@ -114,6 +162,8 @@ export class MapView extends LitElement {
 
   @state() private showHint = true;
   @state() private loading = false;
+  @state() private selectedYear = new Date().getFullYear();
+  @state() private ohmLayerVisible = true;
 
   private map!: Map;
   private debounceTimer = 0;
@@ -141,6 +191,34 @@ export class MapView extends LitElement {
     return html`
       <div id="map"></div>
       <search-box @place-selected=${this._onPlaceSelected}></search-box>
+
+      <div class="time-controls">
+        <div class="time-header">
+          <h4>${msg('Historische Gebäudeumrisse')}</h4>
+          <button class="btn-icon" @click=${this._toggleOhmLayer}>
+            <domus-icon .svg=${this.ohmLayerVisible ? IconEye : IconEyeOff}></domus-icon>
+          </button>
+        </div>
+        <input
+          type="number"
+          class="year-input"
+          .valueAsNumber=${this.selectedYear}
+          @input=${this._onYearInput}
+          min="500"
+          max=${new Date().getFullYear()}
+          ?disabled=${!this.ohmLayerVisible}
+        />
+        <input
+          type="range"
+          class="year-slider"
+          .value=${String(this.selectedYear)}
+          @input=${this._onYearSlide}
+          min="500"
+          max=${new Date().getFullYear()}
+          ?disabled=${!this.ohmLayerVisible}
+        />
+      </div>
+
       <div class="zoom-hint" ?hidden=${!this.showHint}>
         ${msg('Hineinzoomen, um Gebäude zu entdecken')}
       </div>
@@ -151,8 +229,12 @@ export class MapView extends LitElement {
     `;
   }
 
-  firstUpdated() {
+  async firstUpdated() {
     const container = this.shadowRoot!.getElementById('map')!;
+
+    // Expose maplibregl to window and load dates library before creating map
+    (window as any).maplibregl = maplibregl;
+    await import('@openhistoricalmap/maplibre-gl-dates');
 
     // Check if URL has building ID - if so, don't restore saved view
     const hasUrlId = new URLSearchParams(window.location.search).has('id');
@@ -187,6 +269,12 @@ export class MapView extends LitElement {
 
     this.resizeObserver = new ResizeObserver(() => this.map?.resize());
     this.resizeObserver.observe(container);
+
+    // Force slider to sync with selectedYear value
+    const slider = this.shadowRoot!.querySelector('.year-slider') as HTMLInputElement;
+    if (slider) {
+      slider.value = this.selectedYear.toString();
+    }
   }
 
   disconnectedCallback() {
@@ -202,7 +290,7 @@ export class MapView extends LitElement {
     }
     this.ohmDebounceTimer = window.setTimeout(() => {
       this._updateOhmFootprint();
-    }, 100); // 100ms debounce to prevent duplicate queries
+    }, 500); // 500ms debounce to prevent duplicate queries
   }
 
   private async _updateOhmFootprint() {
@@ -325,6 +413,40 @@ export class MapView extends LitElement {
       this.map.getCanvas().style.cursor = '';
     });
 
+    // Add OHM historical building overlay
+    this.map.addSource('ohm-historical', {
+      type: 'vector',
+      tiles: ['https://vtiles.openhistoricalmap.org/maps/ohm/{z}/{x}/{y}.pbf'],
+    });
+
+    this.map.addLayer({
+      id: 'ohm-buildings-fill',
+      source: 'ohm-historical',
+      'source-layer': 'buildings',
+      type: 'fill',
+      minzoom: 14,
+      paint: {
+        'fill-color': '#f2c14e',
+        'fill-opacity': 0.3,
+      },
+    }, 'buildings-circle'); // Insert below Wikidata pins
+
+    this.map.addLayer({
+      id: 'ohm-buildings-outline',
+      source: 'ohm-historical',
+      'source-layer': 'buildings',
+      type: 'line',
+      minzoom: 14,
+      paint: {
+        'line-color': '#c0392b',
+        'line-width': 1,
+        'line-opacity': 0.6,
+      },
+    }, 'buildings-circle');
+
+    // Initialize date filter to current year
+    (this.map as any).filterByDate(new Date().getFullYear().toString());
+
     this._scheduleFetch();
 
     // If ohmId/wikidataId were set before map loaded, fetch now
@@ -374,6 +496,30 @@ export class MapView extends LitElement {
   private _clearBuildings() {
     const source = this.map.getSource('buildings') as GeoJSONSource | undefined;
     source?.setData({ type: 'FeatureCollection', features: [] });
+  }
+
+  private _onYearChange(year: number) {
+    this.selectedYear = year;
+    (this.map as any).filterByDate(year.toString());
+  }
+
+  private _onYearInput(e: Event) {
+    const value = parseInt((e.target as HTMLInputElement).value, 10);
+    if (!isNaN(value)) {
+      this._onYearChange(value);
+    }
+  }
+
+  private _onYearSlide(e: Event) {
+    const value = parseInt((e.target as HTMLInputElement).value, 10);
+    this._onYearChange(value);
+  }
+
+  private _toggleOhmLayer() {
+    this.ohmLayerVisible = !this.ohmLayerVisible;
+    const visibility = this.ohmLayerVisible ? 'visible' : 'none';
+    this.map.setLayoutProperty('ohm-buildings-fill', 'visibility', visibility);
+    this.map.setLayoutProperty('ohm-buildings-outline', 'visibility', visibility);
   }
 
   private _onPlaceSelected(e: CustomEvent<PlaceSelectedEvent>) {

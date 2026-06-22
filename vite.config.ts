@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { createReadStream } from 'fs';
+import Icons from 'unplugin-icons/vite';
 
 export default defineConfig({
   base: '/map/',
@@ -10,6 +11,10 @@ export default defineConfig({
     port: 5173,
   },
   plugins: [
+    Icons({
+      compiler: 'raw',
+      autoInstall: false,
+    }),
     {
       name: 'landing-page',
       configureServer(server) {

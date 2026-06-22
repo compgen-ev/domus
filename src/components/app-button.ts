@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { baseStyles } from '../styles/shared';
+import './icon';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'accent';
 
@@ -9,6 +10,10 @@ export class AppButton extends LitElement {
   static styles = [
     baseStyles,
     css`
+      :host {
+        display: inline-block;
+      }
+
       button {
         font-family: var(--font-family);
         font-size: var(--font-size-sm);
@@ -18,6 +23,10 @@ export class AppButton extends LitElement {
         border: none;
         transition: all var(--transition-fast);
         white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-2);
       }
 
       button:disabled {
@@ -73,11 +82,15 @@ export class AppButton extends LitElement {
 
   @property({ type: String }) variant: ButtonVariant = 'secondary';
   @property({ type: Boolean }) disabled = false;
+  @property() leadingIcon = '';
+  @property() trailingIcon = '';
 
   render() {
     return html`
       <button class=${this.variant} ?disabled=${this.disabled}>
+        ${this.leadingIcon ? html`<domus-icon .svg=${this.leadingIcon}></domus-icon>` : ''}
         <slot></slot>
+        ${this.trailingIcon ? html`<domus-icon .svg=${this.trailingIcon}></domus-icon>` : ''}
       </button>
     `;
   }

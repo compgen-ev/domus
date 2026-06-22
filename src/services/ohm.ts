@@ -6,52 +6,125 @@ export interface OhmFetchResult {
   elementType?: 'way' | 'relation';
 }
 
+// Cache to prevent duplicate queries
+const queryCache = new Map<string, { result: OhmFetchResult; timestamp: number }>();
+const CACHE_TTL = 300000; // 5 minutes (longer to reduce API calls)
+
+// Track in-flight requests to prevent duplicates
+const inflightRequests = new Map<string, Promise<OhmFetchResult>>();
+
+// Track last request time to avoid rate limits
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 1000; // 1 second between requests
+
 async function _fetchOhmWays(
   query: string,
   signal?: AbortSignal,
+  retryCount = 0,
 ): Promise<OhmFetchResult> {
-  const response = await fetch(OHM_OVERPASS, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ data: query }),
-    signal,
-  });
-
-  if (!response.ok) throw new Error(`OHM Overpass error: ${response.status}`);
-
-  const data = await response.json();
-  const features: GeoJSON.Feature<GeoJSON.Polygon>[] = [];
-  let firstElementId: string | undefined;
-  let firstElementType: 'way' | 'relation' | undefined;
-
-  for (const el of data.elements ?? []) {
-    if (el.type !== 'way' || !Array.isArray(el.geometry) || el.geometry.length < 3) continue;
-
-    if (!firstElementId && el.id) {
-      firstElementId = String(el.id);
-      firstElementType = el.type;
-    }
-
-    const coords: [number, number][] = el.geometry.map(
-      ({ lon, lat }: { lon: number; lat: number }) => [lon, lat],
-    );
-
-    if (coords[0][0] !== coords[coords.length - 1][0] || coords[0][1] !== coords[coords.length - 1][1]) {
-      coords.push(coords[0]);
-    }
-
-    features.push({
-      type: 'Feature',
-      geometry: { type: 'Polygon', coordinates: [coords] },
-      properties: el.tags ?? {},
-    });
+  // Check cache first
+  const cached = queryCache.get(query);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.result;
   }
 
-  return {
-    geojson: { type: 'FeatureCollection', features },
-    elementId: firstElementId,
-    elementType: firstElementType,
-  };
+  // Check if request is already in-flight
+  const inflight = inflightRequests.get(query);
+  if (inflight) {
+    return inflight;
+  }
+
+  // Make new request
+  const requestPromise = (async () => {
+    try {
+      // Rate limiting: ensure minimum interval between requests
+      const now = Date.now();
+      const timeSinceLastRequest = now - lastRequestTime;
+      if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+        await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
+      }
+      lastRequestTime = Date.now();
+
+      const response = await fetch(OHM_OVERPASS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ data: query }),
+        signal,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        if (text.includes('duplicate_query') && retryCount < 2) {
+          // Retry after 2 seconds if duplicate query (max 2 retries)
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return _fetchOhmWays(query, signal, retryCount + 1);
+        }
+        // Return empty result instead of throwing
+        console.warn('OHM Overpass error:', response.status);
+        return { geojson: { type: 'FeatureCollection' as const, features: [] } };
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text();
+        if (text.includes('duplicate_query') && retryCount < 2) {
+          // Retry after 2 seconds if duplicate query (max 2 retries)
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return _fetchOhmWays(query, signal, retryCount + 1);
+        }
+        // Return empty result instead of throwing
+        console.warn('OHM returned non-JSON response');
+        return { geojson: { type: 'FeatureCollection' as const, features: [] } };
+      }
+
+      const data = await response.json();
+      const features: GeoJSON.Feature<GeoJSON.Polygon>[] = [];
+      let firstElementId: string | undefined;
+      let firstElementType: 'way' | 'relation' | undefined;
+
+      for (const el of data.elements ?? []) {
+        if (el.type !== 'way' || !Array.isArray(el.geometry) || el.geometry.length < 3) continue;
+
+        if (!firstElementId && el.id) {
+          firstElementId = String(el.id);
+          firstElementType = el.type;
+        }
+
+        const coords: [number, number][] = el.geometry.map(
+          ({ lon, lat }: { lon: number; lat: number }) => [lon, lat],
+        );
+
+        if (coords[0][0] !== coords[coords.length - 1][0] || coords[0][1] !== coords[coords.length - 1][1]) {
+          coords.push(coords[0]);
+        }
+
+        features.push({
+          type: 'Feature',
+          geometry: { type: 'Polygon', coordinates: [coords] },
+          properties: el.tags ?? {},
+        });
+      }
+
+      const result: OhmFetchResult = {
+        geojson: { type: 'FeatureCollection', features },
+        elementId: firstElementId,
+        elementType: firstElementType,
+      };
+
+      // Cache the result
+      queryCache.set(query, { result, timestamp: Date.now() });
+
+      return result;
+    } finally {
+      // Clean up in-flight tracking
+      inflightRequests.delete(query);
+    }
+  })();
+
+  // Track in-flight request
+  inflightRequests.set(query, requestPromise);
+
+  return requestPromise;
 }
 
 export function fetchOhmRelationGeometry(

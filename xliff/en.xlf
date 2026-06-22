@@ -30,10 +30,6 @@
   <source>Keine Ergebnisse</source>
   <target>No results found</target>
 </trans-unit>
-<trans-unit id="s3ef78d4ae86b5cf0">
-  <source>Abgerissen <x id="0" equiv-text="${demoDate}"/></source>
-  <target>Demolished <x id="0" equiv-text="${demoYear}"/></target>
-</trans-unit>
 <trans-unit id="sba7fb5a6fce4db8e">
   <source>Adressgeschichte</source>
   <target>Address history</target>
@@ -165,12 +161,6 @@
 <trans-unit id="sa18c90603ced585a">
   <source>Abgerissen</source>
 </trans-unit>
-<trans-unit id="s17d17e75fbaef51b">
-  <source>Hinzufügen</source>
-</trans-unit>
-<trans-unit id="s4e287322844a54e9">
-  <source>Ereignisse</source>
-</trans-unit>
 <trans-unit id="s3e0e43ed02917d0b">
   <source>Externe Links</source>
 </trans-unit>
@@ -207,9 +197,6 @@
 <trans-unit id="seee4a895389c5cfc">
   <source>Änderungen speichern</source>
 </trans-unit>
-<trans-unit id="s9ea3cac85e289524">
-  <source>Erbaut <x id="0" equiv-text="${builtDate}"/></source>
-</trans-unit>
 <trans-unit id="sf02e2d7a0a9611f0">
   <source>Bearbeiten</source>
 </trans-unit>
@@ -225,6 +212,64 @@
 <trans-unit id="s1f94e54a994bcb76">
   <source>Wird gespeichert …</source>
   <target>Saving…</target>
+</trans-unit>
+<trans-unit id="sdd2fffdf86bf5b6e">
+  <source>Adresse</source>
+</trans-unit>
+<trans-unit id="s2e851189b5d5b49c">
+  <source>Vorhandene Adressen:</source>
+</trans-unit>
+<trans-unit id="s7c842920a95bea8b">
+  <source>Neue Adresse hinzufügen</source>
+</trans-unit>
+<trans-unit id="scbaad7cb92d976de">
+  <source>z.B. Hauptstraße 1</source>
+</trans-unit>
+<trans-unit id="s253734ba1b55ec6a">
+  <source>Personen &amp; Organisationen</source>
+</trans-unit>
+<trans-unit id="s1ea560920126358a">
+  <source>Architekt hinzufügen</source>
+</trans-unit>
+<trans-unit id="s8af2ab4802b8c144">
+  <source>Vorhanden:</source>
+</trans-unit>
+<trans-unit id="s756467ff6afe4c0a">
+  <source>Architekt suchen...</source>
+</trans-unit>
+<trans-unit id="s34e707c2d08bf111">
+  <source>Ausgewählt:</source>
+</trans-unit>
+<trans-unit id="s1a676eb2d93fa8ce">
+  <source>Bauherr hinzufügen</source>
+</trans-unit>
+<trans-unit id="s48de8c411895b72e">
+  <source>Bauherr suchen...</source>
+</trans-unit>
+<trans-unit id="s380ee530795a3a5d">
+  <source>Eigentümer hinzufügen</source>
+</trans-unit>
+<trans-unit id="s41a77760f1c521d3">
+  <source>Eigentümer suchen...</source>
+</trans-unit>
+<trans-unit id="s9c9cc0691b173b67">
+  <source>Bewohner hinzufügen</source>
+</trans-unit>
+<trans-unit id="sb4fb68ccc3313efd">
+  <source>Bewohner suchen...</source>
+</trans-unit>
+<trans-unit id="sc6ee87eab40e3b62">
+  <source>Änderungen gespeichert</source>
+</trans-unit>
+<trans-unit id="s504d90b92c9eeb35">
+  <source>Daten</source>
+</trans-unit>
+<trans-unit id="sac9be1f986270f06">
+  <source>Suche läuft...</source>
+</trans-unit>
+<trans-unit id="sceb7f9cb34dc85bc">
+  <source>Historische Gebäudeumrisse</source>
+  <target>Historical Building Outlines</target>
 </trans-unit>
 </body>
 </file>

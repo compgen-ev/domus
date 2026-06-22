@@ -103,6 +103,10 @@ export const designTokens = css`
 
     /* ── Component Tokens ────────────────────────────────────────────────── */
 
+    /* Icon buttons */
+    --icon-button-color: var(--color-text-muted);
+    --icon-button-color-hover: var(--color-text-secondary);
+
     /* App bar */
     --appbar-height: 44px;
 
@@ -125,6 +129,10 @@ export const buttonStyles = css`
     transition: all var(--transition-fast);
     border: none;
     font-weight: var(--font-weight-medium);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
   }
 
   button:disabled {

@@ -9,6 +9,14 @@ import { login } from '../services/wikimedia-auth';
 import { formatDate } from '../utils/dates';
 import './building-edit-form';
 import './app-button';
+import './icon';
+import IconClose from '~icons/mdi/close';
+import IconPencil from '~icons/mdi/pencil';
+import IconLogin from '~icons/mdi/login';
+import IconArrowRight from '~icons/mdi/arrow-right';
+import IconOpenInNew from '~icons/mdi/open-in-new';
+import IconContentCopy from '~icons/mdi/content-copy';
+import IconCheck from '~icons/mdi/check';
 
 function extractYear(iso: string): string {
   return iso.match(/^[+-]?(\d{1,4})/)?.[1] ?? '';
@@ -256,6 +264,9 @@ export class BuildingPanel extends LitElement {
         border-radius: var(--radius-md);
         background: transparent;
         transition: all var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
       }
 
       .footer-tertiary a:hover {
@@ -263,40 +274,8 @@ export class BuildingPanel extends LitElement {
         color: white;
       }
 
-      /* Primary action */
-      button.detail-btn {
+      .footer-primary app-button {
         flex: 1;
-        background: var(--color-accent);
-        color: var(--color-primary);
-        border: none;
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-semibold);
-        padding: var(--space-3) var(--space-4);
-        border-radius: var(--radius-md);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-      }
-
-      button.detail-btn:hover {
-        background: var(--color-accent-dark);
-      }
-
-      /* Secondary action */
-      button.action-btn {
-        flex: 1;
-        color: white;
-        background: var(--color-primary);
-        border: none;
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-semibold);
-        padding: var(--space-3) var(--space-4);
-        border-radius: var(--radius-md);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-      }
-
-      button.action-btn:hover {
-        background: var(--color-primary-hover);
       }
     `,
   ];
@@ -442,7 +421,9 @@ export class BuildingPanel extends LitElement {
             <h2>${label}</h2>
             ${type ? html`<p class="type-label">${type.label}</p>` : ''}
           </div>
-          <button class="close-btn" @click=${this._close} aria-label=${msg('Schließen')}>✕</button>
+          <button class="close-btn" @click=${this._close} aria-label=${msg('Schließen')}>
+            <domus-icon .svg=${IconClose}></domus-icon>
+          </button>
         </div>
 
         <div class="body">
@@ -497,30 +478,39 @@ export class BuildingPanel extends LitElement {
 
         <div class="footer">
           <div class="footer-primary">
-            <button class="detail-btn" @click=${this._showDetail}>
-              ${msg('Vollständige Details')} →
-            </button>
-            ${this.authenticated ? html`
-              <button class="action-btn" @click=${this._edit}>${msg('Bearbeiten')}</button>
-            ` : html`
-              <button class="action-btn" @click=${this._login}>${msg('Anmelden')}</button>
-            `}
+            <app-button variant="accent" .trailingIcon=${IconArrowRight} @click=${this._showDetail}>
+            ${msg('Vollständige Details')}
+          </app-button>
+          ${this.authenticated ? html`
+            <app-button variant="primary" .leadingIcon=${IconPencil} @click=${this._edit}>
+              ${msg('Bearbeiten')}
+            </app-button>
+          ` : html`
+            <app-button variant="primary" .leadingIcon=${IconLogin} @click=${this._login}>
+              ${msg('Anmelden')}
+            </app-button>
+          `}
           </div>
           <div class="footer-tertiary">
             <a href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
-              Wikidata ↗
+              Wikidata
+              <domus-icon .svg=${IconOpenInNew}></domus-icon>
             </a>
             ${detail?.ohmId || (this.hasOhmFootprint && this.ohmElementId) ? html`
               <a href=${detail?.ohmId
                 ? `https://www.openhistoricalmap.org/relation/${detail.ohmId}`
                 : `https://www.openhistoricalmap.org/${this.ohmElementType}/${this.ohmElementId}`}
                 target="_blank" rel="noopener">
-                OpenHistoricalMap ↗
+                OpenHistoricalMap
+                <domus-icon .svg=${IconOpenInNew}></domus-icon>
               </a>
             ` : ''}
-            <a href="#" @click=${(e: Event) => { e.preventDefault(); this._copyLink(); }}>
+            <app-button
+              variant="outline"
+              .trailingIcon=${this.linkCopied ? IconCheck : IconContentCopy}
+              @click=${this._copyLink}>
               ${this.linkCopied ? msg('Kopiert!') : msg('Link kopieren')}
-            </a>
+            </app-button>
           </div>
         </div>
       </div>

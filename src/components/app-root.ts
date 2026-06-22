@@ -9,6 +9,9 @@ import './map-view';
 import './building-panel';
 import './building-page';
 import './app-toast';
+import './app-button';
+import IconLogin from '~icons/mdi/login';
+import IconLogout from '~icons/mdi/logout';
 
 @localized()
 @customElement('app-root')
@@ -80,35 +83,6 @@ export class AppRoot extends LitElement {
       gap: var(--space-3);
     }
 
-    .sign-in-btn {
-      background: var(--color-primary);
-      color: white;
-      padding: var(--space-2) var(--space-4);
-      border-radius: var(--radius-md);
-      font-size: var(--font-size-sm);
-      white-space: nowrap;
-      transition: background var(--transition-fast);
-    }
-
-    .sign-in-btn:hover {
-      background: var(--color-primary-hover);
-    }
-
-    .sign-out-btn {
-      background: transparent;
-      border: 1px solid var(--color-border);
-      color: var(--color-text-tertiary);
-      padding: var(--space-2) var(--space-3);
-      border-radius: var(--radius-sm);
-      font-size: var(--font-size-sm);
-      white-space: nowrap;
-      transition: all var(--transition-fast);
-    }
-
-    .sign-out-btn:hover {
-      background: var(--color-bg-secondary);
-      border-color: var(--color-text-muted);
-    }
 
     map-view {
       flex: 1;
@@ -266,9 +240,13 @@ export class AppRoot extends LitElement {
         <a href="/"><img src="/map/logo.svg" alt="">Domus</a>
         <div class="auth-section">
           ${this.authenticated ? html`
-            <button class="sign-out-btn" @click=${this._onLogout}>${msg('Abmelden')}</button>
+            <app-button variant="secondary" .leadingIcon=${IconLogout} @click=${this._onLogout}>
+              ${msg('Abmelden')}
+            </app-button>
           ` : html`
-            <button class="sign-in-btn" @click=${this._onLogin}>${msg('Anmelden')}</button>
+            <app-button variant="primary" .leadingIcon=${IconLogin} @click=${this._onLogin}>
+              ${msg('Anmelden')}
+            </app-button>
           `}
         </div>
       </div>

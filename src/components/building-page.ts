@@ -8,6 +8,12 @@ import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import { formatDate } from '../utils/dates';
 import './building-edit-form';
 import './app-button';
+import './icon';
+import IconArrowLeft from '~icons/mdi/arrow-left';
+import IconPencil from '~icons/mdi/pencil';
+import IconOpenInNew from '~icons/mdi/open-in-new';
+import IconContentCopy from '~icons/mdi/content-copy';
+import IconCheck from '~icons/mdi/check';
 
 function extractYear(iso: string): string {
   return iso.match(/^[+-]?(\d{1,4})/)?.[1] ?? '';
@@ -180,6 +186,9 @@ export class BuildingPage extends LitElement {
         border-radius: var(--radius-md);
         background: transparent;
         transition: all var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
       }
 
       a.ext-link:hover {
@@ -187,38 +196,8 @@ export class BuildingPage extends LitElement {
         color: white;
       }
 
-      .back-btn {
-        background: transparent;
-        color: var(--color-primary);
-        border: 1px solid var(--color-primary);
-        cursor: pointer;
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-medium);
-        padding: var(--space-2) var(--space-4);
-        border-radius: var(--radius-md);
+      .content > app-button {
         margin-bottom: var(--space-6);
-        display: inline-block;
-        transition: all var(--transition-fast);
-      }
-
-      .back-btn:hover {
-        background: var(--color-primary);
-        color: white;
-      }
-
-      .edit-btn {
-        background: var(--color-primary);
-        color: white;
-        border: none;
-        cursor: pointer;
-        font-size: var(--font-size-sm);
-        padding: var(--space-2) var(--space-4);
-        border-radius: var(--radius-md);
-        transition: background var(--transition-fast);
-      }
-
-      .edit-btn:hover {
-        background: var(--color-primary-hover);
       }
 
       .edit-wrapper {
@@ -353,7 +332,9 @@ export class BuildingPage extends LitElement {
       `) : ''}
 
       <div class="content">
-        <button class="back-btn" @click=${this._backToMap}>← ${msg('Zur Karte')}</button>
+        <app-button variant="secondary" .leadingIcon=${IconArrowLeft} @click=${this._backToMap}>
+          ${msg('Zur Karte')}
+        </app-button>
         ${detail?.heritages && detail.heritages.length > 0 ? html`
           <div class="badges">
             ${detail.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}
@@ -413,21 +394,28 @@ export class BuildingPage extends LitElement {
 
         <div class="footer">
           <a class="ext-link" href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
-            Wikidata ↗
+            Wikidata
+            <domus-icon .svg=${IconOpenInNew}></domus-icon>
           </a>
           ${detail?.ohmId || (this.hasOhmFootprint && this.ohmElementId) ? html`
             <a class="ext-link" href=${detail?.ohmId
               ? `https://www.openhistoricalmap.org/relation/${detail.ohmId}`
               : `https://www.openhistoricalmap.org/${this.ohmElementType}/${this.ohmElementId}`}
               target="_blank" rel="noopener">
-              OpenHistoricalMap ↗
+              OpenHistoricalMap
+              <domus-icon .svg=${IconOpenInNew}></domus-icon>
             </a>
           ` : ''}
-          <app-button variant="outline" @click=${this._copyLink}>
+          <app-button
+            variant="outline"
+            .trailingIcon=${this.linkCopied ? IconCheck : IconContentCopy}
+            @click=${this._copyLink}>
             ${this.linkCopied ? msg('Kopiert!') : msg('Link kopieren')}
           </app-button>
           ${this.authenticated ? html`
-            <button class="edit-btn" @click=${this._edit}>${msg('Bearbeiten')}</button>
+            <app-button variant="primary" .leadingIcon=${IconPencil} @click=${this._edit}>
+              ${msg('Bearbeiten')}
+            </app-button>
           ` : ''}
         </div>
       </div>
