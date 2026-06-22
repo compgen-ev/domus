@@ -300,6 +300,7 @@ export class BuildingEditForm extends LitElement {
   @state() private sourceType: 'url' | 'archive' = 'url';
   @state() private sourceUrl = '';
   @state() private formLabel = '';
+  @state() private formAliases = '';
   @state() private formType: WikidataItem | undefined;
   @state() private formInception = '';
   @state() private formDemolished = '';
@@ -416,6 +417,7 @@ export class BuildingEditForm extends LitElement {
     const editData: BuildingEditData = {
       id: this.building.id,
       label: this.formLabel !== this.building.label ? this.formLabel : undefined,
+      aliases: this.formAliases || undefined,
       type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
       inception: this.formInception !== this.building.inception ? this.formInception : undefined,
       demolished: this.formDemolished !== this.detail?.demolished ? this.formDemolished : undefined,
@@ -508,6 +510,18 @@ export class BuildingEditForm extends LitElement {
               .value=${this.formLabel}
               @input=${(e: Event) => this.formLabel = (e.target as HTMLInputElement).value}
               ?disabled=${this.saving}>
+          </div>
+          <div class="field-group">
+            <label>${msg('Alternative Namen')}</label>
+            <input
+              type="text"
+              placeholder="${msg('z.B. Müllerhof, Alte Schmiede')}"
+              .value=${this.formAliases}
+              @input=${(e: Event) => this.formAliases = (e.target as HTMLInputElement).value}
+              ?disabled=${this.saving}>
+            <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--space-1);">
+              ${msg('Mehrere Namen durch Komma trennen')}
+            </div>
           </div>
           <div class="field-group">
             <label>${msg('Typ')}</label>

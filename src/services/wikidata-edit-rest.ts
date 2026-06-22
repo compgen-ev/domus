@@ -19,6 +19,7 @@ const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
 export interface BuildingEditData {
   id: string;
   label?: string;
+  aliases?: string;
   type?: WikidataItem;
   inception?: string;
   demolished?: string;
@@ -187,6 +188,23 @@ export async function editBuilding(
       path: '/labels/de',
       value: { language: 'de', value: editData.label },
     });
+  }
+
+  // Update aliases if provided
+  if (editData.aliases !== undefined) {
+    const aliasArray = editData.aliases
+      .split(',')
+      .map(a => a.trim())
+      .filter(a => a.length > 0)
+      .map(a => ({ language: 'de', value: a }));
+
+    if (aliasArray.length > 0) {
+      patchOps.push({
+        op: 'replace',
+        path: '/aliases/de',
+        value: aliasArray,
+      });
+    }
   }
 
   // Update statements
