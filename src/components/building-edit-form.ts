@@ -23,6 +23,9 @@ export class BuildingEditForm extends LitElement {
         display: block;
         height: 100%;
         overflow-y: auto;
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
       }
 
       .form-header {
@@ -32,6 +35,7 @@ export class BuildingEditForm extends LitElement {
         top: 0;
         background: var(--color-bg-primary);
         z-index: var(--z-sticky);
+        box-sizing: border-box;
       }
 
       .form-title {
@@ -110,6 +114,7 @@ export class BuildingEditForm extends LitElement {
 
       .form-body {
         padding: var(--space-4);
+        box-sizing: border-box;
       }
 
       .section {
@@ -157,6 +162,7 @@ export class BuildingEditForm extends LitElement {
         padding: var(--space-2);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
+        box-sizing: border-box;
         font-family: inherit;
         font-size: var(--font-size-sm);
         color: var(--color-text-primary);
@@ -227,6 +233,7 @@ export class BuildingEditForm extends LitElement {
         padding: var(--space-4);
         display: flex;
         gap: var(--space-3);
+        box-sizing: border-box;
       }
 
       .btn-primary {

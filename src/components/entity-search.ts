@@ -16,6 +16,9 @@ export class EntitySearch extends LitElement {
       :host {
         display: block;
         position: relative;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
       }
 
       .search-results {
@@ -82,6 +85,7 @@ export class EntitySearch extends LitElement {
 
       input {
         width: 100%;
+        box-sizing: border-box;
       }
     `,
   ];

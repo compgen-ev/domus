@@ -204,6 +204,8 @@ export class BuildingPage extends LitElement {
         max-width: 680px;
         margin: 0 auto;
         padding: 1rem;
+        box-sizing: border-box;
+        width: 100%;
       }
     `,
   ];
