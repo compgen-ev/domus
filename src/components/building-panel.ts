@@ -5,7 +5,6 @@ import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
-import { login } from '../services/wikimedia-auth';
 import { formatDate } from '../utils/dates';
 import './building-edit-form';
 import './app-button';
@@ -321,7 +320,7 @@ export class BuildingPanel extends LitElement {
   }
 
   private _login() {
-    login(); // Redirects to OAuth, never resolves
+    this.dispatchEvent(new CustomEvent('login', { bubbles: true, composed: true }));
   }
 
   private _edit() {

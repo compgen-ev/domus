@@ -299,6 +299,34 @@
   <source>Deine Änderungen sind möglicherweise noch nicht sichtbar.</source>
   <target>Your changes may not be visible yet.</target>
 </trans-unit>
+<trans-unit id="s81f7eb3f96445263">
+  <source>Mit Wikidata-Konto anmelden</source>
+  <target>Log in with Wikidata account</target>
+</trans-unit>
+<trans-unit id="s3fd6fd0b105f3f2c">
+  <source>Änderungen öffentlich unter deinem Benutzernamen</source>
+  <target>Edits published publicly under your username</target>
+</trans-unit>
+<trans-unit id="s9498927654b04ad5">
+  <source>Gemeinfrei lizenziert (CC0)</source>
+  <target>Licensed as public domain (CC0)</target>
+</trans-unit>
+<trans-unit id="s2e98912a34a4cb8b">
+  <source>Bitte</source>
+  <target>Please</target>
+</trans-unit>
+<trans-unit id="s39f235db8774bdf9">
+  <source>Nutzungsbedingungen</source>
+  <target>Terms of Use</target>
+</trans-unit>
+<trans-unit id="s3d91a679dc7ccd77">
+  <source>beachten</source>
+  <target>review</target>
+</trans-unit>
+<trans-unit id="s3423c77b904b71a8">
+  <source>Fortfahren</source>
+  <target>Continue</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -11,6 +11,7 @@ import './building-panel';
 import './building-page';
 import './app-toast';
 import './app-button';
+import './login-notice';
 import IconLogin from '~icons/mdi/login';
 import IconLogout from '~icons/mdi/logout';
 
@@ -101,6 +102,7 @@ export class AppRoot extends LitElement {
   @state() private ohmElementId: string | undefined;
   @state() private ohmElementType: 'way' | 'relation' | undefined;
   @state() private authenticated = false;
+  @state() private showLoginNotice = false;
 
   private detailController: AbortController | null = null;
 
@@ -225,7 +227,16 @@ export class AppRoot extends LitElement {
   }
 
   private _onLogin() {
+    this.showLoginNotice = true;
+  }
+
+  private _onLoginConfirm() {
+    this.showLoginNotice = false;
     login(); // Redirects, never resolves
+  }
+
+  private _onLoginCancel() {
+    this.showLoginNotice = false;
   }
 
   private _onLogout() {
@@ -317,6 +328,7 @@ export class AppRoot extends LitElement {
             .authenticated=${this.authenticated}
             @close=${this._onPanelClose}
             @show-detail=${this._onShowDetail}
+            @login=${this._onLogin}
             @logout=${this._onLogout}
             @save-success-refresh=${this._onSaveSuccessRefresh}
             @show-toast=${this._onShowToast}
@@ -324,6 +336,11 @@ export class AppRoot extends LitElement {
           ></building-panel>
         `}
       <app-toast></app-toast>
+      <login-notice
+        ?open=${this.showLoginNotice}
+        @confirm=${this._onLoginConfirm}
+        @cancel=${this._onLoginCancel}
+      ></login-notice>
     `;
   }
 }
