@@ -218,6 +218,10 @@ export class AppRoot extends LitElement {
 
   private _onBackToMap() {
     this.view = 'map';
+    // Clear the URL parameter when going back to map
+    const url = new URL(window.location.href);
+    url.searchParams.delete('id');
+    window.history.pushState({}, '', url);
   }
 
   private _onSaveSuccessRefresh() {

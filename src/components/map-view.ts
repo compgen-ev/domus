@@ -258,7 +258,7 @@ export class MapView extends LitElement {
       }),
       'bottom-right',
     );
-    this.map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    this.map.addControl(new maplibregl.NavigationControl(), 'top-right');
     this.map.addControl(new maplibregl.GeolocateControl({
       positionOptions: { enableHighAccuracy: true },
       trackUserLocation: true,
