@@ -291,6 +291,14 @@
   <source>Alternative Namen</source>
   <target>Alternative names</target>
 </trans-unit>
+<trans-unit id="sf602e3f149e6a6ce">
+  <source>Aktualisieren</source>
+  <target>Refresh</target>
+</trans-unit>
+<trans-unit id="s38345f0643595962">
+  <source>Deine Änderungen sind möglicherweise noch nicht sichtbar.</source>
+  <target>Your changes may not be visible yet.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -18,6 +18,7 @@ interface SparqlResult {
       coord?: SparqlBinding;
       image?: SparqlBinding;
       inception?: SparqlBinding;
+      modified?: SparqlBinding;
     }>;
   };
 }
@@ -27,7 +28,7 @@ function buildQuery(west: number, south: number, east: number, north: number): s
   const fallback = locale === 'en' ? 'de' : 'en';
   const langs = `${locale},${fallback},mul`;
   return `
-SELECT ?item ?itemLabel ?type ?typeLabel ?coord ?image ?inception WHERE {
+SELECT ?item ?itemLabel ?type ?typeLabel ?coord ?image ?inception ?modified WHERE {
   SERVICE wikibase:box {
     ?item wdt:P625 ?coord .
     bd:serviceParam wikibase:cornerSouthWest "Point(${west} ${south})"^^geo:wktLiteral .
@@ -37,6 +38,7 @@ SELECT ?item ?itemLabel ?type ?typeLabel ?coord ?image ?inception WHERE {
   OPTIONAL { ?item wdt:P31 ?type . }
   OPTIONAL { ?item wdt:P18 ?image . }
   OPTIONAL { ?item wdt:P571 ?inception . }
+  OPTIONAL { ?item schema:dateModified ?modified . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }
 LIMIT 200`;
@@ -96,6 +98,7 @@ export async function fetchBuildings(
       lng: coords.lng,
       image: row.image?.value,
       inception: row.inception?.value,
+      modified: row.modified?.value,
     });
   }
 
@@ -110,6 +113,7 @@ SELECT ?demolished ?heritage ?heritageLabel
   ?address ?addrStart ?addrEnd
   ?architect ?architectLabel
   ?commissioned ?commissionedLabel
+  ?modified
 WHERE {
   BIND(wd:${id} AS ?item)
   OPTIONAL { ?item wdt:P576 ?demolished . }
@@ -144,6 +148,7 @@ WHERE {
     ?commStmt ps:P88 ?commissioned .
   }
   OPTIONAL { ?item wdt:P8424 ?ohmId . }
+  OPTIONAL { ?item schema:dateModified ?modified . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }`;
 }
@@ -168,6 +173,7 @@ interface DetailBinding {
   commissioned?: SparqlBinding;
   commissionedLabel?: SparqlBinding;
   ohmId?: SparqlBinding;
+  modified?: SparqlBinding;
 }
 
 export async function fetchBuildingById(
@@ -179,12 +185,13 @@ export async function fetchBuildingById(
   const langs = `${locale},${fallback},mul`;
 
   const query = `
-SELECT ?itemLabel ?type ?typeLabel ?coord ?image ?inception WHERE {
+SELECT ?itemLabel ?type ?typeLabel ?coord ?image ?inception ?modified WHERE {
   BIND(wd:${id} AS ?item)
   OPTIONAL { ?item wdt:P625 ?coord . }
   OPTIONAL { ?item wdt:P31 ?type . }
   OPTIONAL { ?item wdt:P18 ?image . }
   OPTIONAL { ?item wdt:P571 ?inception . }
+  OPTIONAL { ?item schema:dateModified ?modified . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }
 LIMIT 1`;
@@ -211,6 +218,7 @@ LIMIT 1`;
     lng: coords?.lng ?? 0,
     image: row.image?.value,
     inception: row.inception?.value,
+    modified: row.modified?.value,
   };
 }
 
@@ -237,6 +245,7 @@ export async function fetchBuildingDetail(
 
   let demolished: string | undefined;
   let ohmId: string | undefined;
+  let modified: string | undefined;
   const heritageSet = new Set<string>();
   const occupants = new Map<string, PersonRef>();
   const owners = new Map<string, PersonRef>();
@@ -247,6 +256,7 @@ export async function fetchBuildingDetail(
   for (const row of rows) {
     if (row.demolished && !demolished) demolished = row.demolished.value;
     if (row.ohmId && !ohmId) ohmId = row.ohmId.value;
+    if (row.modified && !modified) modified = row.modified.value;
     if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
 
     if (row.occupant) {
@@ -315,6 +325,7 @@ export async function fetchBuildingDetail(
   return {
     demolished,
     ohmId,
+    modified,
     heritages: [...heritageSet],
     architects: [...architects.values()],
     commissionedBy: [...commissionedBy.values()],

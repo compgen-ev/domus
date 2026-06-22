@@ -9,6 +9,7 @@ import { formatDate } from '../utils/dates';
 import './building-edit-form';
 import './app-button';
 import './icon';
+import './stale-banner';
 import IconArrowLeft from '~icons/mdi/arrow-left';
 import IconPencil from '~icons/mdi/pencil';
 import IconOpenInNew from '~icons/mdi/open-in-new';
@@ -61,6 +62,12 @@ export class BuildingPage extends LitElement {
         max-width: var(--content-max-width);
         margin: 0 auto;
         padding: var(--space-6) var(--space-5) var(--space-12);
+      }
+
+      stale-banner {
+        margin: var(--space-4) calc(var(--space-5) * -1) var(--space-6);
+        border: 1px solid var(--color-warning-border, #ffd699);
+        border-radius: var(--radius-md);
       }
 
       .badges {
@@ -213,6 +220,7 @@ export class BuildingPage extends LitElement {
   @property({ attribute: false }) building: WikidataBuilding | null = null;
   @property({ attribute: false }) detail: BuildingDetail | null = null;
   @property({ attribute: false }) detailLoading = false;
+  @property({ attribute: false }) dataIsStale = false;
   @property({ attribute: false }) hasOhmFootprint = false;
   @property({ attribute: false }) ohmElementId: string | undefined;
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
@@ -232,6 +240,10 @@ export class BuildingPage extends LitElement {
 
   private _backToMap() {
     this.dispatchEvent(new CustomEvent('back-to-map', { bubbles: true, composed: true }));
+  }
+
+  private _refresh() {
+    this.dispatchEvent(new CustomEvent('refresh', { bubbles: true, composed: true }));
   }
 
   private _edit() {
@@ -337,6 +349,9 @@ export class BuildingPage extends LitElement {
         <app-button variant="secondary" .leadingIcon=${IconArrowLeft} @click=${this._backToMap}>
           ${msg('Zur Karte')}
         </app-button>
+
+        ${this.dataIsStale ? html`<stale-banner @refresh=${this._refresh}></stale-banner>` : ''}
+
         ${detail?.heritages && detail.heritages.length > 0 ? html`
           <div class="badges">
             ${detail.heritages.map((h) => html`<span class="badge badge-heritage">${h}</span>`)}

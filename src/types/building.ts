@@ -11,6 +11,7 @@ export interface WikidataBuilding {
   lng: number;
   image?: string;
   inception?: string;
+  modified?: string;
 }
 
 export type BuildingFeatureProperties = Omit<WikidataBuilding, 'lat' | 'lng'>;
@@ -37,4 +38,5 @@ export interface BuildingDetail {
   owners: PersonRef[];
   addresses: AddressEntry[];
   ohmId?: string;
+  modified?: string;
 }

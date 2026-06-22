@@ -10,6 +10,7 @@ import { formatDate } from '../utils/dates';
 import './building-edit-form';
 import './app-button';
 import './icon';
+import './stale-banner';
 import IconClose from '~icons/mdi/close';
 import IconPencil from '~icons/mdi/pencil';
 import IconLogin from '~icons/mdi/login';
@@ -151,6 +152,11 @@ export class BuildingPanel extends LitElement {
         color: var(--color-text-primary);
       }
 
+      stale-banner {
+        border-top: 1px solid var(--color-warning-border, #ffd699);
+        border-bottom: 1px solid var(--color-warning-border, #ffd699);
+      }
+
       .body {
         padding: var(--space-5) var(--space-4);
         flex: 1;
@@ -283,6 +289,7 @@ export class BuildingPanel extends LitElement {
   @property({ attribute: false }) building: WikidataBuilding | null = null;
   @property({ attribute: false }) detail: BuildingDetail | null = null;
   @property({ attribute: false }) detailLoading = false;
+  @property({ attribute: false }) dataIsStale = false;
   @property({ attribute: false }) hasOhmFootprint = false;
   @property({ attribute: false }) ohmElementId: string | undefined;
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
@@ -303,6 +310,10 @@ export class BuildingPanel extends LitElement {
 
   private _close() {
     this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+  }
+
+  private _refresh() {
+    this.dispatchEvent(new CustomEvent('refresh', { bubbles: true, composed: true }));
   }
 
   private _showDetail() {
@@ -425,6 +436,8 @@ export class BuildingPanel extends LitElement {
             <domus-icon .svg=${IconClose}></domus-icon>
           </button>
         </div>
+
+        ${this.dataIsStale ? html`<stale-banner @refresh=${this._refresh}></stale-banner>` : ''}
 
         <div class="body">
           ${detailLoading ? html`

@@ -5,6 +5,7 @@ import { designTokens, buttonStyles } from '../styles/design-tokens';
 import type { WikidataBuilding, BuildingDetail } from '../types/building';
 import { fetchBuildingById, fetchBuildingDetail } from '../services/wikidata';
 import { handleOAuthCallback, isAuthenticated, logout, login } from '../services/wikimedia-auth';
+import { cleanupExpired, isStale, clearEdit, scheduleRefreshes } from '../services/edit-tracker';
 import './map-view';
 import './building-panel';
 import './building-page';
@@ -94,6 +95,7 @@ export class AppRoot extends LitElement {
   @state() private selectedBuilding: WikidataBuilding | null = null;
   @state() private buildingDetail: BuildingDetail | null = null;
   @state() private detailLoading = false;
+  @state() private dataIsStale = false;
   @state() private view: 'map' | 'detail' = 'map';
   @state() private hasOhmFootprint = false;
   @state() private ohmElementId: string | undefined;
@@ -105,6 +107,9 @@ export class AppRoot extends LitElement {
   async connectedCallback() {
     super.connectedCallback();
     window.addEventListener('popstate', this._onPopState);
+
+    // Clean up expired edit timestamps
+    cleanupExpired();
 
     // Handle OAuth callback
     try {
@@ -152,6 +157,7 @@ export class AppRoot extends LitElement {
       const building = await fetchBuildingById(id);
       if (building) {
         this.selectedBuilding = building;
+        this._checkStaleness(id, building.modified);
         this._fetchDetail(id);
       }
     } catch (err) {
@@ -168,6 +174,7 @@ export class AppRoot extends LitElement {
     this.detailLoading = true;
     fetchBuildingDetail(id, this.detailController.signal).then((detail) => {
       this.buildingDetail = detail;
+      this._checkStaleness(id, detail.modified);
     }).catch((err) => {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('Detail fetch failed:', err);
@@ -175,6 +182,20 @@ export class AppRoot extends LitElement {
     }).finally(() => {
       this.detailLoading = false;
     });
+  }
+
+  private _checkStaleness(id: string, modified?: string) {
+    this.dataIsStale = isStale(id, modified);
+    // Clear edit timestamp if data is fresh
+    if (!this.dataIsStale) {
+      clearEdit(id);
+    }
+  }
+
+  private async _refreshBuilding() {
+    if (this.selectedBuilding) {
+      await this._loadBuildingById(this.selectedBuilding.id);
+    }
   }
 
   private _onBuildingSelected(e: CustomEvent<WikidataBuilding>) {
@@ -227,7 +248,15 @@ export class AppRoot extends LitElement {
   private _onSaveSuccessRefresh() {
     // Re-fetch building data after successful edit
     if (this.selectedBuilding) {
-      this._loadBuildingById(this.selectedBuilding.id);
+      const id = this.selectedBuilding.id;
+      this._loadBuildingById(id);
+
+      // Schedule auto-refreshes with backoff (5s, 10s, 15s, 30s, 60s)
+      scheduleRefreshes(
+        id,
+        () => this._refreshBuilding(),
+        () => this.dataIsStale
+      );
     }
   }
 
@@ -259,6 +288,7 @@ export class AppRoot extends LitElement {
             .building=${this.selectedBuilding}
             .detail=${this.buildingDetail}
             .detailLoading=${this.detailLoading}
+            .dataIsStale=${this.dataIsStale}
             .hasOhmFootprint=${this.hasOhmFootprint}
             .ohmElementId=${this.ohmElementId}
             .ohmElementType=${this.ohmElementType}
@@ -266,6 +296,7 @@ export class AppRoot extends LitElement {
             @back-to-map=${this._onBackToMap}
             @save-success-refresh=${this._onSaveSuccessRefresh}
             @show-toast=${this._onShowToast}
+            @refresh=${this._refreshBuilding}
           ></building-page>`
         : html`
           <map-view
@@ -279,6 +310,7 @@ export class AppRoot extends LitElement {
             .building=${this.selectedBuilding}
             .detail=${this.buildingDetail}
             .detailLoading=${this.detailLoading}
+            .dataIsStale=${this.dataIsStale}
             .hasOhmFootprint=${this.hasOhmFootprint}
             .ohmElementId=${this.ohmElementId}
             .ohmElementType=${this.ohmElementType}
@@ -288,6 +320,7 @@ export class AppRoot extends LitElement {
             @logout=${this._onLogout}
             @save-success-refresh=${this._onSaveSuccessRefresh}
             @show-toast=${this._onShowToast}
+            @refresh=${this._refreshBuilding}
           ></building-panel>
         `}
       <app-toast></app-toast>

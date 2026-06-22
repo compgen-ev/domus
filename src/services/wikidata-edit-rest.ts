@@ -13,6 +13,7 @@
 import type { WikidataItem } from '../types/building';
 import { getValidAccessToken } from './wikimedia-auth';
 import { parseDate } from '../utils/dates';
+import { recordEdit } from './edit-tracker';
 
 const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
 
@@ -527,4 +528,7 @@ export async function editBuilding(
   }
 
   console.log('Edit successful:', result);
+
+  // Track edit timestamp for staleness detection
+  recordEdit(editData.id);
 }
