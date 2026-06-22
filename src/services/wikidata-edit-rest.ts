@@ -23,10 +23,16 @@ export interface BuildingEditData {
   inception?: string;
   demolished?: string;
   address?: string;
+  addressStartDate?: string;
+  addressEndDate?: string;
   architect?: WikidataItem;
   commissionedBy?: WikidataItem;
   owner?: WikidataItem;
+  ownerStartDate?: string;
+  ownerEndDate?: string;
   occupant?: WikidataItem;
+  occupantStartDate?: string;
+  occupantEndDate?: string;
   sourceUrl?: string;
 }
 
@@ -287,6 +293,24 @@ export async function editBuilding(
     );
 
     if (!isDuplicate) {
+      const qualifiers: any[] = [];
+
+      // Add start time qualifier (P580) if provided
+      if (editData.addressStartDate) {
+        qualifiers.push({
+          property: { id: 'P580' },
+          value: createStatementValue(editData.addressStartDate, 'time'),
+        });
+      }
+
+      // Add end time qualifier (P582) if provided
+      if (editData.addressEndDate) {
+        qualifiers.push({
+          property: { id: 'P582' },
+          value: createStatementValue(editData.addressEndDate, 'time'),
+        });
+      }
+
       const newStatement = {
         property: { id: 'P6375' },
         value: {
@@ -296,6 +320,7 @@ export async function editBuilding(
             language: 'de',  // German language code
           },
         },
+        ...(qualifiers.length > 0 && { qualifiers }),
         ...(editData.sourceUrl && {
           references: [createReference(editData.sourceUrl)],
         }),
@@ -366,9 +391,26 @@ export async function editBuilding(
     );
 
     if (!isDuplicate) {
+      const qualifiers: any[] = [];
+
+      if (editData.ownerStartDate) {
+        qualifiers.push({
+          property: { id: 'P580' },
+          value: createStatementValue(editData.ownerStartDate, 'time'),
+        });
+      }
+
+      if (editData.ownerEndDate) {
+        qualifiers.push({
+          property: { id: 'P582' },
+          value: createStatementValue(editData.ownerEndDate, 'time'),
+        });
+      }
+
       const newStatement = {
         property: { id: 'P127' },
         value: createStatementValue(editData.owner, 'wikibase-item'),
+        ...(qualifiers.length > 0 && { qualifiers }),
         ...(editData.sourceUrl && {
           references: [createReference(editData.sourceUrl)],
         }),
@@ -390,9 +432,26 @@ export async function editBuilding(
     );
 
     if (!isDuplicate) {
+      const qualifiers: any[] = [];
+
+      if (editData.occupantStartDate) {
+        qualifiers.push({
+          property: { id: 'P580' },
+          value: createStatementValue(editData.occupantStartDate, 'time'),
+        });
+      }
+
+      if (editData.occupantEndDate) {
+        qualifiers.push({
+          property: { id: 'P582' },
+          value: createStatementValue(editData.occupantEndDate, 'time'),
+        });
+      }
+
       const newStatement = {
         property: { id: 'P466' },
         value: createStatementValue(editData.occupant, 'wikibase-item'),
+        ...(qualifiers.length > 0 && { qualifiers }),
         ...(editData.sourceUrl && {
           references: [createReference(editData.sourceUrl)],
         }),

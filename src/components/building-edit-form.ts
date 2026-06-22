@@ -157,6 +157,22 @@ export class BuildingEditForm extends LitElement {
         margin-bottom: var(--space-4);
       }
 
+      .date-range {
+        display: flex;
+        gap: var(--space-3);
+        margin-top: var(--space-2);
+      }
+
+      .date-field {
+        flex: 1;
+      }
+
+      .date-field label {
+        font-size: var(--font-size-xs);
+        color: var(--color-text-secondary);
+        margin-bottom: var(--space-1);
+      }
+
       input, textarea, select {
         width: 100%;
         padding: var(--space-2);
@@ -288,10 +304,16 @@ export class BuildingEditForm extends LitElement {
   @state() private formInception = '';
   @state() private formDemolished = '';
   @state() private formAddress = '';
+  @state() private formAddressStartDate = '';
+  @state() private formAddressEndDate = '';
   @state() private formArchitect: WikidataItem | undefined;
   @state() private formCommissionedBy: WikidataItem | undefined;
   @state() private formOwner: WikidataItem | undefined;
+  @state() private formOwnerStartDate = '';
+  @state() private formOwnerEndDate = '';
   @state() private formOccupant: WikidataItem | undefined;
+  @state() private formOccupantStartDate = '';
+  @state() private formOccupantEndDate = '';
   @state() private saving = false;
   @state() private saveError: string | null = null;
   @state() private saveErrorDetails: any = null;
@@ -398,10 +420,16 @@ export class BuildingEditForm extends LitElement {
       inception: this.formInception !== this.building.inception ? this.formInception : undefined,
       demolished: this.formDemolished !== this.detail?.demolished ? this.formDemolished : undefined,
       address: this.formAddress || undefined,
+      addressStartDate: this.formAddressStartDate || undefined,
+      addressEndDate: this.formAddressEndDate || undefined,
       architect: this.formArchitect || undefined,
       commissionedBy: this.formCommissionedBy || undefined,
       owner: this.formOwner || undefined,
+      ownerStartDate: this.formOwnerStartDate || undefined,
+      ownerEndDate: this.formOwnerEndDate || undefined,
       occupant: this.formOccupant || undefined,
+      occupantStartDate: this.formOccupantStartDate || undefined,
+      occupantEndDate: this.formOccupantEndDate || undefined,
       sourceUrl: this.sourceUrl || undefined,
     };
 
@@ -535,6 +563,26 @@ export class BuildingEditForm extends LitElement {
               .value=${this.formAddress}
               @input=${(e: Event) => this.formAddress = (e.target as HTMLInputElement).value}
               ?disabled=${this.saving}>
+            <div class="date-range">
+              <div class="date-field">
+                <label>${msg('Von (Jahr)')}</label>
+                <input
+                  type="text"
+                  placeholder="YYYY"
+                  .value=${this.formAddressStartDate}
+                  @input=${(e: Event) => this.formAddressStartDate = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div class="date-field">
+                <label>${msg('Bis (Jahr)')}</label>
+                <input
+                  type="text"
+                  placeholder="YYYY"
+                  .value=${this.formAddressEndDate}
+                  @input=${(e: Event) => this.formAddressEndDate = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -595,6 +643,26 @@ export class BuildingEditForm extends LitElement {
               <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
                 ${msg('Ausgewählt:')} ${this.formOwner.label}
               </div>
+              <div class="date-range">
+                <div class="date-field">
+                  <label>${msg('Von (Jahr)')}</label>
+                  <input
+                    type="text"
+                    placeholder="YYYY"
+                    .value=${this.formOwnerStartDate}
+                    @input=${(e: Event) => this.formOwnerStartDate = (e.target as HTMLInputElement).value}
+                    ?disabled=${this.saving}>
+                </div>
+                <div class="date-field">
+                  <label>${msg('Bis (Jahr)')}</label>
+                  <input
+                    type="text"
+                    placeholder="YYYY"
+                    .value=${this.formOwnerEndDate}
+                    @input=${(e: Event) => this.formOwnerEndDate = (e.target as HTMLInputElement).value}
+                    ?disabled=${this.saving}>
+                </div>
+              </div>
             ` : ''}
           </div>
 
@@ -612,6 +680,26 @@ export class BuildingEditForm extends LitElement {
             ${this.formOccupant ? html`
               <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
                 ${msg('Ausgewählt:')} ${this.formOccupant.label}
+              </div>
+              <div class="date-range">
+                <div class="date-field">
+                  <label>${msg('Von (Jahr)')}</label>
+                  <input
+                    type="text"
+                    placeholder="YYYY"
+                    .value=${this.formOccupantStartDate}
+                    @input=${(e: Event) => this.formOccupantStartDate = (e.target as HTMLInputElement).value}
+                    ?disabled=${this.saving}>
+                </div>
+                <div class="date-field">
+                  <label>${msg('Bis (Jahr)')}</label>
+                  <input
+                    type="text"
+                    placeholder="YYYY"
+                    .value=${this.formOccupantEndDate}
+                    @input=${(e: Event) => this.formOccupantEndDate = (e.target as HTMLInputElement).value}
+                    ?disabled=${this.saving}>
+                </div>
               </div>
             ` : ''}
           </div>

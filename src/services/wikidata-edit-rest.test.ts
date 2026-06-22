@@ -196,6 +196,45 @@ describe('validateEditData', () => {
     expect(result.errors).toHaveLength(0);
   });
 
+  it('accepts address with time qualifiers', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      address: 'Hauptstraße 1',
+      addressStartDate: '1850',
+      addressEndDate: '1920',
+      sourceUrl: 'https://example.com/source',
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('accepts owner with time qualifiers', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      owner: { id: 'Q999', label: 'Test Owner' },
+      ownerStartDate: '1900',
+      ownerEndDate: '1950',
+      sourceUrl: 'https://example.com/source',
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('accepts occupant with time qualifiers', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      occupant: { id: 'Q111', label: 'Test Occupant' },
+      occupantStartDate: '1920',
+      occupantEndDate: '1945',
+      sourceUrl: 'https://example.com/source',
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
   it('collects multiple validation errors', () => {
     const data: BuildingEditData = {
       id: 'invalid-id',
@@ -277,6 +316,41 @@ describe('patch operations', () => {
     expect(reference.parts[0]).toHaveProperty('property');
     expect(reference.parts[0]).toHaveProperty('value');
     expect(reference.parts[0].property.id).toBe('P854');
+  });
+
+  it('should use correct qualifier structure for time qualifiers', () => {
+    // Qualifiers for P580 (start time) and P582 (end time)
+    const qualifiers = [
+      {
+        property: { id: 'P580' },
+        value: {
+          type: 'value',
+          content: {
+            time: '+1900-00-00T00:00:00Z',
+            precision: 9,
+            calendarmodel: 'http://www.wikidata.org/entity/Q1985727',
+          },
+        },
+      },
+      {
+        property: { id: 'P582' },
+        value: {
+          type: 'value',
+          content: {
+            time: '+1950-00-00T00:00:00Z',
+            precision: 9,
+            calendarmodel: 'http://www.wikidata.org/entity/Q1985727',
+          },
+        },
+      },
+    ];
+
+    expect(Array.isArray(qualifiers)).toBe(true);
+    expect(qualifiers[0].property.id).toBe('P580'); // start time
+    expect(qualifiers[1].property.id).toBe('P582'); // end time
+    expect(qualifiers[0].value.content).toHaveProperty('time');
+    expect(qualifiers[0].value.content).toHaveProperty('precision');
+    expect(qualifiers[0].value.content).toHaveProperty('calendarmodel');
   });
 });
 

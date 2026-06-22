@@ -271,6 +271,14 @@
   <source>Historische Gebäudeumrisse</source>
   <target>Historical Building Outlines</target>
 </trans-unit>
+<trans-unit id="s7d71df856f30aa5e">
+  <source>Von (Jahr)</source>
+  <target>From (year)</target>
+</trans-unit>
+<trans-unit id="s97a6a8200cb57f01">
+  <source>Bis (Jahr)</source>
+  <target>To (year)</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
