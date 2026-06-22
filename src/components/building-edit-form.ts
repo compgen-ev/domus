@@ -396,6 +396,44 @@ export class BuildingEditForm extends LitElement {
     }
   }
 
+  private get _canSave(): boolean {
+    // Check if there are any changes or additions
+    const hasChanges =
+      (this.formLabel !== this.building?.label) ||
+      (this.formType !== undefined && this.formType !== this.building?.type) ||
+      (this.formInception !== (this.building?.inception || '')) ||
+      (this.formDemolished !== (this.detail?.demolished || '')) ||
+      (this.formAddress.trim() !== '') ||
+      (this.formAliases.trim() !== '') ||
+      (this.formArchitect !== undefined) ||
+      (this.formCommissionedBy !== undefined) ||
+      (this.formOwner !== undefined) ||
+      (this.formOccupant !== undefined);
+
+    // No changes = can't save
+    if (!hasChanges) {
+      return false;
+    }
+
+    // Check if there are any claim changes (not label/aliases)
+    const hasClaimChanges =
+      (this.formType !== undefined && this.formType !== this.building?.type) ||
+      (this.formInception !== (this.building?.inception || '')) ||
+      (this.formDemolished !== (this.detail?.demolished || '')) ||
+      (this.formAddress.trim() !== '') ||
+      (this.formArchitect !== undefined) ||
+      (this.formCommissionedBy !== undefined) ||
+      (this.formOwner !== undefined) ||
+      (this.formOccupant !== undefined);
+
+    // Source URL is required when there are claim changes
+    if (hasClaimChanges && !this.sourceUrl.trim()) {
+      return false;
+    }
+
+    return true;
+  }
+
   private _cancel() {
     this.dispatchEvent(new CustomEvent('cancel', { bubbles: true, composed: true }));
   }
@@ -786,7 +824,7 @@ export class BuildingEditForm extends LitElement {
         <app-button variant="secondary" .leadingIcon=${IconClose} @click=${this._cancel} ?disabled=${this.saving}>
           ${msg('Abbrechen')}
         </app-button>
-        <app-button variant="primary" .leadingIcon=${IconCheck} @click=${this._save} ?disabled=${this.saving}>
+        <app-button variant="primary" .leadingIcon=${IconCheck} @click=${this._save} ?disabled=${this.saving || !this._canSave}>
           ${this.saving ? msg('Wird gespeichert …') : msg('Änderungen speichern')}
         </button>
       </div>
