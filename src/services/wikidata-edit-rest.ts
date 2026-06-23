@@ -17,6 +17,28 @@ import { recordEdit } from './edit-tracker';
 
 const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
 
+/** Reference to an online source (P854 reference URL + optional P304 page). */
+export interface UrlSource {
+  type: 'url';
+  url: string;
+  page?: string;
+}
+
+/**
+ * Reference to an archival document.
+ * - P485 archive (wikibase-item)
+ * - P217 inventory number / Signatur
+ * - P304 page(s), optional
+ */
+export interface ArchiveSource {
+  type: 'archive';
+  archive: WikidataItem; // P485
+  callNumber: string;    // P217
+  page?: string;         // P304
+}
+
+export type SourceRef = UrlSource | ArchiveSource;
+
 export interface BuildingEditData {
   id: string;
   label?: string;
@@ -35,8 +57,7 @@ export interface BuildingEditData {
   occupant?: WikidataItem;
   occupantStartDate?: string;
   occupantEndDate?: string;
-  sourceUrl?: string;
-  sourcePage?: string;
+  source?: SourceRef;
 }
 
 /**
@@ -85,15 +106,24 @@ export function validateEditData(data: BuildingEditData): { valid: boolean; erro
                           (data.owner !== undefined) ||
                           (data.occupant !== undefined);
 
-  if (hasClaimChanges && !data.sourceUrl) {
-    errors.push('Source URL is required when editing building data');
+  if (hasClaimChanges && !data.source) {
+    errors.push('Source is required when editing building data');
   }
 
-  if (data.sourceUrl) {
-    try {
-      new URL(data.sourceUrl);
-    } catch {
-      errors.push('Source URL must be a valid URL');
+  if (data.source) {
+    if (data.source.type === 'url') {
+      try {
+        new URL(data.source.url);
+      } catch {
+        errors.push('Source URL must be a valid URL');
+      }
+    } else {
+      if (!data.source.archive?.id?.match(/^Q\d+$/)) {
+        errors.push('Archive must be a valid Wikidata item');
+      }
+      if (!data.source.callNumber.trim()) {
+        errors.push('Archive call number (Signatur) is required');
+      }
     }
   }
 
@@ -129,24 +159,43 @@ function createStatementValue(value: string | WikidataItem, type: 'string' | 'ti
 }
 
 /**
- * Creates a reference for a statement.
- * @param referenceUrl - P854 reference URL
- * @param page - P304 page(s), optional
+ * Builds a Wikidata REST API reference object from a SourceRef.
  */
-function createReference(referenceUrl: string, page?: string) {
-  const parts: Array<{ property: { id: string }; value: { type: string; content: string } }> = [
-    {
-      property: { id: 'P854' }, // P854 = reference URL
-      value: { type: 'value', content: referenceUrl },
-    },
-  ];
-  if (page) {
-    parts.push({
-      property: { id: 'P304' }, // P304 = page(s)
-      value: { type: 'value', content: page },
-    });
+function createReference(source: SourceRef) {
+  if (source.type === 'url') {
+    const parts: Array<{ property: { id: string }; value: { type: string; content: string | { id: string } } }> = [
+      {
+        property: { id: 'P854' }, // reference URL
+        value: { type: 'value', content: source.url },
+      },
+    ];
+    if (source.page) {
+      parts.push({
+        property: { id: 'P304' }, // page(s)
+        value: { type: 'value', content: source.page },
+      });
+    }
+    return { parts };
+  } else {
+    // Archive source
+    const parts: Array<{ property: { id: string }; value: { type: string; content: string | { id: string } } }> = [
+      {
+        property: { id: 'P485' }, // archive
+        value: { type: 'value', content: { id: source.archive.id } },
+      },
+      {
+        property: { id: 'P217' }, // inventory number / Signatur
+        value: { type: 'value', content: source.callNumber },
+      },
+    ];
+    if (source.page) {
+      parts.push({
+        property: { id: 'P304' }, // page(s)
+        value: { type: 'value', content: source.page },
+      });
+    }
+    return { parts };
   }
-  return { parts };
 }
 
 /**
@@ -225,7 +274,7 @@ export async function editBuilding(
       stmt.value?.content === editData.type!.id
     );
 
-    if (matchingIdx >= 0 && editData.sourceUrl) {
+    if (matchingIdx >= 0 && editData.source) {
       // Add reference to existing statement
       const existingRefs = existingStatements[matchingIdx].references || [];
       const refPath = existingRefs.length > 0
@@ -234,15 +283,15 @@ export async function editBuilding(
       patchOps.push({
         op: 'add',
         path: refPath,
-        value: existingRefs.length > 0 ? createReference(editData.sourceUrl, editData.sourcePage) : [createReference(editData.sourceUrl, editData.sourcePage)],
+        value: existingRefs.length > 0 ? createReference(editData.source) : [createReference(editData.source)],
       });
     } else {
       // Add or replace P31 statements
       const newStatement = {
         property: { id: 'P31' },
         value: createStatementValue(editData.type, 'wikibase-item'),
-        ...(editData.sourceUrl && {
-          references: [createReference(editData.sourceUrl, editData.sourcePage)],
+        ...(editData.source && {
+          references: [createReference(editData.source)],
         }),
       };
 
@@ -261,7 +310,7 @@ export async function editBuilding(
       stmt.value?.content?.time === normalizedInception
     );
 
-    if (matchingIdx >= 0 && editData.sourceUrl) {
+    if (matchingIdx >= 0 && editData.source) {
       const existingRefs = existingStatements[matchingIdx].references || [];
       const refPath = existingRefs.length > 0
         ? `/statements/P571/${matchingIdx}/references/-`
@@ -269,14 +318,14 @@ export async function editBuilding(
       patchOps.push({
         op: 'add',
         path: refPath,
-        value: existingRefs.length > 0 ? createReference(editData.sourceUrl, editData.sourcePage) : [createReference(editData.sourceUrl, editData.sourcePage)],
+        value: existingRefs.length > 0 ? createReference(editData.source) : [createReference(editData.source)],
       });
     } else {
       const newStatement = {
         property: { id: 'P571' },
         value: createStatementValue(editData.inception, 'time'),
-        ...(editData.sourceUrl && {
-          references: [createReference(editData.sourceUrl, editData.sourcePage)],
+        ...(editData.source && {
+          references: [createReference(editData.source)],
         }),
       };
 
@@ -295,7 +344,7 @@ export async function editBuilding(
       stmt.value?.content?.time === normalizedDemolished
     );
 
-    if (matchingIdx >= 0 && editData.sourceUrl) {
+    if (matchingIdx >= 0 && editData.source) {
       const existingRefs = existingStatements[matchingIdx].references || [];
       const refPath = existingRefs.length > 0
         ? `/statements/P576/${matchingIdx}/references/-`
@@ -303,14 +352,14 @@ export async function editBuilding(
       patchOps.push({
         op: 'add',
         path: refPath,
-        value: existingRefs.length > 0 ? createReference(editData.sourceUrl, editData.sourcePage) : [createReference(editData.sourceUrl, editData.sourcePage)],
+        value: existingRefs.length > 0 ? createReference(editData.source) : [createReference(editData.source)],
       });
     } else {
       const newStatement = {
         property: { id: 'P576' },
         value: createStatementValue(editData.demolished, 'time'),
-        ...(editData.sourceUrl && {
-          references: [createReference(editData.sourceUrl, editData.sourcePage)],
+        ...(editData.source && {
+          references: [createReference(editData.source)],
         }),
       };
 
@@ -359,8 +408,8 @@ export async function editBuilding(
           },
         },
         ...(qualifiers.length > 0 && { qualifiers }),
-        ...(editData.sourceUrl && {
-          references: [createReference(editData.sourceUrl, editData.sourcePage)],
+        ...(editData.source && {
+          references: [createReference(editData.source)],
         }),
       };
 
@@ -384,8 +433,8 @@ export async function editBuilding(
       const newStatement = {
         property: { id: 'P84' },
         value: createStatementValue(editData.architect, 'wikibase-item'),
-        ...(editData.sourceUrl && {
-          references: [createReference(editData.sourceUrl, editData.sourcePage)],
+        ...(editData.source && {
+          references: [createReference(editData.source)],
         }),
       };
 
@@ -408,8 +457,8 @@ export async function editBuilding(
       const newStatement = {
         property: { id: 'P88' },
         value: createStatementValue(editData.commissionedBy, 'wikibase-item'),
-        ...(editData.sourceUrl && {
-          references: [createReference(editData.sourceUrl, editData.sourcePage)],
+        ...(editData.source && {
+          references: [createReference(editData.source)],
         }),
       };
 
@@ -449,8 +498,8 @@ export async function editBuilding(
         property: { id: 'P127' },
         value: createStatementValue(editData.owner, 'wikibase-item'),
         ...(qualifiers.length > 0 && { qualifiers }),
-        ...(editData.sourceUrl && {
-          references: [createReference(editData.sourceUrl, editData.sourcePage)],
+        ...(editData.source && {
+          references: [createReference(editData.source)],
         }),
       };
 
@@ -490,8 +539,8 @@ export async function editBuilding(
         property: { id: 'P466' },
         value: createStatementValue(editData.occupant, 'wikibase-item'),
         ...(qualifiers.length > 0 && { qualifiers }),
-        ...(editData.sourceUrl && {
-          references: [createReference(editData.sourceUrl, editData.sourcePage)],
+        ...(editData.source && {
+          references: [createReference(editData.source)],
         }),
       };
 

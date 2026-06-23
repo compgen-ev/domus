@@ -5,7 +5,7 @@ import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/building';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
-import { editBuilding, type BuildingEditData } from '../services/wikidata-edit-rest';
+import { editBuilding, type BuildingEditData, type SourceRef } from '../services/wikidata-edit-rest';
 import './entity-search';
 import './app-button';
 import './icon';
@@ -302,6 +302,9 @@ export class BuildingEditForm extends LitElement {
   @state() private sourceType: 'url' | 'archive' = 'url';
   @state() private sourceUrl = '';
   @state() private sourcePage = '';
+  @state() private archiveItem: WikidataItem | undefined;
+  @state() private archiveCallNumber = '';
+  @state() private archivePage = '';
   @state() private formLabel = '';
   @state() private formAliases = '';
   @state() private formType: WikidataItem | undefined;
@@ -393,6 +396,9 @@ export class BuildingEditForm extends LitElement {
       this.formDemolished = this.detail?.demolished || '';
       this.sourceUrl = '';
       this.sourcePage = '';
+      this.archiveItem = undefined;
+      this.archiveCallNumber = '';
+      this.archivePage = '';
       this.saveError = null;
       this.saveErrorDetails = null;
     }
@@ -428,9 +434,10 @@ export class BuildingEditForm extends LitElement {
       (this.formOwner !== undefined) ||
       (this.formOccupant !== undefined);
 
-    // Source URL is required when there are claim changes
-    if (hasClaimChanges && !this.sourceUrl.trim()) {
-      return false;
+    // Source is required when there are claim changes
+    if (hasClaimChanges) {
+      if (this.sourceType === 'url' && !this.sourceUrl.trim()) return false;
+      if (this.sourceType === 'archive' && (!this.archiveItem || !this.archiveCallNumber.trim())) return false;
     }
 
     return true;
@@ -456,6 +463,18 @@ export class BuildingEditForm extends LitElement {
     this.saveError = null;
     this.saveErrorDetails = null;
 
+    let source: SourceRef | undefined;
+    if (this.sourceType === 'url' && this.sourceUrl) {
+      source = { type: 'url', url: this.sourceUrl, page: this.sourcePage || undefined };
+    } else if (this.sourceType === 'archive' && this.archiveItem) {
+      source = {
+        type: 'archive',
+        archive: this.archiveItem,
+        callNumber: this.archiveCallNumber,
+        page: this.archivePage || undefined,
+      };
+    }
+
     const editData: BuildingEditData = {
       id: this.building.id,
       label: this.formLabel !== this.building.label ? this.formLabel : undefined,
@@ -474,8 +493,7 @@ export class BuildingEditForm extends LitElement {
       occupant: this.formOccupant || undefined,
       occupantStartDate: this.formOccupantStartDate || undefined,
       occupantEndDate: this.formOccupantEndDate || undefined,
-      sourceUrl: this.sourceUrl || undefined,
-      sourcePage: this.sourcePage || undefined,
+      source,
     };
 
     try {
@@ -505,7 +523,8 @@ export class BuildingEditForm extends LitElement {
           hasCommissionedBy: !!editData.commissionedBy,
           hasOwner: !!editData.owner,
           hasOccupant: !!editData.occupant,
-          hasSourceUrl: !!editData.sourceUrl,
+          hasSource: !!editData.source,
+          sourceType: editData.source?.type,
         },
       };
       console.error('Save failed:', err);
@@ -817,15 +836,32 @@ export class BuildingEditForm extends LitElement {
           ` : html`
             <div class="field-group">
               <label>${msg('Archivname')}</label>
-              <input type="text">
+              <entity-search
+                placeholder="${msg('Archiv suchen...')}"
+                type-qid="Q166118"
+                @select=${(e: CustomEvent) => this.archiveItem = e.detail}
+              ></entity-search>
+              ${this.archiveItem ? html`
+                <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
+                  ${msg('Ausgewählt:')} ${this.archiveItem.label}
+                </div>
+              ` : ''}
             </div>
             <div class="field-group">
               <label>${msg('Signatur')}</label>
-              <input type="text">
+              <input
+                type="text"
+                .value=${this.archiveCallNumber}
+                @input=${(e: Event) => this.archiveCallNumber = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
             </div>
             <div class="field-group">
               <label>${msg('Beschreibung / Seite')} (${msg('optional')})</label>
-              <input type="text">
+              <input
+                type="text"
+                .value=${this.archivePage}
+                @input=${(e: Event) => this.archivePage = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
             </div>
           `}
         </div>

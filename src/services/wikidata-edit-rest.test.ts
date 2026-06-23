@@ -2,6 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { validateEditData, buildPersonItemPayload } from './wikidata-edit-rest';
 import type { BuildingEditData } from './wikidata-edit-rest';
 
+const urlSource = { type: 'url' as const, url: 'https://example.com/source' };
+const archiveSource = {
+  type: 'archive' as const,
+  archive: { id: 'Q594641', label: 'Stadtarchiv München' },
+  callNumber: 'Rep. 5 Nr. 42',
+};
+
 describe('buildPersonItemPayload', () => {
   it('sets German label', () => {
     const payload = buildPersonItemPayload('Johann Müller');
@@ -68,7 +75,7 @@ describe('validateEditData', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       inception: 'not a date',
-      sourceUrl: 'https://example.com',
+      source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
@@ -79,7 +86,7 @@ describe('validateEditData', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       inception: '1950',
-      sourceUrl: 'https://example.com',
+      source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
@@ -89,7 +96,7 @@ describe('validateEditData', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       inception: '1950-06-15',
-      sourceUrl: 'https://example.com',
+      source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
@@ -99,82 +106,82 @@ describe('validateEditData', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       demolished: 'not a date',
-      sourceUrl: 'https://example.com',
+      source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('Demolished date must be a year (YYYY) or ISO date');
   });
 
-  it('requires source URL when editing claims', () => {
+  it('requires source when editing claims', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       inception: '1950',
-      // no sourceUrl
+      // no source
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Source URL is required when editing building data');
+    expect(result.errors).toContain('Source is required when editing building data');
   });
 
-  it('requires source URL when adding type', () => {
+  it('requires source when adding type', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       type: { id: 'Q3947', label: 'dwelling' },
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Source URL is required when editing building data');
+    expect(result.errors).toContain('Source is required when editing building data');
   });
 
-  it('requires source URL when adding address', () => {
+  it('requires source when adding address', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       address: 'Hauptstraße 1',
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Source URL is required when editing building data');
+    expect(result.errors).toContain('Source is required when editing building data');
   });
 
-  it('requires source URL when adding architect', () => {
+  it('requires source when adding architect', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       architect: { id: 'Q456', label: 'Test Architect' },
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Source URL is required when editing building data');
+    expect(result.errors).toContain('Source is required when editing building data');
   });
 
-  it('requires source URL when adding commissioned by', () => {
+  it('requires source when adding commissioned by', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       commissionedBy: { id: 'Q789', label: 'Test Commissioner' },
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Source URL is required when editing building data');
+    expect(result.errors).toContain('Source is required when editing building data');
   });
 
-  it('requires source URL when adding owner', () => {
+  it('requires source when adding owner', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       owner: { id: 'Q999', label: 'Test Owner' },
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Source URL is required when editing building data');
+    expect(result.errors).toContain('Source is required when editing building data');
   });
 
-  it('requires source URL when adding occupant', () => {
+  it('requires source when adding occupant', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       occupant: { id: 'Q111', label: 'Test Occupant' },
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Source URL is required when editing building data');
+    expect(result.errors).toContain('Source is required when editing building data');
   });
 
   it('allows label change without source URL', () => {
@@ -190,24 +197,66 @@ describe('validateEditData', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       inception: '1950',
-      sourceUrl: 'not a url',
+      source: { type: 'url', url: 'not a url' },
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('Source URL must be a valid URL');
   });
 
-  it('accepts valid source URL', () => {
+  it('accepts valid URL source', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       inception: '1950',
-      sourceUrl: 'https://example.com/source',
+      source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
   });
 
-  it('accepts all new properties together with source URL', () => {
+  it('accepts valid archive source', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1950',
+      source: archiveSource,
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+  });
+
+  it('rejects archive source with invalid archive QID', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1950',
+      source: { type: 'archive', archive: { id: 'not-a-qid', label: 'Test' }, callNumber: 'Rep. 5' },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Archive must be a valid Wikidata item');
+  });
+
+  it('rejects archive source with empty call number', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1950',
+      source: { type: 'archive', archive: { id: 'Q594641', label: 'Stadtarchiv München' }, callNumber: '  ' },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Archive call number (Signatur) is required');
+  });
+
+  it('accepts archive source with optional page', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1950',
+      source: { ...archiveSource, page: 'S. 12' },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts all new properties together with URL source', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       label: 'New Building Name',
@@ -219,7 +268,19 @@ describe('validateEditData', () => {
       commissionedBy: { id: 'Q789', label: 'Test Commissioner' },
       owner: { id: 'Q999', label: 'Test Owner' },
       occupant: { id: 'Q111', label: 'Test Occupant' },
-      sourceUrl: 'https://example.com/source',
+      source: urlSource,
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('accepts all new properties together with archive source', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1850',
+      owner: { id: 'Q999', label: 'Test Owner' },
+      source: archiveSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
@@ -232,7 +293,7 @@ describe('validateEditData', () => {
       address: 'Hauptstraße 1',
       addressStartDate: '1850',
       addressEndDate: '1920',
-      sourceUrl: 'https://example.com/source',
+      source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
@@ -245,7 +306,7 @@ describe('validateEditData', () => {
       owner: { id: 'Q999', label: 'Test Owner' },
       ownerStartDate: '1900',
       ownerEndDate: '1950',
-      sourceUrl: 'https://example.com/source',
+      source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
@@ -258,7 +319,7 @@ describe('validateEditData', () => {
       occupant: { id: 'Q111', label: 'Test Occupant' },
       occupantStartDate: '1920',
       occupantEndDate: '1945',
-      sourceUrl: 'https://example.com/source',
+      source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
@@ -271,7 +332,7 @@ describe('validateEditData', () => {
       label: '   ',
       type: { id: 'bad-type', label: 'Test' },
       inception: 'bad-date',
-      sourceUrl: 'not-a-url',
+      source: { type: 'url', url: 'not-a-url' },
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
