@@ -44,9 +44,9 @@ export class AppButton extends LitElement {
         background: var(--color-primary-hover);
       }
 
-      /* Secondary - gray outline */
+      /* Secondary - white background with border */
       .secondary {
-        background: transparent;
+        background: var(--color-bg-primary);
         color: var(--color-text-secondary);
         border: 1px solid var(--color-border);
       }

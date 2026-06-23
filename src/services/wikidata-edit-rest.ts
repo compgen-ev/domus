@@ -590,6 +590,86 @@ export async function editBuilding(
   recordEdit(editData.id);
 }
 
+export interface BuildingCreateData {
+  label: string;
+  type?: WikidataItem;
+  lat: number;
+  lng: number;
+  inception?: string;
+  source: SourceRef;
+}
+
+/**
+ * Creates a new Wikidata building item (Q41176 = building)
+ */
+export function buildBuildingItemPayload(data: BuildingCreateData) {
+  const typeId = data.type?.id ?? 'Q41176';
+  const reference = createReference(data.source);
+
+  const statements: Record<string, any[]> = {
+    P31: [{
+      property: { id: 'P31' },
+      value: { type: 'value', content: typeId },
+      references: [reference],
+    }],
+    P625: [{
+      property: { id: 'P625' },
+      value: {
+        type: 'value',
+        content: {
+          latitude: data.lat,
+          longitude: data.lng,
+          precision: 0.0001,
+          globe: 'http://www.wikidata.org/entity/Q2',
+        },
+      },
+      references: [reference],
+    }],
+  };
+
+  if (data.inception) {
+    const parsed = parseDate(data.inception);
+    if (parsed) {
+      statements['P571'] = [{
+        property: { id: 'P571' },
+        value: {
+          type: 'value',
+          content: { time: parsed.time, precision: parsed.precision, calendarmodel: parsed.calendarmodel },
+        },
+        references: [reference],
+      }];
+    }
+  }
+
+  return { labels: { de: data.label.trim() }, statements };
+}
+
+export async function createBuilding(data: BuildingCreateData): Promise<WikidataItem> {
+  if (!data.label.trim()) throw new Error('Building name is required');
+
+  const token = await getValidAccessToken();
+  if (!token) throw new Error('Not authenticated - please log in again');
+
+  const item = buildBuildingItemPayload(data);
+
+  const response = await fetch(`${WIKIDATA_REST_API}/entities/items`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ item, comment: 'Created building via Domus' }),
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(`Failed to create building: ${result?.message || result?.error || response.status}`);
+  }
+
+  recordEdit(result.id);
+  return { id: result.id, label: data.label.trim() };
+}
+
 export interface PersonItemPayload {
   labels: Record<string, string>;
   descriptions?: Record<string, string>;

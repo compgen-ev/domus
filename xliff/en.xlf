@@ -394,6 +394,46 @@
   <source>"<x id="0" equiv-text="${this.searchQuery}"/>" als neue Person anlegen</source>
   <target>"<x id="0" equiv-text="${this.searchQuery}"/>" as new person</target>
 </trans-unit>
+<trans-unit id="sdcddd59c053f2620">
+  <source>Gebäude angelegt</source>
+  <target>Building created</target>
+</trans-unit>
+<trans-unit id="s2a4c5f86bc16bb31">
+  <source>Gebäude</source>
+  <target>Building</target>
+</trans-unit>
+<trans-unit id="sf1362e67d8ef85bb">
+  <source>Neues Gebäude anlegen</source>
+  <target>Create new building</target>
+</trans-unit>
+<trans-unit id="s428c715233c5db47">
+  <source>Koordinaten</source>
+  <target>Coordinates</target>
+</trans-unit>
+<trans-unit id="sa6233da165b8913e">
+  <source>z.B. Müllerhof</source>
+  <target>e.g. Mill Farm</target>
+</trans-unit>
+<trans-unit id="s2073650ef6219757">
+  <source>Gebäude anlegen</source>
+  <target>Create building</target>
+</trans-unit>
+<trans-unit id="sad7d9f24537800b0">
+  <source>Archiv suchen...</source>
+  <target>Search archive...</target>
+</trans-unit>
+<trans-unit id="sef07158f6c64025c">
+  <source>Standort wählen …</source>
+  <target>Choose location…</target>
+</trans-unit>
+<trans-unit id="s492d421fb4d0ecdd">
+  <source>Gebäude hinzufügen</source>
+  <target>Add building</target>
+</trans-unit>
+<trans-unit id="s277a16b593c2a380">
+  <source>Wird als neuer Wikidata-Eintrag angelegt</source>
+  <target>Will be created as a new Wikidata entry</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

@@ -1,4 +1,5 @@
 import { LitElement, html, css, unsafeCSS, type PropertyValues } from 'lit';
+import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import maplibregl, { type Map, type MapLayerMouseEvent, type GeoJSONSource } from 'maplibre-gl';
@@ -10,8 +11,11 @@ import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
 import { baseStyles, iconButtonStyles } from '../styles/shared';
 import './icon';
+import './app-button';
 import IconEye from '~icons/mdi/eye';
 import IconEyeOff from '~icons/mdi/eye-off';
+import IconMapMarker from '~icons/mdi/map-marker';
+import IconHomePlus from '~icons/mdi/home-plus';
 
 const MIN_ZOOM_FOR_BUILDINGS = 14;
 const DEBOUNCE_MS = 400;
@@ -153,17 +157,57 @@ export class MapView extends LitElement {
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .add-building-btn {
+      position: absolute;
+      top: var(--space-3);
+      left: var(--space-3);
+      margin-top: calc(var(--space-3) + 40px); /* below search box */
+      box-shadow: var(--shadow-md);
+      z-index: var(--z-dropdown);
+    }
+
+    .adding-overlay {
+      position: absolute;
+      inset: 0;
+      cursor: none;
+      /* sits above the MapLibre canvas, below controls that follow in DOM order */
+    }
+
+    .adding-overlay[hidden] {
+      display: none;
+    }
+
+    .cursor-pin {
+      position: absolute;
+      pointer-events: none;
+      transform: translate(-50%, -100%);
+      font-size: 40px;
+      line-height: 0;
+      color: #c0392b;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+    }
+
+    .cursor-pin[hidden] {
+      display: none;
+    }
   `,
   ];
 
   @property({ attribute: false }) ohmId: string | undefined = undefined;
   @property({ attribute: false }) wikidataId: string | undefined = undefined;
   @property({ attribute: false }) selectedBuilding: WikidataBuilding | null = null;
+  @property({ type: Boolean }) authenticated = false;
+  @property({ attribute: false }) pendingLocation: { lat: number; lng: number } | null = null;
 
   @state() private showHint = true;
   @state() private loading = false;
   @state() private selectedYear = new Date().getFullYear();
   @state() private ohmLayerVisible = true;
+  @state() private addingBuilding = false;
+
+  private _pendingMarker: maplibregl.Marker | null = null;
+  private _cursorPinEl: HTMLElement | null = null; // lazy-init in pointermove handler
 
   private map!: Map;
   private debounceTimer = 0;
@@ -185,11 +229,86 @@ export class MapView extends LitElement {
       });
       this._shouldCenterOnBuilding = false;
     }
+    if (changed.has('addingBuilding') && !this.addingBuilding) {
+      // Reset cursor-pin reference so it re-resolves on next adding session
+      this._cursorPinEl = null;
+    }
+    if (changed.has('pendingLocation')) {
+      if (!this.map) return;
+      if (this.pendingLocation) {
+        const lngLat: [number, number] = [this.pendingLocation.lng, this.pendingLocation.lat];
+        if (!this._pendingMarker) {
+          this._pendingMarker = new maplibregl.Marker({
+            element: this._makePinElement(),
+            anchor: 'bottom',
+          })
+            .setLngLat(lngLat)
+            .addTo(this.map);
+        } else {
+          this._pendingMarker.setLngLat(lngLat);
+        }
+      } else {
+        this._pendingMarker?.remove();
+        this._pendingMarker = null;
+      }
+    }
   }
+
+  private _makePinElement(): HTMLElement {
+    const el = document.createElement('div');
+    el.style.cssText = 'font-size:40px;color:#c0392b;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));line-height:0;';
+    el.innerHTML = IconMapMarker;
+    return el;
+  }
+
+  private _onMapPointerMove = (e: PointerEvent) => {
+    if (!this._cursorPinEl) {
+      this._cursorPinEl = this.shadowRoot!.getElementById('cursor-pin');
+    }
+    if (!this._cursorPinEl) return;
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    this._cursorPinEl.style.left = `${e.clientX - rect.left}px`;
+    this._cursorPinEl.style.top = `${e.clientY - rect.top}px`;
+    this._cursorPinEl.hidden = false;
+  };
+
+  private _onMapPointerLeave = () => {
+    if (this._cursorPinEl) this._cursorPinEl.hidden = true;
+  };
+
+  private _onOverlayClick = (e: MouseEvent) => {
+    const mapEl = this.shadowRoot!.getElementById('map')!;
+    const rect = mapEl.getBoundingClientRect();
+    const lngLat = this.map.unproject([e.clientX - rect.left, e.clientY - rect.top]);
+    this.addingBuilding = false;
+    this.dispatchEvent(new CustomEvent('location-picked', {
+      bubbles: true,
+      composed: true,
+      detail: { lat: lngLat.lat, lng: lngLat.lng },
+    }));
+  };
 
   render() {
     return html`
       <div id="map"></div>
+      <div
+        class="adding-overlay"
+        ?hidden=${!this.addingBuilding}
+        @pointermove=${this._onMapPointerMove}
+        @pointerleave=${this._onMapPointerLeave}
+        @click=${this._onOverlayClick}>
+        <div id="cursor-pin" class="cursor-pin" hidden>${unsafeSVG(IconMapMarker)}</div>
+      </div>
+      ${this.authenticated ? html`
+        <app-button
+          class="add-building-btn"
+          variant=${this.addingBuilding ? 'primary' : 'secondary'}
+          .leadingIcon=${IconHomePlus}
+          @click=${this._onAddBuildingClick}>
+          ${this.addingBuilding ? msg('Standort wählen …') : msg('Gebäude hinzufügen')}
+        </app-button>
+      ` : ''}
+
       <search-box @place-selected=${this._onPlaceSelected}></search-box>
 
       <div class="time-controls">
@@ -281,6 +400,7 @@ export class MapView extends LitElement {
     super.disconnectedCallback();
     this.resizeObserver?.disconnect();
     this.ohmController?.abort();
+    this._pendingMarker?.remove();
     this.map?.remove();
   }
 
@@ -531,6 +651,11 @@ export class MapView extends LitElement {
     );
     if (camera) this.map.jumpTo(camera);
   }
+
+  private _onAddBuildingClick() {
+    this.addingBuilding = !this.addingBuilding;
+  }
+
 
 }
 

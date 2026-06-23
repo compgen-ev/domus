@@ -103,6 +103,7 @@ export class AppRoot extends LitElement {
   @state() private ohmElementType: 'way' | 'relation' | undefined;
   @state() private authenticated = false;
   @state() private showLoginNotice = false;
+  @state() private newBuildingCoords: { lat: number; lng: number } | null = null;
 
   private detailController: AbortController | null = null;
 
@@ -202,6 +203,7 @@ export class AppRoot extends LitElement {
 
   private _onBuildingSelected(e: CustomEvent<WikidataBuilding>) {
     this.selectedBuilding = e.detail;
+    this.newBuildingCoords = null;
     this.view = 'map';
     this.hasOhmFootprint = false;
     this.ohmElementId = undefined;
@@ -213,6 +215,7 @@ export class AppRoot extends LitElement {
   private _onPanelClose() {
     this.selectedBuilding = null;
     this.buildingDetail = null;
+    this.newBuildingCoords = null;
     this.hasOhmFootprint = false;
     this.ohmElementId = undefined;
     this.ohmElementType = undefined;
@@ -271,11 +274,29 @@ export class AppRoot extends LitElement {
     }
   }
 
-  private _onShowToast(e: CustomEvent<{ message: string }>) {
+  private _onLocationPicked(e: CustomEvent<{ lat: number; lng: number }>) {
+    this.selectedBuilding = null;
+    this.buildingDetail = null;
+    this.newBuildingCoords = e.detail;
+  }
+
+  private async _onBuildingCreated(e: CustomEvent<{ id: string; label: string; lat: number; lng: number }>) {
+    this.newBuildingCoords = null;
+    const { id } = e.detail;
+    history.pushState(null, '', `?id=${id}`);
+    await this._loadBuildingById(id);
+    this._showToast(msg('Gebäude angelegt'));
+  }
+
+  private _showToast(message: string) {
     const toast = this.shadowRoot?.querySelector('app-toast');
     if (toast) {
-      (toast as any).show(e.detail.message);
+      (toast as any).show(message);
     }
+  }
+
+  private _onShowToast(e: CustomEvent<{ message: string }>) {
+    this._showToast(e.detail.message);
   }
 
   render() {
@@ -314,8 +335,11 @@ export class AppRoot extends LitElement {
             .ohmId=${this.buildingDetail?.ohmId}
             .wikidataId=${this.selectedBuilding?.id}
             .selectedBuilding=${this.selectedBuilding}
+            .authenticated=${this.authenticated}
+            .pendingLocation=${this.newBuildingCoords}
             @building-selected=${this._onBuildingSelected}
             @ohm-data-loaded=${this._onOhmDataLoaded}
+            @location-picked=${this._onLocationPicked}
           ></map-view>
           <building-panel
             .building=${this.selectedBuilding}
@@ -326,6 +350,7 @@ export class AppRoot extends LitElement {
             .ohmElementId=${this.ohmElementId}
             .ohmElementType=${this.ohmElementType}
             .authenticated=${this.authenticated}
+            .newBuildingCoords=${this.newBuildingCoords}
             @close=${this._onPanelClose}
             @show-detail=${this._onShowDetail}
             @login=${this._onLogin}
@@ -333,6 +358,7 @@ export class AppRoot extends LitElement {
             @save-success-refresh=${this._onSaveSuccessRefresh}
             @show-toast=${this._onShowToast}
             @refresh=${this._refreshBuilding}
+            @building-created=${this._onBuildingCreated}
           ></building-panel>
         `}
       <app-toast></app-toast>

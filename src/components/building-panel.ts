@@ -7,6 +7,7 @@ import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import { formatDate } from '../utils/dates';
 import './building-edit-form';
+import './building-create-form';
 import './app-button';
 import './icon';
 import './stale-banner';
@@ -293,15 +294,15 @@ export class BuildingPanel extends LitElement {
   @property({ attribute: false }) ohmElementId: string | undefined;
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
   @property({ attribute: false }) authenticated = false;
+  @property({ attribute: false }) newBuildingCoords: { lat: number; lng: number } | null = null;
 
   @state() private editMode = false;
   @state() private linkCopied = false;
 
   protected willUpdate(changed: PropertyValues) {
-    if (changed.has('building')) {
-      this.toggleAttribute('open', this.building !== null);
-      // Close edit mode when switching buildings
-      if (this.editMode) {
+    if (changed.has('building') || changed.has('newBuildingCoords')) {
+      this.toggleAttribute('open', this.building !== null || this.newBuildingCoords !== null);
+      if (changed.has('building') && this.editMode) {
         this.editMode = false;
       }
     }
@@ -399,7 +400,28 @@ export class BuildingPanel extends LitElement {
     return addresses.map((a) => ({ primary: a.text, range: yearRange(a.start, a.end) }));
   }
 
+  private _onBuildingCreated(e: CustomEvent) {
+    this.dispatchEvent(new CustomEvent('building-created', {
+      bubbles: true,
+      composed: true,
+      detail: e.detail,
+    }));
+  }
+
   render() {
+    if (!this.building && this.newBuildingCoords) {
+      return html`
+        <div class="panel">
+          <building-create-form
+            .lat=${this.newBuildingCoords.lat}
+            .lng=${this.newBuildingCoords.lng}
+            @cancel=${this._close}
+            @building-created=${this._onBuildingCreated}
+          ></building-create-form>
+        </div>
+      `;
+    }
+
     if (!this.building) return html`<div class="panel"></div>`;
     const { label, type, image, id } = this.building;
     const { detail, detailLoading } = this;

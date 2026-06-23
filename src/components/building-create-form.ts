@@ -1,0 +1,411 @@
+import { LitElement, html, css } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+import { localized, msg } from '@lit/localize';
+import type { WikidataItem } from '../types/building';
+import { buttonStyles, inputStyles } from '../styles/design-tokens';
+import { createBuilding, type SourceRef } from '../services/wikidata-edit-rest';
+import './entity-search';
+import './app-button';
+import './icon';
+import IconCheck from '~icons/mdi/check';
+import IconClose from '~icons/mdi/close';
+
+@localized()
+@customElement('building-create-form')
+export class BuildingCreateForm extends LitElement {
+  static styles = [
+    inputStyles,
+    buttonStyles,
+    css`
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .form-header {
+        padding: var(--space-4) var(--space-4) var(--space-2);
+        border-bottom: 1px solid var(--color-border);
+        flex-shrink: 0;
+      }
+
+      .form-title {
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-text-primary);
+        margin: 0 0 var(--space-1);
+      }
+
+      .form-subtitle {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-tertiary);
+        margin: 0;
+      }
+
+      .error-message {
+        margin-top: var(--space-3);
+        padding: var(--space-3);
+        background: #fee;
+        border: 1px solid #f88;
+        border-radius: var(--radius-md);
+        color: #c00;
+        font-size: var(--font-size-sm);
+      }
+
+      .form-body {
+        padding: var(--space-4);
+        overflow-y: auto;
+        flex: 1;
+        box-sizing: border-box;
+      }
+
+      .field-group {
+        margin-bottom: var(--space-4);
+      }
+
+      label {
+        display: block;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--color-text-secondary);
+        margin-bottom: var(--space-1);
+      }
+
+      input, select {
+        width: 100%;
+        padding: var(--space-2);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-sizing: border-box;
+        font-family: inherit;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-primary);
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      }
+
+      input:focus, select:focus {
+        outline: none;
+        border-color: var(--color-border-focus);
+        box-shadow: var(--shadow-focus);
+      }
+
+      input:read-only {
+        background: var(--color-bg-secondary);
+        color: var(--color-text-muted);
+      }
+
+      .source-section {
+        background: var(--color-accent-light);
+        border: 2px solid var(--color-accent);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-top: var(--space-4);
+        box-sizing: border-box;
+      }
+
+      .source-section h3 {
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-semibold);
+        color: var(--color-primary);
+        margin: 0 0 var(--space-2);
+      }
+
+      .source-note {
+        font-size: var(--font-size-sm);
+        color: var(--color-primary);
+        margin: 0 0 var(--space-4);
+      }
+
+      .source-type-picker {
+        display: flex;
+        gap: var(--space-2);
+        margin-bottom: var(--space-4);
+      }
+
+      .source-type-btn {
+        flex: 1;
+        padding: var(--space-2);
+        border: 2px solid var(--color-accent);
+        background: var(--color-bg-primary);
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-sm);
+        color: var(--color-primary);
+        cursor: pointer;
+        font-family: inherit;
+        transition: all var(--transition-fast);
+      }
+
+      .source-type-btn.active {
+        background: var(--color-accent);
+        color: var(--color-primary);
+      }
+
+      .form-footer {
+        flex-shrink: 0;
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-4);
+        display: flex;
+        gap: var(--space-3);
+        box-sizing: border-box;
+      }
+
+      .form-footer app-button:last-child {
+        flex: 1;
+      }
+    `,
+  ];
+
+  @property({ type: Number }) lat = 0;
+  @property({ type: Number }) lng = 0;
+
+  @state() private formLabel = '';
+  @state() private formType: WikidataItem | undefined;
+  @state() private formInception = '';
+  @state() private sourceType: 'url' | 'archive' = 'url';
+  @state() private sourceUrl = '';
+  @state() private sourcePage = '';
+  @state() private archiveItem: WikidataItem | undefined;
+  @state() private archiveCallNumber = '';
+  @state() private archivePage = '';
+  @state() private saving = false;
+  @state() private saveError: string | null = null;
+
+  private readonly buildingTypeIds = [
+    'Q41176',     // building (generic)
+    'Q3947',      // dwelling
+    'Q188869',    // farmhouse
+    'Q1021106',   // apartment building
+    'Q20034440',  // single-family home
+    'Q16970',     // church building
+    'Q108325',    // chapel
+    'Q149566',    // school building
+    'Q25550691',  // town hall
+    'Q44494',     // mill
+    'Q162113',    // barn
+    'Q1662011',   // stable
+    'Q1662536',   // storehouse
+    'Q879050',    // manor house
+    'Q23413',     // palace
+    'Q23691',     // castle
+    'Q1542143',   // factory building
+    'Q656720',    // workshop
+    'Q27686',     // inn
+    'Q18543139',  // railway station building
+  ];
+
+  private _getTypeLabel(id: string): string {
+    switch (id) {
+      case 'Q41176': return msg('Gebäude');
+      case 'Q3947': return msg('Wohnhaus');
+      case 'Q188869': return msg('Bauernhaus');
+      case 'Q1021106': return msg('Mehrfamilienhaus');
+      case 'Q20034440': return msg('Einfamilienhaus');
+      case 'Q16970': return msg('Kirchengebäude');
+      case 'Q108325': return msg('Kapelle');
+      case 'Q149566': return msg('Schulgebäude');
+      case 'Q25550691': return msg('Rathaus');
+      case 'Q44494': return msg('Mühle');
+      case 'Q162113': return msg('Scheune');
+      case 'Q1662011': return msg('Stall');
+      case 'Q1662536': return msg('Speicher');
+      case 'Q879050': return msg('Herrenhaus');
+      case 'Q23413': return msg('Schloss');
+      case 'Q23691': return msg('Burg');
+      case 'Q1542143': return msg('Fabrikgebäude');
+      case 'Q656720': return msg('Werkstatt');
+      case 'Q27686': return msg('Gasthaus');
+      case 'Q18543139': return msg('Bahnhofsgebäude');
+      default: return id;
+    }
+  }
+
+  private get _canSave(): boolean {
+    if (!this.formLabel.trim()) return false;
+    if (this.sourceType === 'url' && !this.sourceUrl.trim()) return false;
+    if (this.sourceType === 'archive' && (!this.archiveItem || !this.archiveCallNumber.trim())) return false;
+    return true;
+  }
+
+  private _cancel() {
+    this.dispatchEvent(new CustomEvent('cancel', { bubbles: true, composed: true }));
+  }
+
+  private async _save() {
+    if (!this._canSave) return;
+
+    this.saving = true;
+    this.saveError = null;
+
+    let source: SourceRef;
+    if (this.sourceType === 'url') {
+      source = { type: 'url', url: this.sourceUrl.trim(), page: this.sourcePage.trim() || undefined };
+    } else {
+      source = {
+        type: 'archive',
+        archive: this.archiveItem!,
+        callNumber: this.archiveCallNumber.trim(),
+        page: this.archivePage.trim() || undefined,
+      };
+    }
+
+    try {
+      const item = await createBuilding({
+        label: this.formLabel.trim(),
+        type: this.formType,
+        lat: this.lat,
+        lng: this.lng,
+        inception: this.formInception.trim() || undefined,
+        source,
+      });
+
+      this.dispatchEvent(new CustomEvent('building-created', {
+        detail: { id: item.id, label: item.label, lat: this.lat, lng: this.lng },
+        bubbles: true,
+        composed: true,
+      }));
+    } catch (err) {
+      this.saveError = err instanceof Error ? err.message : String(err);
+    } finally {
+      this.saving = false;
+    }
+  }
+
+  render() {
+    return html`
+      <div class="form-header">
+        <h2 class="form-title">${msg('Neues Gebäude anlegen')}</h2>
+        <p class="form-subtitle">${msg('Wird als neuer Wikidata-Eintrag angelegt')}</p>
+        <p class="form-subtitle">${msg('Koordinaten')}: ${this.lat.toFixed(5)}, ${this.lng.toFixed(5)}</p>
+        ${this.saveError ? html`
+          <div class="error-message" role="alert">${this.saveError}</div>
+        ` : ''}
+      </div>
+
+      <div class="form-body">
+        <div class="field-group">
+          <label>${msg('Name')} *</label>
+          <input
+            type="text"
+            .value=${this.formLabel}
+            placeholder="${msg('z.B. Müllerhof')}"
+            @input=${(e: Event) => this.formLabel = (e.target as HTMLInputElement).value}
+            ?disabled=${this.saving}
+            autofocus>
+        </div>
+
+        <div class="field-group">
+          <label>${msg('Typ')}</label>
+          <select
+            @change=${(e: Event) => {
+              const v = (e.target as HTMLSelectElement).value;
+              this.formType = v ? { id: v, label: this._getTypeLabel(v) } : undefined;
+            }}
+            ?disabled=${this.saving}>
+            ${this.buildingTypeIds.map(id => html`
+              <option value=${id} ?selected=${(this.formType?.id ?? 'Q41176') === id}>
+                ${this._getTypeLabel(id)}
+              </option>
+            `)}
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label>${msg('Erbaut')}</label>
+          <input
+            type="text"
+            placeholder="YYYY / YYYY-MM / YYYY-MM-DD"
+            .value=${this.formInception}
+            @input=${(e: Event) => this.formInception = (e.target as HTMLInputElement).value}
+            ?disabled=${this.saving}>
+        </div>
+
+        <div class="source-section">
+          <h3>${msg('Quelle')} (${msg('erforderlich')})</h3>
+          <p class="source-note">${msg('Alle Änderungen müssen mit einer Quelle belegt werden.')}</p>
+
+          <div class="source-type-picker">
+            <button
+              class="source-type-btn ${this.sourceType === 'url' ? 'active' : ''}"
+              @click=${() => this.sourceType = 'url'}>
+              ${msg('Online-Quelle')}
+            </button>
+            <button
+              class="source-type-btn ${this.sourceType === 'archive' ? 'active' : ''}"
+              @click=${() => this.sourceType = 'archive'}>
+              ${msg('Archivdokument')}
+            </button>
+          </div>
+
+          ${this.sourceType === 'url' ? html`
+            <div class="field-group">
+              <label>URL</label>
+              <input
+                type="url"
+                placeholder="https://"
+                .value=${this.sourceUrl}
+                @input=${(e: Event) => this.sourceUrl = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
+            </div>
+            <div class="field-group">
+              <label>${msg('Beschreibung / Seite')} (${msg('optional')})</label>
+              <input
+                type="text"
+                .value=${this.sourcePage}
+                @input=${(e: Event) => this.sourcePage = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
+            </div>
+          ` : html`
+            <div class="field-group">
+              <label>${msg('Archivname')}</label>
+              <entity-search
+                placeholder="${msg('Archiv suchen...')}"
+                @select=${(e: CustomEvent) => this.archiveItem = e.detail}
+              ></entity-search>
+              ${this.archiveItem ? html`
+                <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
+                  ${msg('Ausgewählt:')} ${this.archiveItem.label}
+                </div>
+              ` : ''}
+            </div>
+            <div class="field-group">
+              <label>${msg('Signatur')}</label>
+              <input
+                type="text"
+                .value=${this.archiveCallNumber}
+                @input=${(e: Event) => this.archiveCallNumber = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
+            </div>
+            <div class="field-group">
+              <label>${msg('Beschreibung / Seite')} (${msg('optional')})</label>
+              <input
+                type="text"
+                .value=${this.archivePage}
+                @input=${(e: Event) => this.archivePage = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
+            </div>
+          `}
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <app-button variant="secondary" .leadingIcon=${IconClose} @click=${this._cancel} ?disabled=${this.saving}>
+          ${msg('Abbrechen')}
+        </app-button>
+        <app-button
+          variant="primary"
+          .leadingIcon=${IconCheck}
+          @click=${this._save}
+          ?disabled=${this.saving || !this._canSave}>
+          ${this.saving ? msg('Wird angelegt…') : msg('Gebäude anlegen')}
+        </app-button>
+      </div>
+    `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'building-create-form': BuildingCreateForm;
+  }
+}

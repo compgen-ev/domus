@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateEditData, buildPersonItemPayload } from './wikidata-edit-rest';
+import { validateEditData, buildPersonItemPayload, buildBuildingItemPayload } from './wikidata-edit-rest';
 import type { BuildingEditData } from './wikidata-edit-rest';
 
 const urlSource = { type: 'url' as const, url: 'https://example.com/source' };
@@ -518,5 +518,77 @@ describe('deduplication logic', () => {
     );
 
     expect(isDuplicate).toBe(false);
+  });
+});
+
+describe('buildBuildingItemPayload', () => {
+  const base = {
+    label: 'Müllerhof',
+    lat: 48.12345,
+    lng: 11.56789,
+    source: urlSource,
+  };
+
+  it('sets German label', () => {
+    const payload = buildBuildingItemPayload(base);
+    expect(payload.labels).toEqual({ de: 'Müllerhof' });
+  });
+
+  it('trims label whitespace', () => {
+    const payload = buildBuildingItemPayload({ ...base, label: '  Müllerhof  ' });
+    expect(payload.labels.de).toBe('Müllerhof');
+  });
+
+  it('sets P31 to Q41176 (building) by default', () => {
+    const payload = buildBuildingItemPayload(base);
+    const p31 = payload.statements.P31[0];
+    expect(p31.property.id).toBe('P31');
+    expect(p31.value.type).toBe('value');
+    expect(p31.value.content).toBe('Q41176');
+  });
+
+  it('sets P31 to provided type QID', () => {
+    const payload = buildBuildingItemPayload({ ...base, type: { id: 'Q3947', label: 'dwelling' } });
+    expect(payload.statements.P31[0].value.content).toBe('Q3947');
+  });
+
+  it('sets P625 with correct globe-coordinate shape', () => {
+    const payload = buildBuildingItemPayload(base);
+    const coord = payload.statements.P625[0].value.content;
+    expect(coord.latitude).toBe(48.12345);
+    expect(coord.longitude).toBe(11.56789);
+    expect(coord.precision).toBe(0.0001);
+    expect(coord.globe).toBe('http://www.wikidata.org/entity/Q2');
+    expect(Object.keys(coord)).toEqual(['latitude', 'longitude', 'precision', 'globe']);
+  });
+
+  it('attaches reference to P31 and P625', () => {
+    const payload = buildBuildingItemPayload(base);
+    expect(payload.statements.P31[0].references).toHaveLength(1);
+    expect(payload.statements.P625[0].references).toHaveLength(1);
+  });
+
+  it('omits P571 when inception is not provided', () => {
+    const payload = buildBuildingItemPayload(base);
+    expect(payload.statements.P571).toBeUndefined();
+  });
+
+  it('includes P571 when inception year is provided', () => {
+    const payload = buildBuildingItemPayload({ ...base, inception: '1890' });
+    const p571 = payload.statements.P571?.[0];
+    expect(p571).toBeDefined();
+    expect(p571.property.id).toBe('P571');
+    expect(p571.value.content.time).toMatch(/^\+1890/);
+    expect(p571.value.content.precision).toBeDefined();
+    expect(p571.value.content.calendarmodel).toMatch(/Q\d+$/);
+    expect(p571.references).toHaveLength(1);
+  });
+
+  it('uses archive source reference correctly', () => {
+    const payload = buildBuildingItemPayload({ ...base, source: archiveSource });
+    const ref = payload.statements.P31[0].references[0];
+    expect(Array.isArray(ref.parts)).toBe(true);
+    const propIds = ref.parts.map((p: any) => p.property.id);
+    expect(propIds).toContain('P485');
   });
 });
