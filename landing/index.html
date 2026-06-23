@@ -5,16 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Domus</title>
   <link rel="icon" type="image/svg+xml" href="/map/domus.svg" />
-  <meta name="description" content="Häusergeschichte erforschen und dokumentieren.">
+  <meta name="description" content="Häusergeschichte erforschen und dokumentieren – ein offenes Werkzeug für Genealogie und Lokalgeschichte.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=optional" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body {
-      height: 100%;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    :root {
+      --blue:       #000052;
+      --blue-hover: #00003a;
+      --blue-light: #eef0fa;
+      --gold-light: color-mix(in srgb, #f2c14e 22%, white);
+      --text:       #0f172a;
+      --text-2:     #475569;
+      --text-3:     #64748b;
+      --border:     #e2e8f0;
+      --bg:         #ffffff;
+      --bg-2:       #f1f5f9;
+      --radius:     1.25rem;
+    }
+
+    html {
+      font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
       -webkit-font-smoothing: antialiased;
-      background: #fff;
-      color: #0f172a;
+      color: var(--text);
+      background: var(--bg);
     }
 
     body {
@@ -23,110 +39,372 @@
       min-height: 100dvh;
     }
 
-    main {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem 2rem;
-    }
+    a { color: inherit; }
+
+    /* ── Hero ── */
 
     .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
-      max-width: 480px;
+      padding: clamp(3rem, 8vw, 6rem) 1.5rem clamp(2.5rem, 6vw, 5rem);
     }
 
     .logo-title {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: clamp(1rem, 2.5vw, 1.8rem);
-      margin-bottom: 1rem;
+      gap: clamp(0.9rem, 2.2vw, 1.6rem);
+      margin-bottom: 1.25rem;
     }
 
     .logo {
-      height: clamp(58px, 9.9vw, 99px);
+      height: clamp(52px, 9vw, 92px);
       width: auto;
+      aspect-ratio: 1;
       flex-shrink: 0;
       position: relative;
-      top: clamp(-8px, -1.2vw, -5px);
+      top: clamp(-7px, -1.1vw, -4px);
+      fill: var(--blue);
     }
 
     h1 {
-      font-size: clamp(3.5rem, 10vw, 6rem);
+      font-size: clamp(3.2rem, 9.5vw, 5.5rem);
       font-weight: 800;
       letter-spacing: -0.03em;
-      color: #000052;
+      color: var(--blue);
       line-height: 1;
-      margin: 0;
     }
 
     .tagline {
-      font-size: 1.05rem;
-      color: #666;
+      font-size: clamp(1.05rem, 2.5vw, 1.25rem);
+      color: var(--text-2);
       line-height: 1.6;
-      margin-bottom: 2.5rem;
+      max-width: 480px;
+      margin-bottom: 2.25rem;
+    }
+
+    .cta-group {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
     }
 
     .cta {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      background: #000052;
+      gap: 0.45rem;
+      background: var(--blue);
       color: #fff;
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      padding: 0.8rem 2rem;
-      border-radius: 0.5rem;
+      padding: 0.8rem 1.85rem;
+      border-radius: 0.6rem;
       text-decoration: none;
       transition: background 0.15s;
     }
+    .cta:hover { background: var(--blue-hover); }
 
-    .cta:hover { background: #00003a; }
+    .cta-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: transparent;
+      color: var(--blue);
+      font-size: 1.05rem;
+      font-weight: 600;
+      padding: 0.8rem 1.85rem;
+      border-radius: 0.6rem;
+      border: 2px solid var(--blue);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .cta-secondary:hover { background: var(--blue-light); }
+
+    /* ── Sections ── */
+
+    section {
+      padding: clamp(2.5rem, 6vw, 4.5rem) 1.5rem;
+    }
+
+    section:nth-child(even) { background: var(--bg); }
+
+    .inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 2rem;
+      line-height: 1.2;
+    }
+
+    /* ── Cards ── */
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: color-mix(in srgb, #f2c14e 18%, white);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--blue);
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.1rem;
+      color: #fff;
+    }
+
+    .card-icon svg { width: 22px; height: 22px; }
+
+    .card h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      font-size: 1.05rem;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    /* ── Data sources ── */
+
+    .sources {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .source-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      font-size: 1rem;
+    }
+
+    .source-name {
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .source-desc {
+      color: var(--text-2);
+      flex: 1;
+    }
+
+    .source-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--blue);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .source-link:hover { text-decoration: underline; }
+    .source-link svg { width: 13px; height: 13px; }
+
+    /* ── Footer ── */
 
     footer {
-      padding: 1.5rem 2rem;
-      text-align: center;
-      font-size: 0.8rem;
-      color: #999;
+      margin-top: auto;
+      border-top: 1px solid var(--border);
+      padding: 1.75rem 1.5rem;
     }
 
-    footer a {
-      color: inherit;
+    .footer-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .footer-left {
+      font-size: 0.95rem;
+      color: var(--text-3);
+      line-height: 1.6;
+    }
+
+    .footer-left a { color: var(--text-3); text-decoration: none; }
+    .footer-left a:hover { color: var(--text); }
+
+    .gh-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-2);
       text-decoration: none;
+      padding: 0.45rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      transition: border-color 0.15s, color 0.15s;
     }
-
-    footer a:hover { color: #666; }
+    .gh-link:hover { border-color: var(--text-2); color: var(--text); }
+    .gh-link svg { width: 18px; height: 18px; }
   </style>
 </head>
 <body>
-  <main>
-    <div class="hero">
-      <div class="logo-title">
-        <img src="/map/domus.svg" alt="" class="logo">
-        <h1>Domus</h1>
-      </div>
-      <p class="tagline"
-         data-de="Häusergeschichte erforschen und dokumentieren."
-         data-en="Research and document the history of buildings.">
-        Häusergeschichte erforschen und dokumentieren.
-      </p>
+
+  <div class="hero">
+    <div class="logo-title">
+      <svg class="logo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="m60 1.9219c-5.1417 0-10.284 2.6149-15.426 7.8438l-33.758 34.33c-6.544 6.6549-9.8164 14.649-9.8164 23.982v33c0 11.333 5.6667 17 17 17h84c11.333 0 17-5.6667 17-17v-33c0-9.3333-3.2724-17.328-9.8164-23.982l-33.758-34.33c-5.1417-5.2288-10.284-7.8438-15.426-7.8438zm-10.678 55.873c2.9705-0.12031 4.4551 2.5459 4.4551 7.998v26.008c0 8.3081-3.4482 10.147-10.346 5.5156l-21.285-14.291c-4.1985-2.819-4.1985-5.638 0-8.457l21.285-14.291c2.371-1.592 4.3346-2.4194 5.8906-2.4824zm42.262 0c2.9705-0.12031 4.457 2.5459 4.457 7.998v26.008c0 8.3081-3.4501 10.147-10.348 5.5156l-21.283-14.291c-4.1985-2.819-4.1985-5.638 0-8.457l21.283-14.291c2.371-1.592 4.3346-2.4194 5.8906-2.4824z"/>
+      </svg>
+      <h1>Domus</h1>
+    </div>
+    <p class="tagline"
+       data-de="Historische Gebäude digital lebendig machen."
+       data-en="Bringing historical buildings to life digitally.">
+      Historische Gebäude digital lebendig machen.
+    </p>
+    <div class="cta-group">
       <a class="cta" href="./map/">
         <span data-de="Zur Karte" data-en="Open Map">Zur Karte</span>
         <span aria-hidden="true">→</span>
       </a>
     </div>
-  </main>
+  </div>
+
+  <section>
+    <div class="inner">
+      <div class="cards">
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </div>
+          <h3 data-de="Was ist Domus?" data-en="What is Domus?">Was ist Domus?</h3>
+          <p data-de="Eine Webanwendung zur Erforschung historischer Gebäude – wer darin wohnte, wann es gebaut wurde, wie es genutzt wurde."
+             data-en="A web application for researching historical buildings – who lived there, when it was built, how it was used.">
+            Eine Webanwendung zur Erforschung historischer Gebäude – wer darin wohnte, wann es gebaut wurde, wie es genutzt wurde.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3 data-de="Citizen Science" data-en="Citizen Science">Citizen Science</h3>
+          <p data-de="Jede und jeder kann Gebäude auf der Karte verorten und mit Informationen wie Adresse, Baujahr und Nutzungsgeschichte ergänzen."
+             data-en="Anyone can locate buildings on the map and add details such as address, construction date and history of use.">
+            Jede und jeder kann Gebäude auf der Karte verorten und mit Informationen wie Adresse, Baujahr und Nutzungsgeschichte ergänzen.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h3 data-de="Open Data" data-en="Open Data">Open Data</h3>
+          <p data-de="Alle erfassten Daten werden in Wikidata gespeichert – dauerhaft, frei zugänglich und unabhängig von diesem Projekt."
+             data-en="All recorded data is stored in Wikidata – permanently, freely accessible and independent of this project.">
+            Alle erfassten Daten werden in Wikidata gespeichert – dauerhaft, frei zugänglich und unabhängig von diesem Projekt.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="inner">
+      <h2 class="section-title"
+          data-de="Datenquellen"
+          data-en="Data sources">
+        Datenquellen
+      </h2>
+      <div class="sources">
+        <div class="source-row">
+          <span class="source-name">Wikidata</span>
+          <span class="source-desc"
+                data-de="– Strukturierte Gebäudedaten"
+                data-en="– Structured building data">
+            – Strukturierte Gebäudedaten
+          </span>
+          <a class="source-link" href="https://www.wikidata.org/" target="_blank" rel="noopener">
+            wikidata.org
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+        <div class="source-row">
+          <span class="source-name">OpenHistoricalMap</span>
+          <span class="source-desc"
+                data-de="– Historische Gebäudeumrisse"
+                data-en="– Historical building footprints">
+            – Historische Gebäudeumrisse
+          </span>
+          <a class="source-link" href="https://www.openhistoricalmap.org/" target="_blank" rel="noopener">
+            openhistoricalmap.org
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+        <div class="source-row">
+          <span class="source-name">OpenFreeMap</span>
+          <span class="source-desc"
+                data-de="– Hintergrundkarte"
+                data-en="– Base map">
+            – Hintergrundkarte
+          </span>
+          <a class="source-link" href="https://openfreemap.org/" target="_blank" rel="noopener">
+            openfreemap.org
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer>
-    <span data-de="Ein Projekt des " data-en="A project by ">Ein Projekt des </span><a href="https://www.compgen.de/" target="_blank" rel="noopener">Vereins für Computergenealogie (CompGen)</a>
+    <div class="footer-inner">
+      <div class="footer-left">
+        <span data-de="Ein Projekt des " data-en="A project of the ">Ein Projekt des </span><a href="https://www.compgen.de/" target="_blank" rel="noopener">Vereins für Computergenealogie (CompGen)</a><br>
+        <span data-de="Maintainer: " data-en="Maintainer: ">Maintainer: </span>David Straub
+      </div>
+      <a class="gh-link" href="https://github.com/compgen-ev/domus" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
   </footer>
+
   <script>
     const lang = (navigator.languages?.[0] ?? navigator.language ?? '').startsWith('en') ? 'en' : 'de';
     if (lang === 'en') {
       document.documentElement.lang = 'en';
-      document.title = 'Domus';
+      document.title = 'Domus – Building History';
       document.querySelector('meta[name=description]').content =
-        'Research and document the history of buildings.';
+        'Research and document the history of buildings – collaboratively and openly.';
       document.querySelectorAll('[data-en]').forEach(el => {
         el.textContent = el.dataset.en;
       });
