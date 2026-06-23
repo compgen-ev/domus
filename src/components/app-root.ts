@@ -281,7 +281,7 @@ export class AppRoot extends LitElement {
   render() {
     return html`
       <div class="app-bar">
-        <a href="/"><img src="/map/logo.svg" alt="">Domus</a>
+        <a href="/"><img src="/map/domus.svg" alt="">Domus</a>
         <div class="auth-section">
           ${this.authenticated ? html`
             <app-button variant="secondary" .leadingIcon=${IconLogout} @click=${this._onLogout}>

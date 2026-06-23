@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Domus</title>
+  <link rel="icon" type="image/svg+xml" href="/map/domus.svg" />
   <meta name="description" content="Häusergeschichte erforschen und dokumentieren.">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -47,7 +48,8 @@
       height: clamp(58px, 9.9vw, 99px);
       width: auto;
       flex-shrink: 0;
-      padding-bottom: clamp(3px, 0.8vw, 6px);
+      position: relative;
+      top: clamp(-8px, -1.2vw, -5px);
     }
 
     h1 {
@@ -101,7 +103,7 @@
   <main>
     <div class="hero">
       <div class="logo-title">
-        <img src="/map/logo.svg" alt="" class="logo">
+        <img src="/map/domus.svg" alt="" class="logo">
         <h1>Domus</h1>
       </div>
       <p class="tagline"
