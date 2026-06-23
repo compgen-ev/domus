@@ -1,11 +1,10 @@
 import { LitElement, html, css, unsafeCSS, type PropertyValues } from 'lit';
-import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import maplibregl, { type Map, type MapLayerMouseEvent, type GeoJSONSource } from 'maplibre-gl';
+import maplibregl, { type Map, type MapLayerMouseEvent, type MapMouseEvent, type GeoJSONSource } from 'maplibre-gl';
 import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
-import { fetchOhmRelationGeometry, fetchOhmByWikidataId } from '../services/ohm';
+import { fetchOhmRelationGeometry, fetchOhmByWikidataId, fetchOhmWayTags } from '../services/ohm';
 import type { WikidataBuilding } from '../types/building';
 import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
@@ -167,30 +166,6 @@ export class MapView extends LitElement {
       z-index: var(--z-dropdown);
     }
 
-    .adding-overlay {
-      position: absolute;
-      inset: 0;
-      cursor: none;
-      /* sits above the MapLibre canvas, below controls that follow in DOM order */
-    }
-
-    .adding-overlay[hidden] {
-      display: none;
-    }
-
-    .cursor-pin {
-      position: absolute;
-      pointer-events: none;
-      transform: translate(-50%, -100%);
-      font-size: 40px;
-      line-height: 0;
-      color: #c0392b;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
-    }
-
-    .cursor-pin[hidden] {
-      display: none;
-    }
   `,
   ];
 
@@ -207,7 +182,8 @@ export class MapView extends LitElement {
   @state() private addingBuilding = false;
 
   private _pendingMarker: maplibregl.Marker | null = null;
-  private _cursorPinEl: HTMLElement | null = null; // lazy-init in pointermove handler
+  private _addingClickHandler: ((e: MapMouseEvent) => void) | null = null;
+  private _addingFetchController: AbortController | null = null;
 
   private map!: Map;
   private debounceTimer = 0;
@@ -229,9 +205,65 @@ export class MapView extends LitElement {
       });
       this._shouldCenterOnBuilding = false;
     }
-    if (changed.has('addingBuilding') && !this.addingBuilding) {
-      // Reset cursor-pin reference so it re-resolves on next adding session
-      this._cursorPinEl = null;
+    if (changed.has('addingBuilding')) {
+      if (this.addingBuilding) {
+        this._addingClickHandler = (e: MapMouseEvent) => {
+          const features = this.map.queryRenderedFeatures(e.point, { layers: ['ohm-buildings-fill'] });
+          if (features.length > 0) {
+            const feat = features[0];
+            const props = feat.properties as Record<string, string | number | undefined>;
+            const { lat, lng } = e.lngLat;
+            const osmId = typeof props['osm_id'] === 'number' ? props['osm_id'] : undefined;
+            const tileType = typeof props['type'] === 'string' && props['type'] !== 'yes'
+              ? props['type'] : undefined;
+
+            // Remove handler to prevent double-clicks; keep addingBuilding=true while fetching
+            this.map.off('click', this._addingClickHandler!);
+            this._addingClickHandler = null;
+            this.map.getCanvas().style.cursor = 'wait';
+
+            this._addingFetchController = new AbortController();
+            const signal = this._addingFetchController.signal;
+
+            (async () => {
+              const tags = osmId ? await fetchOhmWayTags(osmId, signal) : {};
+              this._addingFetchController = null;
+              this.addingBuilding = false; // resets cursor via updated()
+              if (!signal.aborted) {
+                this.dispatchEvent(new CustomEvent('ohm-feature-picked', {
+                  bubbles: true,
+                  composed: true,
+                  detail: {
+                    lat, lng,
+                    ohmId: osmId ? String(osmId) : undefined,
+                    name: tags['name'],
+                    buildingTag: tags['building'] ?? tileType,
+                    startDate: tags['start_date'],
+                    endDate: tags['end_date'],
+                  },
+                }));
+              }
+            })();
+          } else {
+            this.addingBuilding = false;
+            this.dispatchEvent(new CustomEvent('location-picked', {
+              bubbles: true,
+              composed: true,
+              detail: { lat: e.lngLat.lat, lng: e.lngLat.lng },
+            }));
+          }
+        };
+        this.map?.on('click', this._addingClickHandler);
+        if (this.map) this.map.getCanvas().style.cursor = 'crosshair';
+      } else {
+        if (this._addingClickHandler && this.map) {
+          this.map.off('click', this._addingClickHandler);
+        }
+        this._addingClickHandler = null;
+        this._addingFetchController?.abort();
+        this._addingFetchController = null;
+        if (this.map) this.map.getCanvas().style.cursor = '';
+      }
     }
     if (changed.has('pendingLocation')) {
       if (!this.map) return;
@@ -261,44 +293,9 @@ export class MapView extends LitElement {
     return el;
   }
 
-  private _onMapPointerMove = (e: PointerEvent) => {
-    if (!this._cursorPinEl) {
-      this._cursorPinEl = this.shadowRoot!.getElementById('cursor-pin');
-    }
-    if (!this._cursorPinEl) return;
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    this._cursorPinEl.style.left = `${e.clientX - rect.left}px`;
-    this._cursorPinEl.style.top = `${e.clientY - rect.top}px`;
-    this._cursorPinEl.hidden = false;
-  };
-
-  private _onMapPointerLeave = () => {
-    if (this._cursorPinEl) this._cursorPinEl.hidden = true;
-  };
-
-  private _onOverlayClick = (e: MouseEvent) => {
-    const mapEl = this.shadowRoot!.getElementById('map')!;
-    const rect = mapEl.getBoundingClientRect();
-    const lngLat = this.map.unproject([e.clientX - rect.left, e.clientY - rect.top]);
-    this.addingBuilding = false;
-    this.dispatchEvent(new CustomEvent('location-picked', {
-      bubbles: true,
-      composed: true,
-      detail: { lat: lngLat.lat, lng: lngLat.lng },
-    }));
-  };
-
   render() {
     return html`
       <div id="map"></div>
-      <div
-        class="adding-overlay"
-        ?hidden=${!this.addingBuilding}
-        @pointermove=${this._onMapPointerMove}
-        @pointerleave=${this._onMapPointerLeave}
-        @click=${this._onOverlayClick}>
-        <div id="cursor-pin" class="cursor-pin" hidden>${unsafeSVG(IconMapMarker)}</div>
-      </div>
       ${this.authenticated ? html`
         <app-button
           class="add-building-btn"
@@ -401,6 +398,10 @@ export class MapView extends LitElement {
     this.resizeObserver?.disconnect();
     this.ohmController?.abort();
     this._pendingMarker?.remove();
+    if (this._addingClickHandler && this.map) {
+      this.map.off('click', this._addingClickHandler);
+    }
+    this._addingFetchController?.abort();
     this.map?.remove();
   }
 

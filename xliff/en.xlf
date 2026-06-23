@@ -434,6 +434,10 @@
   <source>Wird als neuer Wikidata-Eintrag angelegt</source>
   <target>Will be created as a new Wikidata entry</target>
 </trans-unit>
+<trans-unit id="s96da93c661c068b2">
+  <source>Vorausgefüllt aus OpenHistoricalMap</source>
+  <target>Pre-filled from OpenHistoricalMap</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

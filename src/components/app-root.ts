@@ -6,6 +6,7 @@ import type { WikidataBuilding, BuildingDetail } from '../types/building';
 import { fetchBuildingById, fetchBuildingDetail } from '../services/wikidata';
 import { handleOAuthCallback, isAuthenticated, logout, login } from '../services/wikimedia-auth';
 import { cleanupExpired, isStale, clearEdit, scheduleRefreshes } from '../services/edit-tracker';
+import type { OhmBuildingPrefill } from '../services/ohm';
 import './map-view';
 import './building-panel';
 import './building-page';
@@ -104,6 +105,7 @@ export class AppRoot extends LitElement {
   @state() private authenticated = false;
   @state() private showLoginNotice = false;
   @state() private newBuildingCoords: { lat: number; lng: number } | null = null;
+  @state() private ohmPrefill: OhmBuildingPrefill | null = null;
 
   private detailController: AbortController | null = null;
 
@@ -216,6 +218,7 @@ export class AppRoot extends LitElement {
     this.selectedBuilding = null;
     this.buildingDetail = null;
     this.newBuildingCoords = null;
+    this.ohmPrefill = null;
     this.hasOhmFootprint = false;
     this.ohmElementId = undefined;
     this.ohmElementType = undefined;
@@ -277,11 +280,20 @@ export class AppRoot extends LitElement {
   private _onLocationPicked(e: CustomEvent<{ lat: number; lng: number }>) {
     this.selectedBuilding = null;
     this.buildingDetail = null;
+    this.ohmPrefill = null;
     this.newBuildingCoords = e.detail;
+  }
+
+  private _onOhmFeaturePicked(e: CustomEvent<OhmBuildingPrefill>) {
+    this.selectedBuilding = null;
+    this.buildingDetail = null;
+    this.newBuildingCoords = { lat: e.detail.lat, lng: e.detail.lng };
+    this.ohmPrefill = e.detail;
   }
 
   private async _onBuildingCreated(e: CustomEvent<{ id: string; label: string; lat: number; lng: number }>) {
     this.newBuildingCoords = null;
+    this.ohmPrefill = null;
     const { id } = e.detail;
     history.pushState(null, '', `?id=${id}`);
     await this._loadBuildingById(id);
@@ -340,6 +352,7 @@ export class AppRoot extends LitElement {
             @building-selected=${this._onBuildingSelected}
             @ohm-data-loaded=${this._onOhmDataLoaded}
             @location-picked=${this._onLocationPicked}
+            @ohm-feature-picked=${this._onOhmFeaturePicked}
           ></map-view>
           <building-panel
             .building=${this.selectedBuilding}
@@ -351,6 +364,7 @@ export class AppRoot extends LitElement {
             .ohmElementType=${this.ohmElementType}
             .authenticated=${this.authenticated}
             .newBuildingCoords=${this.newBuildingCoords}
+            .ohmPrefill=${this.ohmPrefill}
             @close=${this._onPanelClose}
             @show-detail=${this._onShowDetail}
             @login=${this._onLogin}

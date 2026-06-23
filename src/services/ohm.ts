@@ -1,5 +1,52 @@
 const OHM_OVERPASS = 'https://overpass-api.openhistoricalmap.org/api/interpreter';
 
+export interface OhmBuildingPrefill {
+  lat: number;
+  lng: number;
+  ohmId?: string;
+  name?: string;
+  buildingTag?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+const BUILDING_TAG_TO_WIKIDATA: Record<string, { id: string; label: string }> = {
+  house:            { id: 'Q20034440', label: 'Einfamilienhaus' },
+  detached:         { id: 'Q20034440', label: 'Einfamilienhaus' },
+  semidetached_house: { id: 'Q20034440', label: 'Einfamilienhaus' },
+  terrace:          { id: 'Q20034440', label: 'Einfamilienhaus' },
+  residential:      { id: 'Q3947',     label: 'Wohnhaus' },
+  apartments:       { id: 'Q1021106',  label: 'Mehrfamilienhaus' },
+  flat:             { id: 'Q1021106',  label: 'Mehrfamilienhaus' },
+  farm:             { id: 'Q188869',   label: 'Bauernhaus' },
+  farm_auxiliary:   { id: 'Q188869',   label: 'Bauernhaus' },
+  barn:             { id: 'Q162113',   label: 'Scheune' },
+  stable:           { id: 'Q1662011',  label: 'Stall' },
+  warehouse:        { id: 'Q1662536',  label: 'Speicher' },
+  storage:          { id: 'Q1662536',  label: 'Speicher' },
+  church:           { id: 'Q16970',    label: 'Kirchengebäude' },
+  chapel:           { id: 'Q108325',   label: 'Kapelle' },
+  school:           { id: 'Q149566',   label: 'Schulgebäude' },
+  civic:            { id: 'Q25550691', label: 'Rathaus' },
+  public:           { id: 'Q25550691', label: 'Rathaus' },
+  mill:             { id: 'Q44494',    label: 'Mühle' },
+  manor:            { id: 'Q879050',   label: 'Herrenhaus' },
+  palace:           { id: 'Q23413',    label: 'Schloss' },
+  castle:           { id: 'Q23691',    label: 'Burg' },
+  fort:             { id: 'Q23691',    label: 'Burg' },
+  industrial:       { id: 'Q1542143',  label: 'Fabrikgebäude' },
+  factory:          { id: 'Q1542143',  label: 'Fabrikgebäude' },
+  workshop:         { id: 'Q656720',   label: 'Werkstatt' },
+  hotel:            { id: 'Q27686',    label: 'Gasthaus' },
+  inn:              { id: 'Q27686',    label: 'Gasthaus' },
+  train_station:    { id: 'Q18543139', label: 'Bahnhofsgebäude' },
+};
+
+export function buildingTagToWikidataType(tag: string | undefined): { id: string; label: string } | undefined {
+  if (!tag) return undefined;
+  return BUILDING_TAG_TO_WIKIDATA[tag.toLowerCase()];
+}
+
 export interface OhmFetchResult {
   geojson: GeoJSON.FeatureCollection<GeoJSON.Polygon>;
   elementId?: string;
@@ -141,4 +188,24 @@ export function fetchOhmByWikidataId(
 ): Promise<OhmFetchResult> {
   const query = `[out:json];(relation[wikidata=${qid}];way[wikidata=${qid}];);out geom;`;
   return _fetchOhmWays(query, signal);
+}
+
+export async function fetchOhmWayTags(
+  osmId: number,
+  signal?: AbortSignal,
+): Promise<Record<string, string>> {
+  const query = `[out:json];way(${osmId});out tags;`;
+  try {
+    const response = await fetch(OHM_OVERPASS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ data: query }),
+      signal,
+    });
+    if (!response.ok) return {};
+    const data = await response.json();
+    return (data.elements?.[0]?.tags as Record<string, string>) ?? {};
+  } catch {
+    return {};
+  }
 }

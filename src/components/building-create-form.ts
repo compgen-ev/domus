@@ -1,9 +1,11 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import type { WikidataItem } from '../types/building';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { createBuilding, type SourceRef } from '../services/wikidata-edit-rest';
+import type { OhmBuildingPrefill } from '../services/ohm';
+import { buildingTagToWikidataType } from '../services/ohm';
 import './entity-search';
 import './app-button';
 import './icon';
@@ -153,11 +155,22 @@ export class BuildingCreateForm extends LitElement {
       .form-footer app-button:last-child {
         flex: 1;
       }
+
+      .ohm-banner {
+        margin-top: var(--space-3);
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-accent-light);
+        border: 1px solid var(--color-accent);
+        border-radius: var(--radius-md);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+      }
     `,
   ];
 
   @property({ type: Number }) lat = 0;
   @property({ type: Number }) lng = 0;
+  @property({ attribute: false }) ohmPrefill: OhmBuildingPrefill | null = null;
 
   @state() private formLabel = '';
   @state() private formType: WikidataItem | undefined;
@@ -170,6 +183,15 @@ export class BuildingCreateForm extends LitElement {
   @state() private archivePage = '';
   @state() private saving = false;
   @state() private saveError: string | null = null;
+
+  updated(changed: PropertyValues) {
+    if (changed.has('ohmPrefill') && this.ohmPrefill) {
+      this.formLabel = this.ohmPrefill.name ?? '';
+      const type = buildingTagToWikidataType(this.ohmPrefill.buildingTag);
+      if (type) this.formType = type;
+      if (this.ohmPrefill.startDate) this.formInception = this.ohmPrefill.startDate;
+    }
+  }
 
   private readonly buildingTypeIds = [
     'Q41176',     // building (generic)
@@ -277,6 +299,9 @@ export class BuildingCreateForm extends LitElement {
         <h2 class="form-title">${msg('Neues Gebäude anlegen')}</h2>
         <p class="form-subtitle">${msg('Wird als neuer Wikidata-Eintrag angelegt')}</p>
         <p class="form-subtitle">${msg('Koordinaten')}: ${this.lat.toFixed(5)}, ${this.lng.toFixed(5)}</p>
+        ${this.ohmPrefill ? html`
+          <div class="ohm-banner">${msg('Vorausgefüllt aus OpenHistoricalMap')}</div>
+        ` : ''}
         ${this.saveError ? html`
           <div class="error-message" role="alert">${this.saveError}</div>
         ` : ''}

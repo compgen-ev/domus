@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
+import type { OhmBuildingPrefill } from '../services/ohm';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import { formatDate } from '../utils/dates';
@@ -295,6 +296,7 @@ export class BuildingPanel extends LitElement {
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
   @property({ attribute: false }) authenticated = false;
   @property({ attribute: false }) newBuildingCoords: { lat: number; lng: number } | null = null;
+  @property({ attribute: false }) ohmPrefill: OhmBuildingPrefill | null = null;
 
   @state() private editMode = false;
   @state() private linkCopied = false;
@@ -415,6 +417,7 @@ export class BuildingPanel extends LitElement {
           <building-create-form
             .lat=${this.newBuildingCoords.lat}
             .lng=${this.newBuildingCoords.lng}
+            .ohmPrefill=${this.ohmPrefill}
             @cancel=${this._close}
             @building-created=${this._onBuildingCreated}
           ></building-create-form>
