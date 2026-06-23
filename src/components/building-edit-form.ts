@@ -301,6 +301,7 @@ export class BuildingEditForm extends LitElement {
 
   @state() private sourceType: 'url' | 'archive' = 'url';
   @state() private sourceUrl = '';
+  @state() private sourcePage = '';
   @state() private formLabel = '';
   @state() private formAliases = '';
   @state() private formType: WikidataItem | undefined;
@@ -391,6 +392,7 @@ export class BuildingEditForm extends LitElement {
       this.formInception = this.building.inception || '';
       this.formDemolished = this.detail?.demolished || '';
       this.sourceUrl = '';
+      this.sourcePage = '';
       this.saveError = null;
       this.saveErrorDetails = null;
     }
@@ -473,6 +475,7 @@ export class BuildingEditForm extends LitElement {
       occupantStartDate: this.formOccupantStartDate || undefined,
       occupantEndDate: this.formOccupantEndDate || undefined,
       sourceUrl: this.sourceUrl || undefined,
+      sourcePage: this.sourcePage || undefined,
     };
 
     try {
@@ -763,16 +766,16 @@ export class BuildingEditForm extends LitElement {
           </div>
         </div>
 
-        <!-- Section 6: External Links -->
-        <div class="section">
+        <!-- Section 6: External Links — not yet implemented -->
+        <!-- <div class="section">
           <div class="section-header">
-            <h3 >${msg('Externe Links')}</h3>
+            <h3>${msg('Externe Links')}</h3>
           </div>
           <div class="field-group">
             <label>OpenHistoricalMap Relation ID</label>
             <input type="text" .value=${this.detail?.ohmId || ''}>
           </div>
-        </div>
+        </div> -->
 
         <!-- Source (required) -->
         <div class="source-section">
@@ -805,7 +808,11 @@ export class BuildingEditForm extends LitElement {
             </div>
             <div class="field-group">
               <label>${msg('Beschreibung / Seite')} (${msg('optional')})</label>
-              <input type="text" ?disabled=${this.saving}>
+              <input
+                type="text"
+                .value=${this.sourcePage}
+                @input=${(e: Event) => this.sourcePage = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
             </div>
           ` : html`
             <div class="field-group">
