@@ -838,7 +838,6 @@ export class BuildingEditForm extends LitElement {
               <label>${msg('Archivname')}</label>
               <entity-search
                 placeholder="${msg('Archiv suchen...')}"
-                type-qid="Q166118"
                 @select=${(e: CustomEvent) => this.archiveItem = e.detail}
               ></entity-search>
               ${this.archiveItem ? html`

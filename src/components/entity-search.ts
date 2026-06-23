@@ -187,11 +187,9 @@ export class EntitySearch extends LitElement {
     `,
   ];
 
-  @property({ type: String }) placeholder = '';
+  @property({ type: String }) placeholder = '';  
   @property({ type: String }) value = '';
   @property({ type: Boolean, attribute: 'allow-create' }) allowCreate = false;
-  /** When set, restricts results to items that are instances of this QID (or any subclass). Uses SPARQL. */
-  @property({ type: String, attribute: 'type-qid' }) typeQid: string | null = null;
 
   @state() private searchQuery = '';
   @state() private results: Array<{ id: string; label: string; description?: string }> = [];
@@ -222,11 +220,7 @@ export class EntitySearch extends LitElement {
     this.showResults = true;
 
     try {
-      if (this.typeQid) {
-        await this._searchByType(query, this.typeQid, controller.signal);
-      } else {
-        await this._searchGeneric(query, controller.signal);
-      }
+      await this._searchGeneric(query, controller.signal);
     } catch (err) {
       if ((err as DOMException).name === 'AbortError') return; // superseded by newer query
       console.error('Entity search failed:', err);
@@ -259,73 +253,6 @@ export class EntitySearch extends LitElement {
       label: item.label || item.id,
       description: item.description,
     })) ?? [];
-  }
-
-  private async _searchByType(query: string, typeQid: string, signal: AbortSignal) {
-    const lang = getLocale();
-
-    // Step 1: CirrusSearch (same backend as Special:Search, indexes all labels)
-    const searchUrl = new URL('https://www.wikidata.org/w/api.php');
-    searchUrl.searchParams.set('action', 'query');
-    searchUrl.searchParams.set('list', 'search');
-    searchUrl.searchParams.set('srsearch', query);
-    searchUrl.searchParams.set('srnamespace', '0');
-    searchUrl.searchParams.set('srlimit', '50');
-    searchUrl.searchParams.set('format', 'json');
-    searchUrl.searchParams.set('uselang', lang);
-    searchUrl.searchParams.set('origin', '*');
-
-    const searchResponse = await fetch(searchUrl.toString(), { signal });
-    if (!searchResponse.ok) {
-      throw new Error(`CirrusSearch failed: ${searchResponse.status}`);
-    }
-    const searchData = await searchResponse.json();
-
-    // Results have .title = "Q132895388", .snippet = HTML excerpt
-    const hits: Array<{ title: string }> = searchData.query?.search ?? [];
-    if (hits.length === 0) {
-      this.results = [];
-      return;
-    }
-
-    const qids = hits.map(h => h.title); // already in "Q123456" form
-
-    // Step 2: SPARQL type-check + fetch labels in one query
-    const values = qids.map(q => `wd:${q}`).join(' ');
-    const langList = `"${lang},${lang === 'en' ? 'de' : 'en'}"`;
-    const sparql = `
-SELECT ?item ?itemLabel ?itemDescription WHERE {
-  VALUES ?item { ${values} }
-  ?item wdt:P31/wdt:P279* wd:${typeQid} .
-  SERVICE wikibase:label { bd:serviceParam wikibase:language ${langList} . }
-}`;
-
-    const sparqlUrl = new URL('https://query.wikidata.org/sparql');
-    sparqlUrl.searchParams.set('query', sparql);
-    sparqlUrl.searchParams.set('format', 'json');
-
-    const sparqlResponse = await fetch(sparqlUrl.toString(), {
-      headers: { Accept: 'application/sparql-results+json' },
-      signal,
-    });
-    if (!sparqlResponse.ok) {
-      throw new Error(`SPARQL type-filter failed: ${sparqlResponse.status}`);
-    }
-    const sparqlData = await sparqlResponse.json();
-
-    const sparqlRows: Array<{ id: string; label: string; description?: string }> =
-      (sparqlData.results?.bindings ?? []).map((row: any) => ({
-        id: row.item.value.replace('http://www.wikidata.org/entity/', ''),
-        label: row.itemLabel?.value ?? row.item.value,
-        description: row.itemDescription?.value,
-      }));
-
-    // Re-order to match original search ranking
-    const sparqlById = new Map(sparqlRows.map(r => [r.id, r]));
-    this.results = qids
-      .filter(q => sparqlById.has(q))
-      .map(q => sparqlById.get(q)!)
-      .slice(0, 10);
   }
 
   private _onInput(e: Event) {
