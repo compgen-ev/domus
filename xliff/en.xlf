@@ -60,6 +60,7 @@
 </trans-unit>
 <trans-unit id="sf7421fc8f5906183">
   <source>Abmelden</source>
+  <target>Log out</target>
 </trans-unit>
 <trans-unit id="s55dd3f9792622892">
   <source>Wohnhaus</source>
@@ -139,75 +140,99 @@
 </trans-unit>
 <trans-unit id="s69114a08a226ef10">
   <source>bearbeiten</source>
+  <target>edit</target>
 </trans-unit>
 <trans-unit id="sedef3f1c298f0e41">
   <source>Änderungen werden direkt in Wikidata gespeichert</source>
+  <target>Changes are saved directly in Wikidata</target>
 </trans-unit>
 <trans-unit id="s53fd721f3db25629">
   <source>Grunddaten</source>
+  <target>Basic info</target>
 </trans-unit>
 <trans-unit id="sef49aec68fd1dc66">
   <source>Name</source>
+  <target>Name</target>
 </trans-unit>
 <trans-unit id="s6d31f019e246475a">
   <source>Typ</source>
+  <target>Type</target>
 </trans-unit>
 <trans-unit id="se674f7b423636551">
   <source>Nicht angegeben</source>
+  <target>Not specified</target>
 </trans-unit>
 <trans-unit id="sdd77a2e76f19d546">
   <source>Erbaut</source>
+  <target>Built</target>
 </trans-unit>
 <trans-unit id="sa18c90603ced585a">
   <source>Abgerissen</source>
+  <target>Demolished</target>
 </trans-unit>
 <trans-unit id="s3e0e43ed02917d0b">
   <source>Externe Links</source>
+  <target>External links</target>
 </trans-unit>
 <trans-unit id="s6671de71472fcccd">
   <source>Quelle</source>
+  <target>Source</target>
 </trans-unit>
 <trans-unit id="s838dde43b1c54274">
   <source>erforderlich</source>
+  <target>required</target>
 </trans-unit>
 <trans-unit id="s4690da7c59d3d34a">
   <source>Alle Änderungen müssen mit einer Quelle belegt werden.</source>
+  <target>All changes must be backed by a source.</target>
 </trans-unit>
 <trans-unit id="se081e28821f8e8ad">
   <source>Online-Quelle</source>
+  <target>Online source</target>
 </trans-unit>
 <trans-unit id="sfceb32307b0eb5a7">
   <source>Archivdokument</source>
+  <target>Archive document</target>
 </trans-unit>
 <trans-unit id="sca50427382d6f6f5">
   <source>Beschreibung / Seite</source>
+  <target>Description / page</target>
 </trans-unit>
 <trans-unit id="s629576c6b305d539">
   <source>optional</source>
+  <target>optional</target>
 </trans-unit>
 <trans-unit id="sb4585348a9b331e9">
   <source>Archivname</source>
+  <target>Archive name</target>
 </trans-unit>
 <trans-unit id="se96379c0e1acaefa">
   <source>Signatur</source>
+  <target>Call number</target>
 </trans-unit>
 <trans-unit id="s8f411426731b6d29">
   <source>Abbrechen</source>
+  <target>Cancel</target>
 </trans-unit>
 <trans-unit id="seee4a895389c5cfc">
   <source>Änderungen speichern</source>
+  <target>Save changes</target>
 </trans-unit>
 <trans-unit id="sf02e2d7a0a9611f0">
   <source>Bearbeiten</source>
+  <target>Edit</target>
 </trans-unit>
 <trans-unit id="s4827a17f7be6ee2f">
   <source>Anmelden</source>
+  <target>Log in</target>
 </trans-unit>
 <trans-unit id="s35a70342f8310bc4">
   <source>Kopiert!</source>
+  <target>Copied!</target>
 </trans-unit>
 <trans-unit id="s9c9c9456be08b662">
   <source>Link kopieren</source>
+  <target>Copy link</target>
 </trans-unit>
 <trans-unit id="s1f94e54a994bcb76">
   <source>Wird gespeichert …</source>
@@ -215,57 +240,75 @@
 </trans-unit>
 <trans-unit id="sdd2fffdf86bf5b6e">
   <source>Adresse</source>
+  <target>Address</target>
 </trans-unit>
 <trans-unit id="s2e851189b5d5b49c">
   <source>Vorhandene Adressen:</source>
+  <target>Existing addresses:</target>
 </trans-unit>
 <trans-unit id="s7c842920a95bea8b">
   <source>Neue Adresse hinzufügen</source>
+  <target>Add new address</target>
 </trans-unit>
 <trans-unit id="scbaad7cb92d976de">
   <source>z.B. Hauptstraße 1</source>
+  <target>e.g. Main Street 1</target>
 </trans-unit>
 <trans-unit id="s253734ba1b55ec6a">
   <source>Personen &amp; Organisationen</source>
+  <target>People &amp; Organizations</target>
 </trans-unit>
 <trans-unit id="s1ea560920126358a">
   <source>Architekt hinzufügen</source>
+  <target>Add architect</target>
 </trans-unit>
 <trans-unit id="s8af2ab4802b8c144">
   <source>Vorhanden:</source>
+  <target>Existing:</target>
 </trans-unit>
 <trans-unit id="s756467ff6afe4c0a">
   <source>Architekt suchen...</source>
+  <target>Search for architect...</target>
 </trans-unit>
 <trans-unit id="s34e707c2d08bf111">
   <source>Ausgewählt:</source>
+  <target>Selected:</target>
 </trans-unit>
 <trans-unit id="s1a676eb2d93fa8ce">
   <source>Bauherr hinzufügen</source>
+  <target>Add commissioned by</target>
 </trans-unit>
 <trans-unit id="s48de8c411895b72e">
   <source>Bauherr suchen...</source>
+  <target>Search for commissioner...</target>
 </trans-unit>
 <trans-unit id="s380ee530795a3a5d">
   <source>Eigentümer hinzufügen</source>
+  <target>Add owner</target>
 </trans-unit>
 <trans-unit id="s41a77760f1c521d3">
   <source>Eigentümer suchen...</source>
+  <target>Search for owner...</target>
 </trans-unit>
 <trans-unit id="s9c9cc0691b173b67">
   <source>Bewohner hinzufügen</source>
+  <target>Add occupant</target>
 </trans-unit>
 <trans-unit id="sb4fb68ccc3313efd">
   <source>Bewohner suchen...</source>
+  <target>Search for occupant...</target>
 </trans-unit>
 <trans-unit id="sc6ee87eab40e3b62">
   <source>Änderungen gespeichert</source>
+  <target>Changes saved</target>
 </trans-unit>
 <trans-unit id="s504d90b92c9eeb35">
   <source>Daten</source>
+  <target>Data</target>
 </trans-unit>
 <trans-unit id="sac9be1f986270f06">
   <source>Suche läuft...</source>
+  <target>Searching...</target>
 </trans-unit>
 <trans-unit id="sceb7f9cb34dc85bc">
   <source>Historische Gebäudeumrisse</source>
@@ -326,6 +369,30 @@
 <trans-unit id="s3423c77b904b71a8">
   <source>Fortfahren</source>
   <target>Continue</target>
+</trans-unit>
+<trans-unit id="s0646772337bfccfd">
+  <source>Neue Person anlegen</source>
+  <target>Create new person</target>
+</trans-unit>
+<trans-unit id="s68b05b3cd180ef4b">
+  <source>Beschreibung (optional, z.B. Bauer aus Musterstadt)</source>
+  <target>Description (optional, e.g. farmer from Sampletown)</target>
+</trans-unit>
+<trans-unit id="s3ed742c345d9dc9e">
+  <source>Erstellt einen neuen Wikidata-Eintrag (Mensch, Q5)</source>
+  <target>Creates a new Wikidata entry (human, Q5)</target>
+</trans-unit>
+<trans-unit id="s509c9d5f0f1ed8fc">
+  <source>Wird angelegt…</source>
+  <target>Creating…</target>
+</trans-unit>
+<trans-unit id="s553095f46f46c166">
+  <source>Person anlegen</source>
+  <target>Create person</target>
+</trans-unit>
+<trans-unit id="sc9c4961620e139e5">
+  <source>"<x id="0" equiv-text="${this.searchQuery}"/>" als neue Person anlegen</source>
+  <target>"<x id="0" equiv-text="${this.searchQuery}"/>" as new person</target>
 </trans-unit>
 </body>
 </file>

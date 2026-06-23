@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { localized, msg } from '@lit/localize';
+import { localized, msg, str } from '@lit/localize';
 import type { WikidataItem } from '../types/building';
 import { inputStyles } from '../styles/design-tokens';
 import { createPerson } from '../services/wikidata-edit-rest';
@@ -395,7 +395,7 @@ export class EntitySearch extends LitElement {
             <div class="no-results">${msg('Keine Ergebnisse')}</div>
             ${this.allowCreate ? html`
               <div class="create-option" @click=${this._startCreate}>
-                + ${msg('"')}<strong>${this.searchQuery}</strong>${msg('" als neue Person anlegen')}
+                + ${msg(str`"${this.searchQuery}" als neue Person anlegen`)}
               </div>
             ` : ''}
           `}
