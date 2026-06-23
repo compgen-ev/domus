@@ -1,6 +1,36 @@
 import { describe, it, expect } from 'vitest';
-import { validateEditData } from './wikidata-edit-rest';
+import { validateEditData, buildPersonItemPayload } from './wikidata-edit-rest';
 import type { BuildingEditData } from './wikidata-edit-rest';
+
+describe('buildPersonItemPayload', () => {
+  it('sets German label', () => {
+    const payload = buildPersonItemPayload('Johann Müller');
+    expect(payload.labels).toEqual({ de: 'Johann Müller' });
+  });
+
+  it('sets P31=Q5 (human) statement', () => {
+    const payload = buildPersonItemPayload('Test Person');
+    expect(payload.statements.P31).toHaveLength(1);
+    expect(payload.statements.P31[0].property.id).toBe('P31');
+    expect(payload.statements.P31[0].value.type).toBe('value');
+    expect(payload.statements.P31[0].value.content).toBe('Q5');
+  });
+
+  it('omits descriptions when not provided', () => {
+    const payload = buildPersonItemPayload('Test Person');
+    expect(payload.descriptions).toBeUndefined();
+  });
+
+  it('includes German description when provided', () => {
+    const payload = buildPersonItemPayload('Johann Müller', 'Bauer aus Musterstadt');
+    expect(payload.descriptions).toEqual({ de: 'Bauer aus Musterstadt' });
+  });
+
+  it('omits descriptions when empty string passed', () => {
+    const payload = buildPersonItemPayload('Test Person', '');
+    expect(payload.descriptions).toBeUndefined();
+  });
+});
 
 describe('validateEditData', () => {
   it('validates building ID format', () => {

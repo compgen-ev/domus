@@ -532,3 +532,60 @@ export async function editBuilding(
   // Track edit timestamp for staleness detection
   recordEdit(editData.id);
 }
+
+export interface PersonItemPayload {
+  labels: Record<string, string>;
+  descriptions?: Record<string, string>;
+  statements: {
+    P31: Array<{ property: { id: string }; value: { type: string; content: string } }>;
+  };
+}
+
+export function buildPersonItemPayload(name: string, description?: string): PersonItemPayload {
+  const payload: PersonItemPayload = {
+    labels: { de: name },
+    statements: {
+      P31: [{ property: { id: 'P31' }, value: { type: 'value', content: 'Q5' } }],
+    },
+  };
+  if (description) {
+    payload.descriptions = { de: description };
+  }
+  return payload;
+}
+
+/**
+ * Creates a new Wikidata person item (Q5 = human)
+ */
+export async function createPerson(
+  name: string,
+  description?: string,
+): Promise<WikidataItem> {
+  if (!name.trim()) {
+    throw new Error('Person name is required');
+  }
+
+  const token = await getValidAccessToken();
+  if (!token) {
+    throw new Error('Not authenticated - please log in again');
+  }
+
+  const item = buildPersonItemPayload(name.trim(), description?.trim() || undefined);
+
+  const response = await fetch(`${WIKIDATA_REST_API}/entities/items`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ item, comment: 'Created person via Domus' }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(`Failed to create person: ${result?.message || result?.error || response.status}`);
+  }
+
+  return { id: result.id, label: name };
+}

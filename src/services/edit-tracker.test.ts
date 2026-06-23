@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { isStale, cleanupExpired, recordEdit, getLastEdit } from './edit-tracker';
 
 describe('edit-tracker', () => {
@@ -76,10 +76,12 @@ describe('edit-tracker', () => {
     });
 
     it('removes timestamps older than 1 hour, keeps those at boundary', () => {
-      const now = Date.now();
-      const slightlyOver = new Date(now - 60 * 60 * 1000 - 1000).toISOString(); // 1h 1s ago
-      const exactlyOneHour = new Date(now - 60 * 60 * 1000).toISOString();
-      const justUnder = new Date(now - 60 * 60 * 1000 + 1000).toISOString(); // 59 min 59s
+      const frozenNow = Date.now();
+      vi.spyOn(Date, 'now').mockReturnValue(frozenNow);
+
+      const slightlyOver = new Date(frozenNow - 60 * 60 * 1000 - 1000).toISOString(); // 1h 1s ago
+      const exactlyOneHour = new Date(frozenNow - 60 * 60 * 1000).toISOString();
+      const justUnder = new Date(frozenNow - 60 * 60 * 1000 + 1000).toISOString(); // 59 min 59s
 
       localStorage.setItem('wikidata-edits', JSON.stringify({
         Q123: slightlyOver,
@@ -92,6 +94,8 @@ describe('edit-tracker', () => {
       expect(getLastEdit('Q123')).toBeNull(); // removed (> 1 hour)
       expect(getLastEdit('Q456')).toBe(exactlyOneHour); // kept (= 1 hour)
       expect(getLastEdit('Q789')).toBe(justUnder); // kept (< 1 hour)
+
+      vi.restoreAllMocks();
     });
 
     it('handles malformed timestamps by removing them', () => {

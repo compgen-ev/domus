@@ -655,6 +655,7 @@ export class BuildingEditForm extends LitElement {
             ` : ''}
             <entity-search
               placeholder="${msg('Architekt suchen...')}"
+              allow-create
               @select=${(e: CustomEvent) => this.formArchitect = e.detail}
             ></entity-search>
             ${this.formArchitect ? html`
@@ -673,6 +674,7 @@ export class BuildingEditForm extends LitElement {
             ` : ''}
             <entity-search
               placeholder="${msg('Bauherr suchen...')}"
+              allow-create
               @select=${(e: CustomEvent) => this.formCommissionedBy = e.detail}
             ></entity-search>
             ${this.formCommissionedBy ? html`
@@ -691,6 +693,7 @@ export class BuildingEditForm extends LitElement {
             ` : ''}
             <entity-search
               placeholder="${msg('Eigentümer suchen...')}"
+              allow-create
               @select=${(e: CustomEvent) => this.formOwner = e.detail}
             ></entity-search>
             ${this.formOwner ? html`
@@ -729,6 +732,7 @@ export class BuildingEditForm extends LitElement {
             ` : ''}
             <entity-search
               placeholder="${msg('Bewohner suchen...')}"
+              allow-create
               @select=${(e: CustomEvent) => this.formOccupant = e.detail}
             ></entity-search>
             ${this.formOccupant ? html`
