@@ -1,7 +1,11 @@
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { getLocale } from '../locale';
+import { BUILDING_TYPES } from './building-types';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
+
+// Create a Set for fast building type lookup
+const BUILDING_TYPE_SET = new Set<string>(BUILDING_TYPES);
 
 interface SparqlBinding {
   value: string;
@@ -34,14 +38,13 @@ SELECT ?item ?itemLabel ?type ?typeLabel ?coord ?image ?inception ?modified WHER
     bd:serviceParam wikibase:cornerSouthWest "Point(${west} ${south})"^^geo:wktLiteral .
     bd:serviceParam wikibase:cornerNorthEast "Point(${east} ${north})"^^geo:wktLiteral .
   }
-  ?item wdt:P31/wdt:P279?/wdt:P279?/wdt:P279? wd:Q41176 .
-  OPTIONAL { ?item wdt:P31 ?type . }
+  ?item wdt:P31 ?type .
   OPTIONAL { ?item wdt:P18 ?image . }
   OPTIONAL { ?item wdt:P571 ?inception . }
   OPTIONAL { ?item schema:dateModified ?modified . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }
-LIMIT 200`;
+LIMIT 5000`;
 }
 
 function parseCoord(wkt: string): { lat: number; lng: number } | null {
@@ -88,11 +91,15 @@ export async function fetchBuildings(
     const coords = parseCoord(row.coord.value);
     if (!coords) continue;
 
+    // Client-side filtering: only include buildings
+    const typeId = row.type?.value ? extractQid(row.type.value) : null;
+    if (!typeId || !BUILDING_TYPE_SET.has(typeId)) continue;
+
     buildings.push({
       id,
       label: row.itemLabel?.value ?? id,
       type: row.type?.value && row.typeLabel?.value
-        ? { id: extractQid(row.type.value), label: row.typeLabel.value }
+        ? { id: typeId, label: row.typeLabel.value }
         : undefined,
       lat: coords.lat,
       lng: coords.lng,
