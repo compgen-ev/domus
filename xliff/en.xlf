@@ -186,10 +186,6 @@
   <source>Alle Änderungen müssen mit einer Quelle belegt werden.</source>
   <target>All changes must be backed by a source.</target>
 </trans-unit>
-<trans-unit id="se081e28821f8e8ad">
-  <source>Online-Quelle</source>
-  <target>Online source</target>
-</trans-unit>
 <trans-unit id="sfceb32307b0eb5a7">
   <source>Archivdokument</source>
   <target>Archive document</target>
@@ -437,6 +433,50 @@
 <trans-unit id="s96da93c661c068b2">
   <source>Vorausgefüllt aus OpenHistoricalMap</source>
   <target>Pre-filled from OpenHistoricalMap</target>
+</trans-unit>
+<trans-unit id="seadeb3a807d7478a">
+  <source>Online</source>
+  <target>Online</target>
+</trans-unit>
+<trans-unit id="s2a39c3a7e44c8ff3">
+  <source>Buch</source>
+  <target>Book</target>
+</trans-unit>
+<trans-unit id="s8476bbeadc0eb9dc">
+  <source>Buch nicht auf Wikidata?</source>
+  <target>Book not on Wikidata?</target>
+</trans-unit>
+<trans-unit id="sb5900d5ef36f9d7e">
+  <source>Manuell eingeben</source>
+  <target>Enter manually</target>
+</trans-unit>
+<trans-unit id="s5ef46c689e4e6619">
+  <source>Buchtitel</source>
+  <target>Book title</target>
+</trans-unit>
+<trans-unit id="s969a6729d9e87c4d">
+  <source>Buch suchen...</source>
+  <target>Search for book...</target>
+</trans-unit>
+<trans-unit id="s83977996c90f160f">
+  <source>Seite</source>
+  <target>Page</target>
+</trans-unit>
+<trans-unit id="s9a0ff5d27e4b3537">
+  <source>Titel</source>
+  <target>Title</target>
+</trans-unit>
+<trans-unit id="s7c953897f53716ec">
+  <source>Autor</source>
+  <target>Author</target>
+</trans-unit>
+<trans-unit id="sc30797ea5be14792">
+  <source>Jahr</source>
+  <target>Year</target>
+</trans-unit>
+<trans-unit id="s32b4da2023191cef">
+  <source>← Auf Wikidata suchen</source>
+  <target>← Search on Wikidata</target>
 </trans-unit>
 </body>
 </file>

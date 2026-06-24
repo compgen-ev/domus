@@ -37,7 +37,38 @@ export interface ArchiveSource {
   page?: string;         // P304
 }
 
-export type SourceRef = UrlSource | ArchiveSource;
+/**
+ * Reference to a book by its Wikidata item.
+ * - P248 stated in (wikibase-item)
+ * - P304 page(s), optional
+ */
+export interface BookSourceItem {
+  type: 'book';
+  mode: 'item';
+  book: WikidataItem; // P248
+  page?: string;      // P304
+}
+
+/**
+ * Reference to a book without a Wikidata item (free-text fallback).
+ * - P1476 title (monolingual text)
+ * - P2093 author name string, optional
+ * - P577 publication date (year only), optional
+ * - P304 page(s), optional
+ */
+export interface BookSourceFreeText {
+  type: 'book';
+  mode: 'freetext';
+  title: string;         // P1476
+  titleLanguage: string;
+  author?: string;       // P2093
+  year?: string;         // P577
+  page?: string;         // P304
+}
+
+export type BookSource = BookSourceItem | BookSourceFreeText;
+
+export type SourceRef = UrlSource | ArchiveSource | BookSource;
 
 export interface BuildingEditData {
   id: string;
@@ -117,12 +148,26 @@ export function validateEditData(data: BuildingEditData): { valid: boolean; erro
       } catch {
         errors.push('Source URL must be a valid URL');
       }
-    } else {
+    } else if (data.source.type === 'archive') {
       if (!data.source.archive?.id?.match(/^Q\d+$/)) {
         errors.push('Archive must be a valid Wikidata item');
       }
       if (!data.source.callNumber.trim()) {
         errors.push('Archive call number (Signatur) is required');
+      }
+    } else {
+      // book
+      if (data.source.mode === 'item') {
+        if (!data.source.book?.id?.match(/^Q\d+$/)) {
+          errors.push('Book must be a valid Wikidata item');
+        }
+      } else {
+        if (!data.source.title.trim()) {
+          errors.push('Book title is required');
+        }
+        if (data.source.year && !data.source.year.match(/^\d{4}$/)) {
+          errors.push('Book year must be a 4-digit year');
+        }
       }
     }
   }
@@ -161,38 +206,51 @@ function createStatementValue(value: string | WikidataItem, type: 'string' | 'ti
 /**
  * Builds a Wikidata REST API reference object from a SourceRef.
  */
+type ReferencePart = { property: { id: string }; value: { type: string; content: unknown } };
+
 function createReference(source: SourceRef) {
   if (source.type === 'url') {
-    const parts: Array<{ property: { id: string }; value: { type: string; content: string | { id: string } } }> = [
-      {
-        property: { id: 'P854' }, // reference URL
-        value: { type: 'value', content: source.url },
-      },
+    const parts: ReferencePart[] = [
+      { property: { id: 'P854' }, value: { type: 'value', content: source.url } },
     ];
     if (source.page) {
-      parts.push({
-        property: { id: 'P304' }, // page(s)
-        value: { type: 'value', content: source.page },
-      });
+      parts.push({ property: { id: 'P304' }, value: { type: 'value', content: source.page } });
+    }
+    return { parts };
+  } else if (source.type === 'archive') {
+    const parts: ReferencePart[] = [
+      { property: { id: 'P485' }, value: { type: 'value', content: { id: source.archive.id } } },
+      { property: { id: 'P217' }, value: { type: 'value', content: source.callNumber } },
+    ];
+    if (source.page) {
+      parts.push({ property: { id: 'P304' }, value: { type: 'value', content: source.page } });
+    }
+    return { parts };
+  } else if (source.mode === 'item') {
+    // Book with Wikidata item: P248 stated in
+    const parts: ReferencePart[] = [
+      { property: { id: 'P248' }, value: { type: 'value', content: { id: source.book.id } } },
+    ];
+    if (source.page) {
+      parts.push({ property: { id: 'P304' }, value: { type: 'value', content: source.page } });
     }
     return { parts };
   } else {
-    // Archive source
-    const parts: Array<{ property: { id: string }; value: { type: string; content: string | { id: string } } }> = [
-      {
-        property: { id: 'P485' }, // archive
-        value: { type: 'value', content: { id: source.archive.id } },
-      },
-      {
-        property: { id: 'P217' }, // inventory number / Signatur
-        value: { type: 'value', content: source.callNumber },
-      },
+    // Book free-text: P1476 title + optional P2093 author + optional P577 year
+    const parts: ReferencePart[] = [
+      { property: { id: 'P1476' }, value: { type: 'value', content: { text: source.title, language: source.titleLanguage } } },
     ];
+    if (source.author) {
+      parts.push({ property: { id: 'P2093' }, value: { type: 'value', content: source.author } });
+    }
+    if (source.year) {
+      const parsed = parseDate(source.year);
+      if (parsed) {
+        parts.push({ property: { id: 'P577' }, value: { type: 'value', content: { time: parsed.time, precision: parsed.precision, calendarmodel: parsed.calendarmodel } } });
+      }
+    }
     if (source.page) {
-      parts.push({
-        property: { id: 'P304' }, // page(s)
-        value: { type: 'value', content: source.page },
-      });
+      parts.push({ property: { id: 'P304' }, value: { type: 'value', content: source.page } });
     }
     return { parts };
   }

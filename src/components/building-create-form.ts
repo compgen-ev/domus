@@ -143,6 +143,17 @@ export class BuildingCreateForm extends LitElement {
         color: var(--color-primary);
       }
 
+      .btn-link {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--color-primary);
+        font-size: inherit;
+        font-family: inherit;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
       .form-footer {
         flex-shrink: 0;
         border-top: 1px solid var(--color-border);
@@ -175,12 +186,18 @@ export class BuildingCreateForm extends LitElement {
   @state() private formLabel = '';
   @state() private formType: WikidataItem | undefined;
   @state() private formInception = '';
-  @state() private sourceType: 'url' | 'archive' = 'url';
+  @state() private sourceType: 'url' | 'archive' | 'book' = 'url';
   @state() private sourceUrl = '';
   @state() private sourcePage = '';
   @state() private archiveItem: WikidataItem | undefined;
   @state() private archiveCallNumber = '';
   @state() private archivePage = '';
+  @state() private bookMode: 'item' | 'freetext' = 'item';
+  @state() private bookItem: WikidataItem | undefined;
+  @state() private bookTitle = '';
+  @state() private bookAuthor = '';
+  @state() private bookYear = '';
+  @state() private bookPage = '';
   @state() private saving = false;
   @state() private saveError: string | null = null;
 
@@ -246,6 +263,10 @@ export class BuildingCreateForm extends LitElement {
     if (!this.formLabel.trim()) return false;
     if (this.sourceType === 'url' && !this.sourceUrl.trim()) return false;
     if (this.sourceType === 'archive' && (!this.archiveItem || !this.archiveCallNumber.trim())) return false;
+    if (this.sourceType === 'book') {
+      if (this.bookMode === 'item' && !this.bookItem) return false;
+      if (this.bookMode === 'freetext' && !this.bookTitle.trim()) return false;
+    }
     return true;
   }
 
@@ -262,12 +283,24 @@ export class BuildingCreateForm extends LitElement {
     let source: SourceRef;
     if (this.sourceType === 'url') {
       source = { type: 'url', url: this.sourceUrl.trim(), page: this.sourcePage.trim() || undefined };
-    } else {
+    } else if (this.sourceType === 'archive') {
       source = {
         type: 'archive',
         archive: this.archiveItem!,
         callNumber: this.archiveCallNumber.trim(),
         page: this.archivePage.trim() || undefined,
+      };
+    } else if (this.bookMode === 'item') {
+      source = { type: 'book', mode: 'item', book: this.bookItem!, page: this.bookPage.trim() || undefined };
+    } else {
+      source = {
+        type: 'book',
+        mode: 'freetext',
+        title: this.bookTitle.trim(),
+        titleLanguage: navigator.language.split('-')[0] || 'de',
+        author: this.bookAuthor.trim() || undefined,
+        year: this.bookYear.trim() || undefined,
+        page: this.bookPage.trim() || undefined,
       };
     }
 
@@ -353,12 +386,17 @@ export class BuildingCreateForm extends LitElement {
             <button
               class="source-type-btn ${this.sourceType === 'url' ? 'active' : ''}"
               @click=${() => this.sourceType = 'url'}>
-              ${msg('Online-Quelle')}
+              ${msg('Online')}
             </button>
             <button
               class="source-type-btn ${this.sourceType === 'archive' ? 'active' : ''}"
               @click=${() => this.sourceType = 'archive'}>
               ${msg('Archivdokument')}
+            </button>
+            <button
+              class="source-type-btn ${this.sourceType === 'book' ? 'active' : ''}"
+              @click=${() => this.sourceType = 'book'}>
+              ${msg('Buch')}
             </button>
           </div>
 
@@ -380,12 +418,13 @@ export class BuildingCreateForm extends LitElement {
                 @input=${(e: Event) => this.sourcePage = (e.target as HTMLInputElement).value}
                 ?disabled=${this.saving}>
             </div>
-          ` : html`
+          ` : this.sourceType === 'archive' ? html`
             <div class="field-group">
               <label>${msg('Archivname')}</label>
               <entity-search
                 placeholder="${msg('Archiv suchen...')}"
                 @select=${(e: CustomEvent) => this.archiveItem = e.detail}
+                @clear=${() => this.archiveItem = undefined}
               ></entity-search>
               ${this.archiveItem ? html`
                 <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
@@ -409,6 +448,76 @@ export class BuildingCreateForm extends LitElement {
                 @input=${(e: Event) => this.archivePage = (e.target as HTMLInputElement).value}
                 ?disabled=${this.saving}>
             </div>
+          ` : html`
+            ${this.bookMode === 'item' ? html`
+              <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-4);">
+                ${msg('Buch nicht auf Wikidata?')}
+                <button class="btn-link" @click=${() => this.bookMode = 'freetext'}>
+                  ${msg('Manuell eingeben')}
+                </button>
+              </div>
+              <div class="field-group">
+                <label>${msg('Buchtitel')}</label>
+                <entity-search
+                  placeholder="${msg('Buch suchen...')}"
+                  @select=${(e: CustomEvent) => this.bookItem = e.detail}
+                  @clear=${() => this.bookItem = undefined}
+                ></entity-search>
+                ${this.bookItem ? html`
+                  <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
+                    ${msg('Ausgewählt:')} ${this.bookItem.label}
+                  </div>
+                ` : ''}
+              </div>
+              <div class="field-group">
+                <label>${msg('Seite')} (${msg('optional')})</label>
+                <input
+                  type="text"
+                  .value=${this.bookPage}
+                  @input=${(e: Event) => this.bookPage = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+            ` : html`
+              <div class="field-group">
+                <label>${msg('Titel')} *</label>
+                <input
+                  type="text"
+                  .value=${this.bookTitle}
+                  @input=${(e: Event) => this.bookTitle = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div class="field-group">
+                <label>${msg('Autor')} (${msg('optional')})</label>
+                <input
+                  type="text"
+                  .value=${this.bookAuthor}
+                  @input=${(e: Event) => this.bookAuthor = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div class="field-group">
+                <label>${msg('Jahr')} (${msg('optional')})</label>
+                <input
+                  type="text"
+                  placeholder="YYYY"
+                  maxlength="4"
+                  .value=${this.bookYear}
+                  @input=${(e: Event) => this.bookYear = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div class="field-group">
+                <label>${msg('Seite')} (${msg('optional')})</label>
+                <input
+                  type="text"
+                  .value=${this.bookPage}
+                  @input=${(e: Event) => this.bookPage = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                <button class="btn-link" @click=${() => this.bookMode = 'item'}>
+                  ${msg('← Auf Wikidata suchen')}
+                </button>
+              </div>
+            `}
           `}
         </div>
       </div>

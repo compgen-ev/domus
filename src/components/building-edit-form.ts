@@ -293,18 +293,35 @@ export class BuildingEditForm extends LitElement {
         background: var(--color-bg-secondary);
         border-color: var(--color-text-muted);
       }
+
+      .btn-link {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--color-primary);
+        font-size: inherit;
+        font-family: inherit;
+        cursor: pointer;
+        text-decoration: underline;
+      }
     `,
   ];
 
   @property({ attribute: false }) building: WikidataBuilding | null = null;
   @property({ attribute: false }) detail: BuildingDetail | null = null;
 
-  @state() private sourceType: 'url' | 'archive' = 'url';
+  @state() private sourceType: 'url' | 'archive' | 'book' = 'url';
   @state() private sourceUrl = '';
   @state() private sourcePage = '';
   @state() private archiveItem: WikidataItem | undefined;
   @state() private archiveCallNumber = '';
   @state() private archivePage = '';
+  @state() private bookMode: 'item' | 'freetext' = 'item';
+  @state() private bookItem: WikidataItem | undefined;
+  @state() private bookTitle = '';
+  @state() private bookAuthor = '';
+  @state() private bookYear = '';
+  @state() private bookPage = '';
   @state() private formLabel = '';
   @state() private formAliases = '';
   @state() private formType: WikidataItem | undefined;
@@ -399,6 +416,12 @@ export class BuildingEditForm extends LitElement {
       this.archiveItem = undefined;
       this.archiveCallNumber = '';
       this.archivePage = '';
+      this.bookMode = 'item';
+      this.bookItem = undefined;
+      this.bookTitle = '';
+      this.bookAuthor = '';
+      this.bookYear = '';
+      this.bookPage = '';
       this.saveError = null;
       this.saveErrorDetails = null;
     }
@@ -438,6 +461,10 @@ export class BuildingEditForm extends LitElement {
     if (hasClaimChanges) {
       if (this.sourceType === 'url' && !this.sourceUrl.trim()) return false;
       if (this.sourceType === 'archive' && (!this.archiveItem || !this.archiveCallNumber.trim())) return false;
+      if (this.sourceType === 'book') {
+        if (this.bookMode === 'item' && !this.bookItem) return false;
+        if (this.bookMode === 'freetext' && !this.bookTitle.trim()) return false;
+      }
     }
 
     return true;
@@ -473,6 +500,20 @@ export class BuildingEditForm extends LitElement {
         callNumber: this.archiveCallNumber,
         page: this.archivePage || undefined,
       };
+    } else if (this.sourceType === 'book') {
+      if (this.bookMode === 'item' && this.bookItem) {
+        source = { type: 'book', mode: 'item', book: this.bookItem, page: this.bookPage || undefined };
+      } else if (this.bookMode === 'freetext' && this.bookTitle.trim()) {
+        source = {
+          type: 'book',
+          mode: 'freetext',
+          title: this.bookTitle.trim(),
+          titleLanguage: navigator.language.split('-')[0] || 'de',
+          author: this.bookAuthor.trim() || undefined,
+          year: this.bookYear.trim() || undefined,
+          page: this.bookPage.trim() || undefined,
+        };
+      }
     }
 
     const editData: BuildingEditData = {
@@ -679,6 +720,7 @@ export class BuildingEditForm extends LitElement {
               placeholder="${msg('Architekt suchen...')}"
               allow-create
               @select=${(e: CustomEvent) => this.formArchitect = e.detail}
+              @clear=${() => this.formArchitect = undefined}
             ></entity-search>
             ${this.formArchitect ? html`
               <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
@@ -698,6 +740,7 @@ export class BuildingEditForm extends LitElement {
               placeholder="${msg('Bauherr suchen...')}"
               allow-create
               @select=${(e: CustomEvent) => this.formCommissionedBy = e.detail}
+              @clear=${() => this.formCommissionedBy = undefined}
             ></entity-search>
             ${this.formCommissionedBy ? html`
               <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
@@ -717,6 +760,7 @@ export class BuildingEditForm extends LitElement {
               placeholder="${msg('Eigentümer suchen...')}"
               allow-create
               @select=${(e: CustomEvent) => this.formOwner = e.detail}
+              @clear=${() => { this.formOwner = undefined; this.formOwnerStartDate = ''; this.formOwnerEndDate = ''; }}
             ></entity-search>
             ${this.formOwner ? html`
               <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
@@ -756,6 +800,7 @@ export class BuildingEditForm extends LitElement {
               placeholder="${msg('Bewohner suchen...')}"
               allow-create
               @select=${(e: CustomEvent) => this.formOccupant = e.detail}
+              @clear=${() => { this.formOccupant = undefined; this.formOccupantStartDate = ''; this.formOccupantEndDate = ''; }}
             ></entity-search>
             ${this.formOccupant ? html`
               <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
@@ -805,12 +850,17 @@ export class BuildingEditForm extends LitElement {
             <button
               class="source-type-btn ${this.sourceType === 'url' ? 'active' : ''}"
               @click=${() => this.sourceType = 'url'}>
-              ${msg('Online-Quelle')}
+              ${msg('Online')}
             </button>
             <button
               class="source-type-btn ${this.sourceType === 'archive' ? 'active' : ''}"
               @click=${() => this.sourceType = 'archive'}>
               ${msg('Archivdokument')}
+            </button>
+            <button
+              class="source-type-btn ${this.sourceType === 'book' ? 'active' : ''}"
+              @click=${() => this.sourceType = 'book'}>
+              ${msg('Buch')}
             </button>
           </div>
 
@@ -833,12 +883,13 @@ export class BuildingEditForm extends LitElement {
                 @input=${(e: Event) => this.sourcePage = (e.target as HTMLInputElement).value}
                 ?disabled=${this.saving}>
             </div>
-          ` : html`
+          ` : this.sourceType === 'archive' ? html`
             <div class="field-group">
               <label>${msg('Archivname')}</label>
               <entity-search
                 placeholder="${msg('Archiv suchen...')}"
                 @select=${(e: CustomEvent) => this.archiveItem = e.detail}
+                @clear=${() => this.archiveItem = undefined}
               ></entity-search>
               ${this.archiveItem ? html`
                 <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
@@ -862,6 +913,76 @@ export class BuildingEditForm extends LitElement {
                 @input=${(e: Event) => this.archivePage = (e.target as HTMLInputElement).value}
                 ?disabled=${this.saving}>
             </div>
+          ` : html`
+            ${this.bookMode === 'item' ? html`
+              <div style="font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--space-4);">
+                ${msg('Buch nicht auf Wikidata?')}
+                <button class="btn-link" @click=${() => this.bookMode = 'freetext'}>
+                  ${msg('Manuell eingeben')}
+                </button>
+              </div>
+              <div class="field-group">
+                <label>${msg('Buchtitel')}</label>
+                <entity-search
+                  placeholder="${msg('Buch suchen...')}"
+                  @select=${(e: CustomEvent) => this.bookItem = e.detail}
+                  @clear=${() => this.bookItem = undefined}
+                ></entity-search>
+                ${this.bookItem ? html`
+                  <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
+                    ${msg('Ausgewählt:')} ${this.bookItem.label}
+                  </div>
+                ` : ''}
+              </div>
+              <div class="field-group">
+                <label>${msg('Seite')} (${msg('optional')})</label>
+                <input
+                  type="text"
+                  .value=${this.bookPage}
+                  @input=${(e: Event) => this.bookPage = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+            ` : html`
+              <div class="field-group">
+                <label>${msg('Titel')} *</label>
+                <input
+                  type="text"
+                  .value=${this.bookTitle}
+                  @input=${(e: Event) => this.bookTitle = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div class="field-group">
+                <label>${msg('Autor')} (${msg('optional')})</label>
+                <input
+                  type="text"
+                  .value=${this.bookAuthor}
+                  @input=${(e: Event) => this.bookAuthor = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div class="field-group">
+                <label>${msg('Jahr')} (${msg('optional')})</label>
+                <input
+                  type="text"
+                  placeholder="YYYY"
+                  maxlength="4"
+                  .value=${this.bookYear}
+                  @input=${(e: Event) => this.bookYear = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div class="field-group">
+                <label>${msg('Seite')} (${msg('optional')})</label>
+                <input
+                  type="text"
+                  .value=${this.bookPage}
+                  @input=${(e: Event) => this.bookPage = (e.target as HTMLInputElement).value}
+                  ?disabled=${this.saving}>
+              </div>
+              <div style="font-size: var(--font-size-sm); color: var(--color-text-muted);">
+                <button class="btn-link" @click=${() => this.bookMode = 'item'}>
+                  ${msg('← Auf Wikidata suchen')}
+                </button>
+              </div>
+            `}
           `}
         </div>
       </div>

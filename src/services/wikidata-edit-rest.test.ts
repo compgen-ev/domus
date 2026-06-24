@@ -326,6 +326,79 @@ describe('validateEditData', () => {
     expect(result.errors).toHaveLength(0);
   });
 
+  it('accepts valid book item source', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1900',
+      source: { type: 'book', mode: 'item', book: { id: 'Q456', label: 'Denkmäler in Bayern' } },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts book item source with optional page', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1900',
+      source: { type: 'book', mode: 'item', book: { id: 'Q456', label: 'Denkmäler in Bayern' }, page: '42' },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+  });
+
+  it('rejects book item source with invalid QID', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1900',
+      source: { type: 'book', mode: 'item', book: { id: 'not-a-qid', label: 'Test' } },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Book must be a valid Wikidata item');
+  });
+
+  it('accepts valid book freetext source', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1900',
+      source: { type: 'book', mode: 'freetext', title: 'Denkmäler in Bayern', titleLanguage: 'de' },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts book freetext source with all optional fields', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1900',
+      source: { type: 'book', mode: 'freetext', title: 'Denkmäler in Bayern', titleLanguage: 'de', author: 'Georg Lill', year: '1934', page: '42' },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(true);
+  });
+
+  it('rejects book freetext source with empty title', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1900',
+      source: { type: 'book', mode: 'freetext', title: '', titleLanguage: 'de' },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Book title is required');
+  });
+
+  it('rejects book freetext source with invalid year', () => {
+    const data: BuildingEditData = {
+      id: 'Q123',
+      inception: '1900',
+      source: { type: 'book', mode: 'freetext', title: 'Test', titleLanguage: 'de', year: '19ab' },
+    };
+    const result = validateEditData(data);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Book year must be a 4-digit year');
+  });
+
   it('collects multiple validation errors', () => {
     const data: BuildingEditData = {
       id: 'invalid-id',

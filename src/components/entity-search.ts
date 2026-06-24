@@ -259,6 +259,10 @@ export class EntitySearch extends LitElement {
     const input = e.target as HTMLInputElement;
     this.searchQuery = input.value;
 
+    if (!input.value) {
+      this.dispatchEvent(new CustomEvent('clear', { bubbles: true, composed: true }));
+    }
+
     if (this.searchTimeout) {
       clearTimeout(this.searchTimeout);
     }
