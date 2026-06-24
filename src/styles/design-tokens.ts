@@ -112,7 +112,7 @@ export const designTokens = css`
 
     /* Panel */
     --panel-width-desktop: 400px;
-    --panel-height-mobile: 70vh;
+    --panel-height-mobile: 70dvh;
 
     /* Content */
     --content-max-width: 680px;
