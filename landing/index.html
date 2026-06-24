@@ -22,7 +22,7 @@
       --text-3:     #64748b;
       --border:     #e2e8f0;
       --bg:         #ffffff;
-      --bg-2:       #f1f5f9;
+      --bg-2:       #f5f1e8;
       --radius:     1.25rem;
     }
 
@@ -48,7 +48,7 @@
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: clamp(3rem, 8vw, 6rem) 1.5rem clamp(2.5rem, 6vw, 5rem);
+      padding: clamp(3rem, 8vw, 6rem) 1.5rem clamp(1.25rem, 3vw, 2.5rem);
     }
 
     .logo-title {
@@ -60,12 +60,12 @@
     }
 
     .logo {
-      height: clamp(52px, 9vw, 92px);
+      height: clamp(44px, 7.65vw, 78px);
       width: auto;
       aspect-ratio: 1;
       flex-shrink: 0;
       position: relative;
-      top: clamp(-7px, -1.1vw, -4px);
+      top: clamp(-3px, -0.4vw, -1px);
       fill: var(--blue);
     }
 
@@ -78,8 +78,8 @@
     }
 
     .tagline {
-      font-size: clamp(1.05rem, 2.5vw, 1.25rem);
-      color: var(--text-2);
+      font-size: clamp(1.2rem, 2.8vw, 1.45rem);
+      color: var(--blue);
       line-height: 1.6;
       max-width: 480px;
       margin-bottom: 2.25rem;
@@ -96,8 +96,8 @@
       display: inline-flex;
       align-items: center;
       gap: 0.45rem;
-      background: var(--blue);
-      color: #fff;
+      background: #f2c14e;
+      color: var(--blue);
       font-size: 1.05rem;
       font-weight: 600;
       padding: 0.8rem 1.85rem;
@@ -105,7 +105,7 @@
       text-decoration: none;
       transition: background 0.15s;
     }
-    .cta:hover { background: var(--blue-hover); }
+    .cta:hover { background: #e0af3a; }
 
     .cta-secondary {
       display: inline-flex;
@@ -140,9 +140,10 @@
       font-size: clamp(1.6rem, 3.5vw, 2.2rem);
       font-weight: 700;
       letter-spacing: -0.02em;
-      color: var(--text);
+      color: var(--blue);
       margin-bottom: 2rem;
       line-height: 1.2;
+      text-align: center;
     }
 
     /* ── Cards ── */
@@ -155,23 +156,24 @@
 
     .card {
       background: color-mix(in srgb, #f2c14e 18%, white);
+      border: 1px solid color-mix(in srgb, #f2c14e 40%, white);
       border-radius: var(--radius);
       padding: 1.75rem;
     }
 
     .card-icon {
-      width: 44px;
-      height: 44px;
-      background: var(--blue);
+      width: 60px;
+      height: 60px;
+      background: #f2c14e;
       border-radius: 0.75rem;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 1.1rem;
-      color: #fff;
+      color: var(--blue);
     }
 
-    .card-icon svg { width: 22px; height: 22px; }
+    .card-icon svg { width: 30px; height: 30px; }
 
     .card h3 {
       font-size: 1.2rem;
@@ -182,34 +184,38 @@
 
     .card p {
       font-size: 1.05rem;
-      color: var(--text-2);
+      color: #334155;
       line-height: 1.65;
     }
 
     /* ── Data sources ── */
 
     .sources {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
     }
 
-    .source-row {
+    .source-card {
+      background: var(--blue-light);
+      border: 1px solid color-mix(in srgb, var(--blue) 12%, transparent);
+      border-radius: var(--radius);
+      padding: 1.5rem;
       display: flex;
-      align-items: baseline;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-      font-size: 1rem;
+      flex-direction: column;
+      gap: 0.4rem;
     }
 
     .source-name {
+      font-size: 1.05rem;
       font-weight: 700;
       color: var(--text);
-      white-space: nowrap;
     }
 
     .source-desc {
+      font-size: 0.95rem;
       color: var(--text-2);
+      line-height: 1.55;
       flex: 1;
     }
 
@@ -217,14 +223,14 @@
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       font-weight: 600;
       color: var(--blue);
       text-decoration: none;
-      white-space: nowrap;
+      margin-top: 0.6rem;
     }
     .source-link:hover { text-decoration: underline; }
-    .source-link svg { width: 13px; height: 13px; }
+    .source-link svg { width: 12px; height: 12px; }
 
     /* ── Footer ── */
 
@@ -238,9 +244,9 @@
       max-width: 960px;
       margin: 0 auto;
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
+      text-align: center;
       gap: 1rem;
     }
 
@@ -281,9 +287,7 @@
     </div>
     <p class="tagline"
        data-de="Historische Gebäude digital lebendig machen."
-       data-en="Bringing historical buildings to life digitally.">
-      Historische Gebäude digital lebendig machen.
-    </p>
+       data-en="Bringing historical buildings to life digitally.">Historische Gebäude digital lebendig machen.</p>
     <div class="cta-group">
       <a class="cta" href="./map/">
         <span data-de="Zur Karte" data-en="Open Map">Zur Karte</span>
@@ -310,18 +314,6 @@
         <div class="card">
           <div class="card-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-            </svg>
-          </div>
-          <h3 data-de="Citizen Science" data-en="Citizen Science">Citizen Science</h3>
-          <p data-de="Jede und jeder kann Gebäude auf der Karte verorten und mit Informationen wie Adresse, Baujahr und Nutzungsgeschichte ergänzen."
-             data-en="Anyone can locate buildings on the map and add details such as address, construction date and history of use.">
-            Jede und jeder kann Gebäude auf der Karte verorten und mit Informationen wie Adresse, Baujahr und Nutzungsgeschichte ergänzen.
-          </p>
-        </div>
-        <div class="card">
-          <div class="card-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
             </svg>
           </div>
@@ -329,6 +321,18 @@
           <p data-de="Alle erfassten Daten werden in Wikidata gespeichert – dauerhaft, frei zugänglich und unabhängig von diesem Projekt."
              data-en="All recorded data is stored in Wikidata – permanently, freely accessible and independent of this project.">
             Alle erfassten Daten werden in Wikidata gespeichert – dauerhaft, frei zugänglich und unabhängig von diesem Projekt.
+          </p>
+        </div>
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <h3 data-de="Citizen Science" data-en="Citizen Science">Citizen Science</h3>
+          <p data-de="Jede und jeder kann Gebäude auf der Karte verorten und mit Informationen wie Adresse, Baujahr und Nutzungsgeschichte ergänzen."
+             data-en="Anyone can locate buildings on the map and add details such as address, construction date and history of use.">
+            Jede und jeder kann Gebäude auf der Karte verorten und mit Informationen wie Adresse, Baujahr und Nutzungsgeschichte ergänzen.
           </p>
         </div>
       </div>
@@ -343,36 +347,36 @@
         Datenquellen
       </h2>
       <div class="sources">
-        <div class="source-row">
+        <div class="source-card">
           <span class="source-name">Wikidata</span>
           <span class="source-desc"
-                data-de="– Strukturierte Gebäudedaten"
-                data-en="– Structured building data">
-            – Strukturierte Gebäudedaten
+                data-de="Strukturierte Gebäudedaten"
+                data-en="Structured building data">
+            Strukturierte Gebäudedaten
           </span>
           <a class="source-link" href="https://www.wikidata.org/" target="_blank" rel="noopener">
             wikidata.org
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
         </div>
-        <div class="source-row">
+        <div class="source-card">
           <span class="source-name">OpenHistoricalMap</span>
           <span class="source-desc"
-                data-de="– Historische Gebäudeumrisse"
-                data-en="– Historical building footprints">
-            – Historische Gebäudeumrisse
+                data-de="Historische Gebäudeumrisse"
+                data-en="Historical building footprints">
+            Historische Gebäudeumrisse
           </span>
           <a class="source-link" href="https://www.openhistoricalmap.org/" target="_blank" rel="noopener">
             openhistoricalmap.org
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </a>
         </div>
-        <div class="source-row">
+        <div class="source-card">
           <span class="source-name">OpenFreeMap</span>
           <span class="source-desc"
-                data-de="– Hintergrundkarte"
-                data-en="– Base map">
-            – Hintergrundkarte
+                data-de="Hintergrundkarte"
+                data-en="Base map">
+            Hintergrundkarte
           </span>
           <a class="source-link" href="https://openfreemap.org/" target="_blank" rel="noopener">
             openfreemap.org
@@ -387,7 +391,7 @@
     <div class="footer-inner">
       <div class="footer-left">
         <span data-de="Ein Projekt des " data-en="A project of the ">Ein Projekt des </span><a href="https://www.compgen.de/" target="_blank" rel="noopener">Vereins für Computergenealogie (CompGen)</a><br>
-        <span data-de="Maintainer: " data-en="Maintainer: ">Maintainer: </span>David Straub
+        <span data-de="Projektbetreuer: " data-en="Author: ">Projektbetreuer: </span>David Straub
       </div>
       <a class="gh-link" href="https://github.com/compgen-ev/domus" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
