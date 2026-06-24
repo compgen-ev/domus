@@ -219,7 +219,7 @@ function createReference(source: SourceRef) {
     return { parts };
   } else if (source.type === 'archive') {
     const parts: ReferencePart[] = [
-      { property: { id: 'P485' }, value: { type: 'value', content: { id: source.archive.id } } },
+      { property: { id: 'P485' }, value: { type: 'value', content: source.archive.id } },
       { property: { id: 'P217' }, value: { type: 'value', content: source.callNumber } },
     ];
     if (source.page) {
@@ -229,7 +229,7 @@ function createReference(source: SourceRef) {
   } else if (source.mode === 'item') {
     // Book with Wikidata item: P248 stated in
     const parts: ReferencePart[] = [
-      { property: { id: 'P248' }, value: { type: 'value', content: { id: source.book.id } } },
+      { property: { id: 'P248' }, value: { type: 'value', content: source.book.id } },
     ];
     if (source.page) {
       parts.push({ property: { id: 'P304' }, value: { type: 'value', content: source.page } });
