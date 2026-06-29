@@ -212,49 +212,49 @@ export class BuildingCreateForm extends LitElement {
 
   private readonly buildingTypeIds = [
     'Q41176',     // building (generic)
-    'Q3947',      // dwelling
-    'Q188869',    // farmhouse
-    'Q1021106',   // apartment building
-    'Q20034440',  // single-family home
+    'Q3947',      // house
+    'Q489357',    // farmhouse
+    'Q13402009',  // apartment building
+    'Q1307276',   // single-family detached home
     'Q16970',     // church building
     'Q108325',    // chapel
-    'Q149566',    // school building
-    'Q25550691',  // town hall
+    'Q1244442',   // school building
+    'Q25550691',  // city hall
     'Q44494',     // mill
-    'Q162113',    // barn
-    'Q1662011',   // stable
-    'Q1662536',   // storehouse
+    'Q1303167',   // barn
+    'Q1207909',   // livestock housing
+    'Q1362225',   // warehouse
     'Q879050',    // manor house
-    'Q23413',     // palace
-    'Q23691',     // castle
-    'Q1542143',   // factory building
+    'Q16823155',  // Schloss
+    'Q23413',     // castle
+    'Q1662011',   // industrial building
     'Q656720',    // workshop
-    'Q27686',     // inn
-    'Q18543139',  // railway station building
+    'Q5526694',   // Gasthaus
+    'Q1339195',   // station building
   ];
 
   private _getTypeLabel(id: string): string {
     switch (id) {
       case 'Q41176': return msg('Gebäude');
       case 'Q3947': return msg('Wohnhaus');
-      case 'Q188869': return msg('Bauernhaus');
-      case 'Q1021106': return msg('Mehrfamilienhaus');
-      case 'Q20034440': return msg('Einfamilienhaus');
+      case 'Q489357': return msg('Bauernhaus');
+      case 'Q13402009': return msg('Mehrfamilienhaus');
+      case 'Q1307276': return msg('Einfamilienhaus');
       case 'Q16970': return msg('Kirchengebäude');
       case 'Q108325': return msg('Kapelle');
-      case 'Q149566': return msg('Schulgebäude');
+      case 'Q1244442': return msg('Schulgebäude');
       case 'Q25550691': return msg('Rathaus');
       case 'Q44494': return msg('Mühle');
-      case 'Q162113': return msg('Scheune');
-      case 'Q1662011': return msg('Stall');
-      case 'Q1662536': return msg('Speicher');
+      case 'Q1303167': return msg('Scheune');
+      case 'Q1207909': return msg('Stall');
+      case 'Q1362225': return msg('Speicher');
       case 'Q879050': return msg('Herrenhaus');
-      case 'Q23413': return msg('Schloss');
-      case 'Q23691': return msg('Burg');
-      case 'Q1542143': return msg('Fabrikgebäude');
+      case 'Q16823155': return msg('Schloss');
+      case 'Q23413': return msg('Burg');
+      case 'Q1662011': return msg('Fabrikgebäude');
       case 'Q656720': return msg('Werkstatt');
-      case 'Q27686': return msg('Gasthaus');
-      case 'Q18543139': return msg('Bahnhofsgebäude');
+      case 'Q5526694': return msg('Gasthaus');
+      case 'Q1339195': return msg('Bahnhofsgebäude');
       default: return id;
     }
   }
