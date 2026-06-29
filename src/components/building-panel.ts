@@ -352,7 +352,11 @@ export class BuildingPanel extends LitElement {
 
   private async _copyLink() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const url = new URL(location.href);
+      const cleanParams = new URLSearchParams();
+      if (url.searchParams.has('id')) cleanParams.set('id', url.searchParams.get('id')!);
+      url.search = cleanParams.toString();
+      await navigator.clipboard.writeText(url.toString());
       this.linkCopied = true;
       setTimeout(() => {
         this.linkCopied = false;

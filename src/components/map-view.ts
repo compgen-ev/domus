@@ -352,18 +352,25 @@ export class MapView extends LitElement {
     (window as any).maplibregl = maplibregl;
     await import('@openhistoricalmap/maplibre-gl-dates');
 
-    // Check if URL has building ID - if so, don't restore saved view
-    const hasUrlId = new URLSearchParams(window.location.search).has('id');
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasUrlId = urlParams.has('id');
     if (hasUrlId) {
       this._shouldCenterOnBuilding = true;
     }
 
-    const saved = !hasUrlId ? loadSavedView() : null;
+    const urlLat = urlParams.get('lat');
+    const urlLng = urlParams.get('lng');
+    const urlZoom = urlParams.get('zoom');
+    const urlView = !hasUrlId && urlLat && urlLng && urlZoom
+      ? { center: [parseFloat(urlLng), parseFloat(urlLat)] as [number, number], zoom: parseFloat(urlZoom) }
+      : null;
+
+    const saved = !hasUrlId && !urlView ? loadSavedView() : null;
     this.map = new maplibregl.Map({
       container,
       style: 'https://tiles.openfreemap.org/styles/liberty',
-      center: saved?.center ?? [13.4, 52.52],
-      zoom: saved?.zoom ?? 12,
+      center: urlView?.center ?? saved?.center ?? [13.4, 52.52],
+      zoom: urlView?.zoom ?? saved?.zoom ?? 12,
       attributionControl: false,
     });
 
@@ -381,7 +388,7 @@ export class MapView extends LitElement {
     }), 'top-right');
 
     this.map.on('load', () => this._onMapLoad());
-    this.map.on('moveend', () => { saveView(this.map); this._scheduleFetch(); });
+    this.map.on('moveend', () => { saveView(this.map); this._updateUrlPosition(); this._scheduleFetch(); });
 
     this.resizeObserver = new ResizeObserver(() => this.map?.resize());
     this.resizeObserver.observe(container);
@@ -574,6 +581,16 @@ export class MapView extends LitElement {
     if (this.ohmId || this.wikidataId) {
       this._scheduleOhmFetch();
     }
+  }
+
+  private _updateUrlPosition() {
+    const { lng, lat } = this.map.getCenter();
+    const zoom = this.map.getZoom();
+    const params = new URLSearchParams(location.search);
+    params.set('lat', lat.toFixed(5));
+    params.set('lng', lng.toFixed(5));
+    params.set('zoom', zoom.toFixed(1));
+    history.replaceState(null, '', `?${params}`);
   }
 
   private _scheduleFetch() {

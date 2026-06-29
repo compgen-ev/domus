@@ -210,7 +210,9 @@ export class AppRoot extends LitElement {
     this.hasOhmFootprint = false;
     this.ohmElementId = undefined;
     this.ohmElementType = undefined;
-    history.pushState(null, '', `?id=${e.detail.id}`);
+    const params = new URLSearchParams(location.search);
+    params.set('id', e.detail.id);
+    history.pushState(null, '', `?${params}`);
     this._fetchDetail(e.detail.id);
   }
 
@@ -223,7 +225,10 @@ export class AppRoot extends LitElement {
     this.ohmElementId = undefined;
     this.ohmElementType = undefined;
     this.view = 'map';
-    history.pushState(null, '', location.pathname);
+    const params = new URLSearchParams(location.search);
+    params.delete('id');
+    const qs = params.toString();
+    history.pushState(null, '', qs ? `?${qs}` : location.pathname);
   }
 
   private _onOhmDataLoaded(e: CustomEvent<{ elementId?: string; elementType?: 'way' | 'relation' }>) {
@@ -295,7 +300,9 @@ export class AppRoot extends LitElement {
     this.newBuildingCoords = null;
     this.ohmPrefill = null;
     const { id } = e.detail;
-    history.pushState(null, '', `?id=${id}`);
+    const params = new URLSearchParams(location.search);
+    params.set('id', id);
+    history.pushState(null, '', `?${params}`);
     await this._loadBuildingById(id);
     this._showToast(msg('Gebäude angelegt'));
   }
