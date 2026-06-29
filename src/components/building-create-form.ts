@@ -1,6 +1,7 @@
 import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
+import { BUILDING_TYPE_IDS, getBuildingTypeLabel } from '../services/building-type-options';
 import type { WikidataItem } from '../types/building';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { createBuilding, type SourceRef } from '../services/wikidata-edit-rest';
@@ -210,54 +211,9 @@ export class BuildingCreateForm extends LitElement {
     }
   }
 
-  private readonly buildingTypeIds = [
-    'Q41176',     // building (generic)
-    'Q3947',      // house
-    'Q489357',    // farmhouse
-    'Q13402009',  // apartment building
-    'Q1307276',   // single-family detached home
-    'Q16970',     // church building
-    'Q108325',    // chapel
-    'Q1244442',   // school building
-    'Q25550691',  // city hall
-    'Q44494',     // mill
-    'Q1303167',   // barn
-    'Q1207909',   // livestock housing
-    'Q1362225',   // warehouse
-    'Q879050',    // manor house
-    'Q16823155',  // Schloss
-    'Q23413',     // castle
-    'Q1662011',   // industrial building
-    'Q656720',    // workshop
-    'Q5526694',   // Gasthaus
-    'Q1339195',   // station building
-  ];
+  private readonly buildingTypeIds = ['Q41176', ...BUILDING_TYPE_IDS];
 
-  private _getTypeLabel(id: string): string {
-    switch (id) {
-      case 'Q41176': return msg('Gebäude');
-      case 'Q3947': return msg('Wohnhaus');
-      case 'Q489357': return msg('Bauernhaus');
-      case 'Q13402009': return msg('Mehrfamilienhaus');
-      case 'Q1307276': return msg('Einfamilienhaus');
-      case 'Q16970': return msg('Kirchengebäude');
-      case 'Q108325': return msg('Kapelle');
-      case 'Q1244442': return msg('Schulgebäude');
-      case 'Q25550691': return msg('Rathaus');
-      case 'Q44494': return msg('Mühle');
-      case 'Q1303167': return msg('Scheune');
-      case 'Q1207909': return msg('Stall');
-      case 'Q1362225': return msg('Speicher');
-      case 'Q879050': return msg('Herrenhaus');
-      case 'Q16823155': return msg('Schloss');
-      case 'Q23413': return msg('Burg');
-      case 'Q1662011': return msg('Fabrikgebäude');
-      case 'Q656720': return msg('Werkstatt');
-      case 'Q5526694': return msg('Gasthaus');
-      case 'Q1339195': return msg('Bahnhofsgebäude');
-      default: return id;
-    }
-  }
+  private _getTypeLabel = getBuildingTypeLabel;
 
   private get _canSave(): boolean {
     if (!this.formLabel.trim()) return false;

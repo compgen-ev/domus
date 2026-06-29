@@ -1,3 +1,5 @@
+import { OHM_TAG_TO_BUILDING_TYPE_ID, getBuildingTypeLabel } from './building-type-options';
+
 const OHM_OVERPASS = 'https://overpass-api.openhistoricalmap.org/api/interpreter';
 
 export interface OhmBuildingPrefill {
@@ -10,41 +12,11 @@ export interface OhmBuildingPrefill {
   endDate?: string;
 }
 
-const BUILDING_TAG_TO_WIKIDATA: Record<string, { id: string; label: string }> = {
-  house:            { id: 'Q1307276',  label: 'Einfamilienhaus' },
-  detached:         { id: 'Q1307276',  label: 'Einfamilienhaus' },
-  semidetached_house: { id: 'Q1307276', label: 'Einfamilienhaus' },
-  terrace:          { id: 'Q1307276',  label: 'Einfamilienhaus' },
-  residential:      { id: 'Q3947',     label: 'Wohnhaus' },
-  apartments:       { id: 'Q13402009', label: 'Mehrfamilienhaus' },
-  flat:             { id: 'Q13402009', label: 'Mehrfamilienhaus' },
-  farm:             { id: 'Q489357',   label: 'Bauernhaus' },
-  farm_auxiliary:   { id: 'Q489357',   label: 'Bauernhaus' },
-  barn:             { id: 'Q1303167',  label: 'Scheune' },
-  stable:           { id: 'Q1207909',  label: 'Stall' },
-  warehouse:        { id: 'Q1362225',  label: 'Speicher' },
-  storage:          { id: 'Q1362225',  label: 'Speicher' },
-  church:           { id: 'Q16970',    label: 'Kirchengebäude' },
-  chapel:           { id: 'Q108325',   label: 'Kapelle' },
-  school:           { id: 'Q1244442',  label: 'Schulgebäude' },
-  civic:            { id: 'Q25550691', label: 'Rathaus' },
-  public:           { id: 'Q25550691', label: 'Rathaus' },
-  mill:             { id: 'Q44494',    label: 'Mühle' },
-  manor:            { id: 'Q879050',   label: 'Herrenhaus' },
-  palace:           { id: 'Q16823155', label: 'Schloss' },
-  castle:           { id: 'Q23413',    label: 'Burg' },
-  fort:             { id: 'Q23413',    label: 'Burg' },
-  industrial:       { id: 'Q1662011',  label: 'Fabrikgebäude' },
-  factory:          { id: 'Q1662011',  label: 'Fabrikgebäude' },
-  workshop:         { id: 'Q656720',   label: 'Werkstatt' },
-  hotel:            { id: 'Q5526694',  label: 'Gasthaus' },
-  inn:              { id: 'Q5526694',  label: 'Gasthaus' },
-  train_station:    { id: 'Q1339195',  label: 'Bahnhofsgebäude' },
-};
-
 export function buildingTagToWikidataType(tag: string | undefined): { id: string; label: string } | undefined {
   if (!tag) return undefined;
-  return BUILDING_TAG_TO_WIKIDATA[tag.toLowerCase()];
+  const id = OHM_TAG_TO_BUILDING_TYPE_ID[tag.toLowerCase()];
+  if (!id) return undefined;
+  return { id, label: getBuildingTypeLabel(id) };
 }
 
 export interface OhmFetchResult {
