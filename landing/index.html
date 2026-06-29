@@ -274,6 +274,20 @@
     }
     .gh-link:hover { border-color: var(--text-2); color: var(--text); }
     .gh-link svg { width: 18px; height: 18px; }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-3);
+    }
+
+    .footer-links a {
+      color: var(--text-3);
+      text-decoration: none;
+    }
+    .footer-links a:hover { color: var(--text); text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -392,6 +406,13 @@
       <div class="footer-left">
         <span data-de="Ein Projekt des " data-en="A project of the ">Ein Projekt des </span><a href="https://www.compgen.de/" target="_blank" rel="noopener">Vereins für Computergenealogie (CompGen)</a><br>
         <span data-de="Projektbetreuer: " data-en="Author: ">Projektbetreuer: </span>David Straub
+      </div>
+      <div class="footer-links">
+        <a href="https://www.compgen.de/impressum/" target="_blank" rel="noopener"
+           data-de="Impressum" data-en="Legal notice">Impressum</a>
+        <span aria-hidden="true">·</span>
+        <a href="https://www.compgen.de/datenschutzerklaerung_genealogienetz/" target="_blank" rel="noopener"
+           data-de="Datenschutz" data-en="Privacy policy">Datenschutz</a>
       </div>
       <a class="gh-link" href="https://github.com/compgen-ev/domus" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
