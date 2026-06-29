@@ -8,17 +8,17 @@ export const BUILDING_TYPE_IDS = [
   'Q1307276',   // single-family detached home
   'Q16970',     // church building
   'Q108325',    // chapel
+  'Q44613',     // monastery
+  'Q34627',     // synagogue
   'Q1244442',   // school building
   'Q25550691',  // city hall
   'Q44494',     // mill
-  'Q1303167',   // barn
-  'Q1207909',   // livestock housing
-  'Q1362225',   // warehouse
   'Q879050',    // manor house
   'Q16823155',  // Schloss
   'Q23413',     // castle
+  'Q17715832',  // castle ruin
+  'Q615810',    // water castle
   'Q1662011',   // industrial building
-  'Q656720',    // workshop
   'Q5526694',   // Gasthaus
   'Q1339195',   // station building
 ];
@@ -32,6 +32,8 @@ export function getBuildingTypeLabel(id: string): string {
     case 'Q1307276': return msg('Einfamilienhaus');
     case 'Q16970': return msg('Kirchengebäude');
     case 'Q108325': return msg('Kapelle');
+    case 'Q44613': return msg('Kloster');
+    case 'Q34627': return msg('Synagoge');
     case 'Q1244442': return msg('Schulgebäude');
     case 'Q25550691': return msg('Rathaus');
     case 'Q44494': return msg('Mühle');
@@ -41,6 +43,8 @@ export function getBuildingTypeLabel(id: string): string {
     case 'Q879050': return msg('Herrenhaus');
     case 'Q16823155': return msg('Schloss');
     case 'Q23413': return msg('Burg');
+    case 'Q17715832': return msg('Burgruine');
+    case 'Q615810': return msg('Wasserschloss');
     case 'Q1662011': return msg('Fabrikgebäude');
     case 'Q656720': return msg('Werkstatt');
     case 'Q5526694': return msg('Gasthaus');
