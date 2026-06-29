@@ -1,7 +1,7 @@
 import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { BUILDING_TYPE_IDS, getBuildingTypeLabel } from '../services/building-type-options';
+import { BUILDING_TYPE_IDS, getBuildingTypeLabel, BUILDING_TYPE_SET } from '../services/building-type-options';
 import type { WikidataItem } from '../types/building';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { createBuilding, type SourceRef } from '../services/wikidata-edit-rest';
@@ -211,9 +211,9 @@ export class BuildingCreateForm extends LitElement {
     }
   }
 
-  private readonly buildingTypeIds = ['Q41176', ...BUILDING_TYPE_IDS];
-
-  private _getTypeLabel = getBuildingTypeLabel;
+  private get _typeSuggestions(): WikidataItem[] {
+    return ['Q41176', ...BUILDING_TYPE_IDS].map(id => ({ id, label: getBuildingTypeLabel(id) }));
+  }
 
   private get _canSave(): boolean {
     if (!this.formLabel.trim()) return false;
@@ -310,18 +310,15 @@ export class BuildingCreateForm extends LitElement {
 
         <div class="field-group">
           <label>${msg('Typ')}</label>
-          <select
-            @change=${(e: Event) => {
-              const v = (e.target as HTMLSelectElement).value;
-              this.formType = v ? { id: v, label: this._getTypeLabel(v) } : undefined;
-            }}
-            ?disabled=${this.saving}>
-            ${this.buildingTypeIds.map(id => html`
-              <option value=${id} ?selected=${(this.formType?.id ?? 'Q41176') === id}>
-                ${this._getTypeLabel(id)}
-              </option>
-            `)}
-          </select>
+          <entity-search
+            .value=${this.formType?.label ?? ''}
+            .suggestions=${this._typeSuggestions}
+            .filterFn=${(id: string) => BUILDING_TYPE_SET.has(id)}
+            placeholder=${msg('Gebäude')}
+            @select=${(e: CustomEvent) => this.formType = e.detail}
+            @clear=${() => this.formType = undefined}
+            ?disabled=${this.saving}
+          ></entity-search>
         </div>
 
         <div class="field-group">

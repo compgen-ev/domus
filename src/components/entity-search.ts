@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg, str } from '@lit/localize';
 import type { WikidataItem } from '../types/building';
@@ -187,9 +187,11 @@ export class EntitySearch extends LitElement {
     `,
   ];
 
-  @property({ type: String }) placeholder = '';  
+  @property({ type: String }) placeholder = '';
   @property({ type: String }) value = '';
   @property({ type: Boolean, attribute: 'allow-create' }) allowCreate = false;
+  @property({ type: Array }) suggestions: WikidataItem[] = [];
+  @property({ attribute: false }) filterFn: ((id: string) => boolean) | undefined;
 
   @state() private searchQuery = '';
   @state() private results: Array<{ id: string; label: string; description?: string }> = [];
@@ -203,6 +205,12 @@ export class EntitySearch extends LitElement {
 
   private searchTimeout: number | null = null;
   private searchAbort: AbortController | null = null;
+
+  protected willUpdate(changed: PropertyValues) {
+    if (changed.has('value') && this.value !== this.searchQuery) {
+      this.searchQuery = this.value;
+    }
+  }
 
   private async _searchEntities(query: string) {
     if (!query || query.length < 2) {
@@ -248,11 +256,13 @@ export class EntitySearch extends LitElement {
     if (!response.ok) throw new Error(`wbsearchentities failed: ${response.status}`);
     const data = await response.json();
 
-    this.results = data.search?.map((item: any) => ({
+    const raw: Array<{ id: string; label: string; description?: string }> = data.search?.map((item: any) => ({
       id: item.id,
       label: item.label || item.id,
       description: item.description,
     })) ?? [];
+
+    this.results = this.filterFn ? raw.filter(item => this.filterFn!(item.id)) : raw;
   }
 
   private _onInput(e: Event) {
@@ -261,6 +271,11 @@ export class EntitySearch extends LitElement {
 
     if (!input.value) {
       this.dispatchEvent(new CustomEvent('clear', { bubbles: true, composed: true }));
+      if (this.suggestions.length > 0) {
+        this.results = [];
+        this.showResults = true;
+        return;
+      }
     }
 
     if (this.searchTimeout) {
@@ -289,7 +304,7 @@ export class EntitySearch extends LitElement {
   }
 
   private _onFocus() {
-    if (this.results.length > 0) {
+    if ((!this.searchQuery.trim() && this.suggestions.length > 0) || this.results.length > 0) {
       this.showResults = true;
     }
   }
@@ -391,7 +406,13 @@ export class EntitySearch extends LitElement {
         </div>
       ` : this.showResults ? html`
         <div class="search-results">
-          ${this.loading ? html`
+          ${!this.searchQuery.trim() && this.suggestions.length > 0 ? html`
+            ${this.suggestions.map(item => html`
+              <div class="result-item" @click=${() => this._onSelect(item)}>
+                <div class="result-label">${item.label}</div>
+              </div>
+            `)}
+          ` : this.loading ? html`
             <div class="loading">${msg('Suche läuft...')}</div>
           ` : this.results.length > 0 ? html`
             ${this.results.map(item => html`

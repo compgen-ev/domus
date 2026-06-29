@@ -1,7 +1,7 @@
 import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { BUILDING_TYPE_IDS, getBuildingTypeLabel } from '../services/building-type-options';
+import { BUILDING_TYPE_IDS, getBuildingTypeLabel, BUILDING_TYPE_SET } from '../services/building-type-options';
 import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/building';
 import { baseStyles } from '../styles/shared';
@@ -343,22 +343,8 @@ export class BuildingEditForm extends LitElement {
   @state() private saveError: string | null = null;
   @state() private saveErrorDetails: any = null;
 
-  private readonly buildingTypeIds = [...BUILDING_TYPE_IDS];
-
-  private _getTypeLabel = getBuildingTypeLabel;
-
-  private _getBuildingTypeOptions(): WikidataItem[] {
-    const currentType = this.building?.type;
-    const options = this.buildingTypeIds.map(id => ({
-      id,
-      label: this._getTypeLabel(id),
-    }));
-
-    // If current type exists and is not in predefined list, add it at the top
-    if (currentType && !this.buildingTypeIds.includes(currentType.id)) {
-      return [currentType, ...options];
-    }
-    return options;
+  private get _typeSuggestions(): WikidataItem[] {
+    return BUILDING_TYPE_IDS.map(id => ({ id, label: getBuildingTypeLabel(id) }));
   }
 
   protected willUpdate(changed: PropertyValues) {
@@ -585,19 +571,15 @@ export class BuildingEditForm extends LitElement {
           </div>
           <div class="field-group">
             <label>${msg('Typ')}</label>
-            <select
-              @change=${(e: Event) => {
-                const value = (e.target as HTMLSelectElement).value;
-                this.formType = value ? this._getBuildingTypeOptions().find(t => t.id === value) : undefined;
-              }}
-              ?disabled=${this.saving}>
-              <option value="" ?selected=${!this.formType}>${msg('Nicht angegeben')}</option>
-              ${this._getBuildingTypeOptions().map(type => html`
-                <option value=${type.id} ?selected=${this.formType?.id === type.id}>
-                  ${type.label}
-                </option>
-              `)}
-            </select>
+            <entity-search
+              .value=${this.formType?.label ?? ''}
+              .suggestions=${this._typeSuggestions}
+              .filterFn=${(id: string) => BUILDING_TYPE_SET.has(id)}
+              placeholder=${msg('Nicht angegeben')}
+              @select=${(e: CustomEvent) => this.formType = e.detail}
+              @clear=${() => this.formType = undefined}
+              ?disabled=${this.saving}
+            ></entity-search>
           </div>
           <div class="field-group">
             <label>${msg('Erbaut')}</label>
