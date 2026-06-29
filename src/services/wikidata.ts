@@ -1,11 +1,8 @@
 import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { getLocale } from '../locale';
-import { BUILDING_TYPES } from './building-types';
+import { BUILDING_TYPE_SET } from './building-types';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
-
-// Create a Set for fast building type lookup
-const BUILDING_TYPE_SET = new Set<string>(BUILDING_TYPES);
 
 interface SparqlBinding {
   value: string;
