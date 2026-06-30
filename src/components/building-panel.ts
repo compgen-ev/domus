@@ -7,6 +7,7 @@ import type { OhmBuildingPrefill } from '../services/ohm';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import { formatDate } from '../utils/dates';
+import { renderExternalLinks } from './external-links';
 import './building-edit-form';
 import './building-create-form';
 import './app-button';
@@ -16,7 +17,6 @@ import IconClose from '~icons/mdi/close';
 import IconPencil from '~icons/mdi/pencil';
 import IconLogin from '~icons/mdi/login';
 import IconArrowRight from '~icons/mdi/arrow-right';
-import IconOpenInNew from '~icons/mdi/open-in-new';
 import IconContentCopy from '~icons/mdi/content-copy';
 import IconCheck from '~icons/mdi/check';
 
@@ -533,19 +533,14 @@ export class BuildingPanel extends LitElement {
           `}
           </div>
           <div class="footer-tertiary">
-            <a href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
-              Wikidata
-              <domus-icon .svg=${IconOpenInNew}></domus-icon>
-            </a>
-            ${detail?.ohmId || (this.hasOhmFootprint && this.ohmElementId) ? html`
-              <a href=${detail?.ohmId
-                ? `https://www.openhistoricalmap.org/relation/${detail.ohmId}`
-                : `https://www.openhistoricalmap.org/${this.ohmElementType}/${this.ohmElementId}`}
-                target="_blank" rel="noopener">
-                OpenHistoricalMap
-                <domus-icon .svg=${IconOpenInNew}></domus-icon>
-              </a>
-            ` : ''}
+            ${renderExternalLinks({
+              id,
+              ohmId: detail?.ohmId,
+              govId: detail?.govId,
+              hasOhmFootprint: this.hasOhmFootprint,
+              ohmElementId: this.ohmElementId,
+              ohmElementType: this.ohmElementType,
+            })}
             <app-button
               variant="outline"
               .trailingIcon=${this.linkCopied ? IconCheck : IconContentCopy}

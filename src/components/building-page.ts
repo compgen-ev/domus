@@ -6,13 +6,13 @@ import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
 import { formatDate } from '../utils/dates';
+import { renderExternalLinks } from './external-links';
 import './building-edit-form';
 import './app-button';
 import './icon';
 import './stale-banner';
 import IconArrowLeft from '~icons/mdi/arrow-left';
 import IconPencil from '~icons/mdi/pencil';
-import IconOpenInNew from '~icons/mdi/open-in-new';
 import IconContentCopy from '~icons/mdi/content-copy';
 import IconCheck from '~icons/mdi/check';
 
@@ -414,19 +414,15 @@ export class BuildingPage extends LitElement {
           : ''}
 
         <div class="footer">
-          <a class="ext-link" href="https://www.wikidata.org/wiki/${id}" target="_blank" rel="noopener">
-            Wikidata
-            <domus-icon .svg=${IconOpenInNew}></domus-icon>
-          </a>
-          ${detail?.ohmId || (this.hasOhmFootprint && this.ohmElementId) ? html`
-            <a class="ext-link" href=${detail?.ohmId
-              ? `https://www.openhistoricalmap.org/relation/${detail.ohmId}`
-              : `https://www.openhistoricalmap.org/${this.ohmElementType}/${this.ohmElementId}`}
-              target="_blank" rel="noopener">
-              OpenHistoricalMap
-              <domus-icon .svg=${IconOpenInNew}></domus-icon>
-            </a>
-          ` : ''}
+          ${renderExternalLinks({
+            id,
+            ohmId: detail?.ohmId,
+            govId: detail?.govId,
+            hasOhmFootprint: this.hasOhmFootprint,
+            ohmElementId: this.ohmElementId,
+            ohmElementType: this.ohmElementType,
+            linkClass: 'ext-link',
+          })}
           <app-button
             variant="outline"
             .trailingIcon=${this.linkCopied ? IconCheck : IconContentCopy}

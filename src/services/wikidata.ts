@@ -117,6 +117,7 @@ SELECT ?demolished ?heritage ?heritageLabel
   ?address ?addrStart ?addrEnd
   ?architect ?architectLabel
   ?commissioned ?commissionedLabel
+  ?ohmId ?govId
   ?modified
 WHERE {
   BIND(wd:${id} AS ?item)
@@ -152,6 +153,7 @@ WHERE {
     ?commStmt ps:P88 ?commissioned .
   }
   OPTIONAL { ?item wdt:P8424 ?ohmId . }
+  OPTIONAL { ?item wdt:P2503 ?govId . }
   OPTIONAL { ?item schema:dateModified ?modified . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }`;
@@ -177,6 +179,7 @@ interface DetailBinding {
   commissioned?: SparqlBinding;
   commissionedLabel?: SparqlBinding;
   ohmId?: SparqlBinding;
+  govId?: SparqlBinding;
   modified?: SparqlBinding;
 }
 
@@ -249,6 +252,7 @@ export async function fetchBuildingDetail(
 
   let demolished: string | undefined;
   let ohmId: string | undefined;
+  let govId: string | undefined;
   let modified: string | undefined;
   const heritageSet = new Set<string>();
   const occupants = new Map<string, PersonRef>();
@@ -260,6 +264,7 @@ export async function fetchBuildingDetail(
   for (const row of rows) {
     if (row.demolished && !demolished) demolished = row.demolished.value;
     if (row.ohmId && !ohmId) ohmId = row.ohmId.value;
+    if (row.govId && !govId) govId = row.govId.value;
     if (row.modified && !modified) modified = row.modified.value;
     if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
 
@@ -329,6 +334,7 @@ export async function fetchBuildingDetail(
   return {
     demolished,
     ohmId,
+    govId,
     modified,
     heritages: [...heritageSet],
     architects: [...architects.values()],

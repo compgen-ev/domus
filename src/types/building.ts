@@ -38,5 +38,6 @@ export interface BuildingDetail {
   owners: PersonRef[];
   addresses: AddressEntry[];
   ohmId?: string;
+  govId?: string;
   modified?: string;
 }
