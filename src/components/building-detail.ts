@@ -156,24 +156,27 @@ export class BuildingDetail extends LitElement {
       }
 
       .photo-gallery {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
         gap: var(--space-2);
         margin-top: var(--space-6);
       }
 
-      .photo-gallery a {
-        display: block;
-        width: 96px;
-        height: 96px;
-        border-radius: var(--radius-lg);
-        overflow: hidden;
-        flex-shrink: 0;
+      :host([expanded]) .photo-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       }
 
-      :host([expanded]) .photo-gallery a {
-        width: 180px;
-        height: 180px;
+      @media (max-width: 640px) {
+        :host([expanded]) .photo-gallery {
+          grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        }
+      }
+
+      .photo-gallery a {
+        display: block;
+        aspect-ratio: 1;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
       }
 
       .photo-gallery img {
