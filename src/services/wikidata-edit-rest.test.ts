@@ -10,9 +10,9 @@ const archiveSource = {
 };
 
 describe('buildPersonItemPayload', () => {
-  it('sets German label', () => {
+  it('sets label in current locale', () => {
     const payload = buildPersonItemPayload('Johann Müller');
-    expect(payload.labels).toEqual({ de: 'Johann Müller' });
+    expect(Object.values(payload.labels)).toContain('Johann Müller');
   });
 
   it('sets P31=Q5 (human) statement', () => {
@@ -602,14 +602,14 @@ describe('buildBuildingItemPayload', () => {
     source: urlSource,
   };
 
-  it('sets German label', () => {
+  it('sets label in current locale', () => {
     const payload = buildBuildingItemPayload(base);
-    expect(payload.labels).toEqual({ de: 'Müllerhof' });
+    expect(Object.values(payload.labels)).toContain('Müllerhof');
   });
 
   it('trims label whitespace', () => {
     const payload = buildBuildingItemPayload({ ...base, label: '  Müllerhof  ' });
-    expect(payload.labels.de).toBe('Müllerhof');
+    expect(Object.values(payload.labels)[0]).toBe('Müllerhof');
   });
 
   it('sets P31 to Q41176 (building) by default', () => {

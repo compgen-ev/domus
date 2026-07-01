@@ -14,6 +14,7 @@ import type { WikidataItem } from '../types/building';
 import { getValidAccessToken } from './wikimedia-auth';
 import { parseDate } from '../utils/dates';
 import { recordEdit } from './edit-tracker';
+import { getLocale } from '../locale';
 
 const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
 
@@ -699,7 +700,7 @@ export function buildBuildingItemPayload(data: BuildingCreateData) {
     }
   }
 
-  return { labels: { de: data.label.trim() }, statements };
+  return { labels: { [getLocale()]: data.label.trim() }, statements };
 }
 
 export async function createBuilding(data: BuildingCreateData): Promise<WikidataItem> {
@@ -738,7 +739,7 @@ export interface PersonItemPayload {
 
 export function buildPersonItemPayload(name: string, description?: string): PersonItemPayload {
   const payload: PersonItemPayload = {
-    labels: { de: name },
+    labels: { [getLocale()]: name },
     statements: {
       P31: [{ property: { id: 'P31' }, value: { type: 'value', content: 'Q5' } }],
     },
