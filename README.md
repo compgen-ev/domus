@@ -13,6 +13,16 @@ npm run build    # → dist/index.html (landing) + dist/map/ (app)
 npm run preview  # preview the build at localhost:4173/
 ```
 
+## Maintenance
+
+### Building types
+
+The client-side building type filter (`src/services/building-types.ts`) is a static snapshot of all Wikidata types that are subclasses of Q41176 (building). Regenerate it after relevant Wikidata changes:
+
+```bash
+python3 scripts/update-building-types.py
+```
+
 ## Stack
 
 | | |
