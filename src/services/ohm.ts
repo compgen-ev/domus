@@ -172,14 +172,19 @@ export function fetchOhmByWikidataId(
   return _fetchOhmWays(query, signal);
 }
 
+function xmlEsc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export async function addWikidataTag(
   elementType: 'way' | 'relation',
   elementId: string,
   qid: string,
   token: string,
 ): Promise<void> {
-  // Fetch current element to get its version, nodes, and existing tags
-  const fetchRes = await fetch(`${OHM_API}/${elementType}/${elementId}`);
+  const fetchRes = await fetch(`${OHM_API}/${elementType}/${elementId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!fetchRes.ok) throw new Error(`OHM fetch failed: HTTP ${fetchRes.status}`);
   const xmlText = await fetchRes.text();
 
@@ -190,32 +195,50 @@ export async function addWikidataTag(
 
   const existing = [...el.querySelectorAll('tag')].find(t => t.getAttribute('k') === 'wikidata');
   if (existing) {
-    if (existing.getAttribute('v') === qid) return; // already correct, nothing to do
+    if (existing.getAttribute('v') === qid) return;
     throw new Error(`OHM element already has wikidata=${existing.getAttribute('v')}`);
   }
 
-  const tag = doc.createElement('tag');
-  tag.setAttribute('k', 'wikidata');
-  tag.setAttribute('v', qid);
-  el.appendChild(tag);
+  const version = el.getAttribute('version') ?? '1';
+
+  // Build element body manually to avoid XMLSerializer namespace pollution
+  let innerXml = '';
+  if (elementType === 'way') {
+    for (const nd of el.querySelectorAll('nd')) {
+      innerXml += `  <nd ref="${nd.getAttribute('ref')}"/>\n`;
+    }
+  } else {
+    for (const member of el.querySelectorAll('member')) {
+      innerXml += `  <member type="${member.getAttribute('type')}" ref="${member.getAttribute('ref')}" role="${xmlEsc(member.getAttribute('role') ?? '')}"/>\n`;
+    }
+  }
+  for (const tag of el.querySelectorAll('tag')) {
+    innerXml += `  <tag k="${xmlEsc(tag.getAttribute('k') ?? '')}" v="${xmlEsc(tag.getAttribute('v') ?? '')}"/>\n`;
+  }
+  innerXml += `  <tag k="wikidata" v="${xmlEsc(qid)}"/>\n`;
 
   const changesetRes = await fetch(`${OHM_API}/changeset/create`, {
     method:  'PUT',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/xml' },
-    body:    `<osm><changeset><tag k="comment" v="Add Wikidata tag ${qid}"/><tag k="created_by" v="domus"/></changeset></osm>`,
+    body:    `<osm><changeset><tag k="comment" v="Add Wikidata tag ${xmlEsc(qid)}"/><tag k="created_by" v="domus"/></changeset></osm>`,
   });
   if (!changesetRes.ok) throw new Error(`OHM changeset create failed: HTTP ${changesetRes.status}`);
   const changesetId = (await changesetRes.text()).trim();
 
-  el.setAttribute('changeset', changesetId);
-  const updatedXml = new XMLSerializer().serializeToString(doc);
+  // Use POST /changeset/{id}/upload (OSChange) — element PUT endpoints lack CORS support
+  const osmChange = `<osmChange version="0.6">
+  <modify>
+    <${elementType} id="${elementId}" version="${version}" changeset="${changesetId}">
+${innerXml}    </${elementType}>
+  </modify>
+</osmChange>`;
 
   let uploadOk = false;
   try {
-    const uploadRes = await fetch(`${OHM_API}/${elementType}/${elementId}`, {
-      method:  'PUT',
+    const uploadRes = await fetch(`${OHM_API}/changeset/${changesetId}/upload`, {
+      method:  'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/xml' },
-      body:    updatedXml,
+      body:    osmChange,
     });
     if (!uploadRes.ok) {
       const text = await uploadRes.text();
