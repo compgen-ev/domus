@@ -476,15 +476,19 @@
 </trans-unit>
 <trans-unit id="s633b485250006fcf">
   <source>Kloster</source>
+  <target>Monastery</target>
 </trans-unit>
 <trans-unit id="sbc2d021a41c1379e">
   <source>Synagoge</source>
+  <target>Synagogue</target>
 </trans-unit>
 <trans-unit id="sd0e3a267f9abfbe8">
   <source>Burgruine</source>
+  <target>Castle ruin</target>
 </trans-unit>
 <trans-unit id="sd81149f4885cf285">
   <source>Wasserschloss</source>
+  <target>Moated castle</target>
 </trans-unit>
 <trans-unit id="s5039ecf0a9074ef2">
   <source>Maximieren</source>
