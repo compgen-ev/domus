@@ -1,6 +1,7 @@
 import { OHM_TAG_TO_BUILDING_TYPE_ID, getBuildingTypeLabel } from './building-type-options';
 
 const OHM_OVERPASS = 'https://overpass-api.openhistoricalmap.org/api/interpreter';
+const OHM_API = 'https://api.openhistoricalmap.org/api/0.6';
 
 export interface OhmBuildingPrefill {
   lat: number;
@@ -160,6 +161,66 @@ export function fetchOhmByWikidataId(
 ): Promise<OhmFetchResult> {
   const query = `[out:json];(relation[wikidata=${qid}];way[wikidata=${qid}];);out geom;`;
   return _fetchOhmWays(query, signal);
+}
+
+export async function addWikidataTag(
+  elementType: 'way' | 'relation',
+  elementId: string,
+  qid: string,
+  token: string,
+): Promise<void> {
+  // Fetch current element to get its version, nodes, and existing tags
+  const fetchRes = await fetch(`${OHM_API}/${elementType}/${elementId}`);
+  if (!fetchRes.ok) throw new Error(`OHM fetch failed: HTTP ${fetchRes.status}`);
+  const xmlText = await fetchRes.text();
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'application/xml');
+  const el = doc.querySelector(elementType);
+  if (!el) throw new Error(`${elementType} not found in OHM response`);
+
+  const existing = [...el.querySelectorAll('tag')].find(t => t.getAttribute('k') === 'wikidata');
+  if (existing) {
+    if (existing.getAttribute('v') === qid) return; // already correct, nothing to do
+    throw new Error(`OHM element already has wikidata=${existing.getAttribute('v')}`);
+  }
+
+  const tag = doc.createElement('tag');
+  tag.setAttribute('k', 'wikidata');
+  tag.setAttribute('v', qid);
+  el.appendChild(tag);
+
+  const changesetRes = await fetch(`${OHM_API}/changeset/create`, {
+    method:  'PUT',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/xml' },
+    body:    `<osm><changeset><tag k="comment" v="Add Wikidata tag ${qid}"/><tag k="created_by" v="domus"/></changeset></osm>`,
+  });
+  if (!changesetRes.ok) throw new Error(`OHM changeset create failed: HTTP ${changesetRes.status}`);
+  const changesetId = (await changesetRes.text()).trim();
+
+  el.setAttribute('changeset', changesetId);
+  const updatedXml = new XMLSerializer().serializeToString(doc);
+
+  let uploadOk = false;
+  try {
+    const uploadRes = await fetch(`${OHM_API}/${elementType}/${elementId}`, {
+      method:  'PUT',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/xml' },
+      body:    updatedXml,
+    });
+    if (!uploadRes.ok) {
+      const text = await uploadRes.text();
+      throw new Error(`OHM upload failed: HTTP ${uploadRes.status} — ${text}`);
+    }
+    uploadOk = true;
+  } finally {
+    await fetch(`${OHM_API}/changeset/${changesetId}/close`, {
+      method:  'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  if (!uploadOk) throw new Error('OHM upload failed');
 }
 
 export async function fetchOhmWayTags(
