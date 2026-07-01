@@ -54,10 +54,6 @@
   <source>Zur Karte</source>
   <target>Back to map</target>
 </trans-unit>
-<trans-unit id="s6f21690e29034096">
-  <source>Vollständige Details</source>
-  <target>Full details</target>
-</trans-unit>
 <trans-unit id="sf7421fc8f5906183">
   <source>Abmelden</source>
   <target>Log out</target>
@@ -477,6 +473,22 @@
 <trans-unit id="s32b4da2023191cef">
   <source>← Auf Wikidata suchen</source>
   <target>← Search on Wikidata</target>
+</trans-unit>
+<trans-unit id="s633b485250006fcf">
+  <source>Kloster</source>
+</trans-unit>
+<trans-unit id="sbc2d021a41c1379e">
+  <source>Synagoge</source>
+</trans-unit>
+<trans-unit id="sd0e3a267f9abfbe8">
+  <source>Burgruine</source>
+</trans-unit>
+<trans-unit id="sd81149f4885cf285">
+  <source>Wasserschloss</source>
+</trans-unit>
+<trans-unit id="s5039ecf0a9074ef2">
+  <source>Maximieren</source>
+  <target>Expand</target>
 </trans-unit>
 </body>
 </file>

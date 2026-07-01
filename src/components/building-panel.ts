@@ -16,9 +16,10 @@ import './stale-banner';
 import IconClose from '~icons/mdi/close';
 import IconPencil from '~icons/mdi/pencil';
 import IconLogin from '~icons/mdi/login';
-import IconArrowRight from '~icons/mdi/arrow-right';
 import IconContentCopy from '~icons/mdi/content-copy';
 import IconCheck from '~icons/mdi/check';
+import IconArrowLeft from '~icons/mdi/arrow-left';
+import IconArrowRight from '~icons/mdi/arrow-right';
 
 function extractYear(iso: string): string {
   return iso.match(/^[+-]?(\d{1,4})/)?.[1] ?? '';
@@ -58,6 +59,14 @@ export class BuildingPanel extends LitElement {
         transform: translateX(0);
       }
 
+      :host([expanded]) {
+        left: 0;
+        width: 100%;
+        border-left: none;
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
       @media (max-width: 700px) {
         :host {
           top: auto;
@@ -72,6 +81,12 @@ export class BuildingPanel extends LitElement {
         :host([open]) {
           transform: translateY(0);
         }
+
+        :host([expanded]) {
+          height: 100%;
+          top: var(--appbar-height);
+          bottom: 0;
+        }
       }
 
       .panel {
@@ -82,12 +97,22 @@ export class BuildingPanel extends LitElement {
         overflow-y: auto;
       }
 
+      :host([expanded]) .panel {
+        height: auto;
+        min-height: 100%;
+        overflow-y: visible;
+      }
+
       .image-wrap {
         width: 100%;
         height: 180px;
         flex-shrink: 0;
         overflow: hidden;
         background: var(--color-bg-tertiary);
+      }
+
+      :host([expanded]) .image-wrap {
+        height: 280px;
       }
 
       .image-wrap img {
@@ -102,6 +127,14 @@ export class BuildingPanel extends LitElement {
         align-items: flex-start;
         gap: var(--space-3);
         padding: var(--space-6) var(--space-4) 0;
+      }
+
+      :host([expanded]) .header {
+        max-width: var(--content-max-width);
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+        padding: var(--space-6) var(--space-5) 0;
       }
 
       .title {
@@ -129,13 +162,17 @@ export class BuildingPanel extends LitElement {
         margin: 0 0 var(--space-1);
       }
 
+      :host([expanded]) h2 {
+        letter-spacing: -0.02em;
+      }
+
       .type-label {
         font-size: var(--font-size-base);
         color: var(--color-text-secondary);
         margin: 0 0 var(--space-4);
       }
 
-      .close-btn {
+      .header-btn {
         background: none;
         border: none;
         cursor: pointer;
@@ -148,7 +185,7 @@ export class BuildingPanel extends LitElement {
         transition: all var(--transition-fast);
       }
 
-      .close-btn:hover {
+      .header-btn:hover {
         background: var(--color-bg-tertiary);
         color: var(--color-text-primary);
       }
@@ -163,11 +200,24 @@ export class BuildingPanel extends LitElement {
         flex: 1;
       }
 
+      :host([expanded]) .body {
+        max-width: var(--content-max-width);
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+        padding: var(--space-4) var(--space-5) var(--space-8);
+      }
+
       .skeleton {
         display: flex;
         flex-direction: column;
         gap: var(--space-2);
         padding: var(--space-2) 0;
+      }
+
+      :host([expanded]) .skeleton {
+        gap: var(--space-3);
+        padding: var(--space-2) 0 var(--space-8);
       }
 
       .skel-line {
@@ -176,6 +226,10 @@ export class BuildingPanel extends LitElement {
         background-size: 200% 100%;
         animation: shimmer 1.2s infinite;
         border-radius: var(--radius-sm);
+      }
+
+      :host([expanded]) .skel-line {
+        height: 14px;
       }
 
       @keyframes shimmer {
@@ -187,14 +241,26 @@ export class BuildingPanel extends LitElement {
         margin-bottom: var(--space-8);
       }
 
+      :host([expanded]) .section {
+        margin-bottom: var(--space-10);
+      }
+
       .dates-section {
         margin-bottom: var(--space-8);
+      }
+
+      :host([expanded]) .dates-section {
+        margin-bottom: var(--space-10);
       }
 
       .date-item {
         font-size: var(--font-size-base);
         color: var(--color-text-primary);
         margin-bottom: var(--space-2);
+      }
+
+      :host([expanded]) .date-item {
+        margin-bottom: var(--space-3);
       }
 
       .date-label {
@@ -207,6 +273,10 @@ export class BuildingPanel extends LitElement {
         font-weight: var(--font-weight-semibold);
         color: var(--color-text-primary);
         margin: 0 0 var(--space-2);
+      }
+
+      :host([expanded]) h3 {
+        font-size: var(--font-size-lg);
       }
 
       .entry {
@@ -251,6 +321,14 @@ export class BuildingPanel extends LitElement {
         gap: var(--space-3);
       }
 
+      :host([expanded]) .footer {
+        max-width: var(--content-max-width);
+        margin: var(--space-8) auto 0;
+        width: 100%;
+        box-sizing: border-box;
+        padding: var(--space-4) var(--space-5);
+      }
+
       .footer-primary {
         display: flex;
         gap: var(--space-2);
@@ -284,6 +362,33 @@ export class BuildingPanel extends LitElement {
       .footer-primary app-button {
         flex: 1;
       }
+
+      .footer-primary .expand-btn {
+        flex: 0 0 auto;
+      }
+
+      .back-btn-wrap {
+        max-width: var(--content-max-width);
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+        padding: var(--space-6) var(--space-5) 0;
+      }
+
+      .edit-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      :host([expanded]) .edit-wrapper {
+        max-width: var(--content-max-width);
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+        padding: var(--space-6) var(--space-5);
+      }
     `,
   ];
 
@@ -299,13 +404,18 @@ export class BuildingPanel extends LitElement {
   @property({ attribute: false }) ohmPrefill: OhmBuildingPrefill | null = null;
 
   @state() private editMode = false;
+  @state() private expanded = false;
   @state() private linkCopied = false;
 
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building') || changed.has('newBuildingCoords')) {
       this.toggleAttribute('open', this.building !== null || this.newBuildingCoords !== null);
-      if (changed.has('building') && this.editMode) {
-        this.editMode = false;
+    }
+    if (changed.has('building')) {
+      if (this.editMode) this.editMode = false;
+      if (this.expanded) {
+        this.expanded = false;
+        this.toggleAttribute('expanded', false);
       }
     }
   }
@@ -316,10 +426,6 @@ export class BuildingPanel extends LitElement {
 
   private _refresh() {
     this.dispatchEvent(new CustomEvent('refresh', { bubbles: true, composed: true }));
-  }
-
-  private _showDetail() {
-    this.dispatchEvent(new CustomEvent('show-detail', { bubbles: true, composed: true }));
   }
 
   private _login() {
@@ -334,11 +440,14 @@ export class BuildingPanel extends LitElement {
     this.editMode = false;
   }
 
+  private _toggleExpanded() {
+    this.expanded = !this.expanded;
+    this.toggleAttribute('expanded', this.expanded);
+  }
+
   private _onSaveSuccess() {
     this.editMode = false;
-    // Dispatch event to parent to re-fetch building data
     this.dispatchEvent(new CustomEvent('save-success-refresh', { bubbles: true, composed: true }));
-    // Show toast notification
     this._showToast(msg('Änderungen gespeichert'));
   }
 
@@ -358,9 +467,7 @@ export class BuildingPanel extends LitElement {
       url.search = cleanParams.toString();
       await navigator.clipboard.writeText(url.toString());
       this.linkCopied = true;
-      setTimeout(() => {
-        this.linkCopied = false;
-      }, 2000);
+      setTimeout(() => { this.linkCopied = false; }, 2000);
     } catch (err) {
       console.error('Failed to copy link:', err);
     }
@@ -436,12 +543,14 @@ export class BuildingPanel extends LitElement {
     if (this.editMode) {
       return html`
         <div class="panel">
-          <building-edit-form
-            .building=${this.building}
-            .detail=${this.detail}
-            @cancel=${this._cancelEdit}
-            @save-success=${this._onSaveSuccess}
-          ></building-edit-form>
+          <div class="edit-wrapper">
+            <building-edit-form
+              .building=${this.building}
+              .detail=${this.detail}
+              @cancel=${this._cancelEdit}
+              @save-success=${this._onSaveSuccess}
+            ></building-edit-form>
+          </div>
         </div>
       `;
     }
@@ -449,6 +558,14 @@ export class BuildingPanel extends LitElement {
     return html`
       <div class="panel">
         ${image ? keyed(image, html`<div class="image-wrap"><img src=${image} alt=${label}></div>`) : ''}
+
+        ${this.expanded ? html`
+          <div class="back-btn-wrap">
+            <app-button variant="outline" .leadingIcon=${IconArrowLeft} @click=${this._toggleExpanded}>
+              ${msg('Zur Karte')}
+            </app-button>
+          </div>
+        ` : ''}
 
         <div class="header">
           <div class="title">
@@ -460,14 +577,17 @@ export class BuildingPanel extends LitElement {
             <h2>${label}</h2>
             ${type ? html`<p class="type-label">${type.label}</p>` : ''}
           </div>
-          <button class="close-btn" @click=${this._close} aria-label=${msg('Schließen')}>
-            <domus-icon .svg=${IconClose}></domus-icon>
-          </button>
+          ${!this.expanded ? html`
+            <button class="header-btn" @click=${this._close} aria-label=${msg('Schließen')}>
+              <domus-icon .svg=${IconClose}></domus-icon>
+            </button>
+          ` : ''}
         </div>
 
         ${this.dataIsStale ? html`<stale-banner @refresh=${this._refresh}></stale-banner>` : ''}
 
         <div class="body">
+
           ${detailLoading ? html`
             <div class="skeleton">
               <div class="skel-line" style="width:40%"></div>
@@ -519,18 +639,20 @@ export class BuildingPanel extends LitElement {
 
         <div class="footer">
           <div class="footer-primary">
-            <app-button variant="accent" .trailingIcon=${IconArrowRight} @click=${this._showDetail}>
-            ${msg('Vollständige Details')}
-          </app-button>
-          ${this.authenticated ? html`
-            <app-button variant="primary" .leadingIcon=${IconPencil} @click=${this._edit}>
-              ${msg('Bearbeiten')}
-            </app-button>
-          ` : html`
-            <app-button variant="primary" .leadingIcon=${IconLogin} @click=${this._login}>
-              ${msg('Anmelden')}
-            </app-button>
-          `}
+            ${!this.expanded ? html`
+              <app-button class="expand-btn" variant="primary" .trailingIcon=${IconArrowRight} @click=${this._toggleExpanded}>
+                ${msg('Maximieren')}
+              </app-button>
+            ` : ''}
+            ${this.authenticated ? html`
+              <app-button variant="accent" .leadingIcon=${IconPencil} @click=${this._edit}>
+                ${msg('Bearbeiten')}
+              </app-button>
+            ` : html`
+              <app-button variant="primary" .leadingIcon=${IconLogin} @click=${this._login}>
+                ${msg('Anmelden')}
+              </app-button>
+            `}
           </div>
           <div class="footer-tertiary">
             ${renderExternalLinks({

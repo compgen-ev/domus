@@ -9,7 +9,6 @@ import { cleanupExpired, isStale, clearEdit, scheduleRefreshes } from '../servic
 import type { OhmBuildingPrefill } from '../services/ohm';
 import './map-view';
 import './building-panel';
-import './building-page';
 import './app-toast';
 import './app-button';
 import './login-notice';
@@ -98,7 +97,6 @@ export class AppRoot extends LitElement {
   @state() private buildingDetail: BuildingDetail | null = null;
   @state() private detailLoading = false;
   @state() private dataIsStale = false;
-  @state() private view: 'map' | 'detail' = 'map';
   @state() private hasOhmFootprint = false;
   @state() private ohmElementId: string | undefined;
   @state() private ohmElementType: 'way' | 'relation' | undefined;
@@ -153,7 +151,6 @@ export class AppRoot extends LitElement {
     } else {
       this.selectedBuilding = null;
       this.buildingDetail = null;
-      this.view = 'map';
     }
   };
 
@@ -206,7 +203,6 @@ export class AppRoot extends LitElement {
   private _onBuildingSelected(e: CustomEvent<WikidataBuilding>) {
     this.selectedBuilding = e.detail;
     this.newBuildingCoords = null;
-    this.view = 'map';
     this.hasOhmFootprint = false;
     this.ohmElementId = undefined;
     this.ohmElementType = undefined;
@@ -224,7 +220,6 @@ export class AppRoot extends LitElement {
     this.hasOhmFootprint = false;
     this.ohmElementId = undefined;
     this.ohmElementType = undefined;
-    this.view = 'map';
     const params = new URLSearchParams(location.search);
     params.delete('id');
     const qs = params.toString();
@@ -253,18 +248,6 @@ export class AppRoot extends LitElement {
   private _onLogout() {
     logout();
     this.authenticated = false;
-  }
-
-  private _onShowDetail() {
-    this.view = 'detail';
-  }
-
-  private _onBackToMap() {
-    this.view = 'map';
-    // Clear the URL parameter when going back to map
-    const url = new URL(window.location.href);
-    url.searchParams.delete('id');
-    window.history.pushState({}, '', url);
   }
 
   private _onSaveSuccessRefresh() {
@@ -334,54 +317,36 @@ export class AppRoot extends LitElement {
           `}
         </div>
       </div>
-      ${this.view === 'detail'
-        ? html`<building-page
-            .building=${this.selectedBuilding}
-            .detail=${this.buildingDetail}
-            .detailLoading=${this.detailLoading}
-            .dataIsStale=${this.dataIsStale}
-            .hasOhmFootprint=${this.hasOhmFootprint}
-            .ohmElementId=${this.ohmElementId}
-            .ohmElementType=${this.ohmElementType}
-            .authenticated=${this.authenticated}
-            @back-to-map=${this._onBackToMap}
-            @save-success-refresh=${this._onSaveSuccessRefresh}
-            @show-toast=${this._onShowToast}
-            @refresh=${this._refreshBuilding}
-          ></building-page>`
-        : html`
-          <map-view
-            .ohmId=${this.buildingDetail?.ohmId}
-            .wikidataId=${this.selectedBuilding?.id}
-            .selectedBuilding=${this.selectedBuilding}
-            .authenticated=${this.authenticated}
-            .pendingLocation=${this.newBuildingCoords}
-            @building-selected=${this._onBuildingSelected}
-            @ohm-data-loaded=${this._onOhmDataLoaded}
-            @location-picked=${this._onLocationPicked}
-            @ohm-feature-picked=${this._onOhmFeaturePicked}
-          ></map-view>
-          <building-panel
-            .building=${this.selectedBuilding}
-            .detail=${this.buildingDetail}
-            .detailLoading=${this.detailLoading}
-            .dataIsStale=${this.dataIsStale}
-            .hasOhmFootprint=${this.hasOhmFootprint}
-            .ohmElementId=${this.ohmElementId}
-            .ohmElementType=${this.ohmElementType}
-            .authenticated=${this.authenticated}
-            .newBuildingCoords=${this.newBuildingCoords}
-            .ohmPrefill=${this.ohmPrefill}
-            @close=${this._onPanelClose}
-            @show-detail=${this._onShowDetail}
-            @login=${this._onLogin}
-            @logout=${this._onLogout}
-            @save-success-refresh=${this._onSaveSuccessRefresh}
-            @show-toast=${this._onShowToast}
-            @refresh=${this._refreshBuilding}
-            @building-created=${this._onBuildingCreated}
-          ></building-panel>
-        `}
+      <map-view
+        .ohmId=${this.buildingDetail?.ohmId}
+        .wikidataId=${this.selectedBuilding?.id}
+        .selectedBuilding=${this.selectedBuilding}
+        .authenticated=${this.authenticated}
+        .pendingLocation=${this.newBuildingCoords}
+        @building-selected=${this._onBuildingSelected}
+        @ohm-data-loaded=${this._onOhmDataLoaded}
+        @location-picked=${this._onLocationPicked}
+        @ohm-feature-picked=${this._onOhmFeaturePicked}
+      ></map-view>
+      <building-panel
+        .building=${this.selectedBuilding}
+        .detail=${this.buildingDetail}
+        .detailLoading=${this.detailLoading}
+        .dataIsStale=${this.dataIsStale}
+        .hasOhmFootprint=${this.hasOhmFootprint}
+        .ohmElementId=${this.ohmElementId}
+        .ohmElementType=${this.ohmElementType}
+        .authenticated=${this.authenticated}
+        .newBuildingCoords=${this.newBuildingCoords}
+        .ohmPrefill=${this.ohmPrefill}
+        @close=${this._onPanelClose}
+        @login=${this._onLogin}
+        @logout=${this._onLogout}
+        @save-success-refresh=${this._onSaveSuccessRefresh}
+        @show-toast=${this._onShowToast}
+        @refresh=${this._refreshBuilding}
+        @building-created=${this._onBuildingCreated}
+      ></building-panel>
       <app-toast></app-toast>
       <login-notice
         ?open=${this.showLoginNotice}
