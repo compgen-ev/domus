@@ -1,7 +1,6 @@
 import { LitElement, html, css, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import { keyed } from 'lit/directives/keyed.js';
 import type { WikidataBuilding, BuildingDetail as BuildingDetailData, PersonRef, AddressEntry } from '../types/building';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import { baseStyles } from '../styles/shared';
@@ -30,6 +29,40 @@ function yearRange(start?: string, end?: string): string {
   const e = end ? extractYear(end) : '';
   if (!s && !e) return '';
   return `${s}–${e}`;
+}
+
+function photoFilename(url: string): string {
+  if (url.includes('/thumb/')) {
+    const parts = url.split('/');
+    return decodeURIComponent(parts[parts.length - 2] ?? '').replace(/_/g, ' ');
+  }
+  if (url.includes('Special:FilePath/')) {
+    return decodeURIComponent(url.split('Special:FilePath/')[1]?.split('?')[0] ?? '').replace(/_/g, ' ');
+  }
+  return decodeURIComponent(url.split('/').pop() ?? '').replace(/_/g, ' ');
+}
+
+function photoThumbUrl(url: string, width = 400): string {
+  // Already a sized thumbnail from Commons API (depicting photos)
+  if (url.includes('/thumb/')) return url;
+  // Special:FilePath URLs from Wikidata P18
+  if (url.includes('Special:FilePath/')) return `${url}?width=${width}`;
+  const filename = url.split('/').pop() ?? '';
+  return `https://commons.wikimedia.org/wiki/Special:FilePath/${filename}?width=${width}`;
+}
+
+function photoPageUrl(url: string): string {
+  let filename: string;
+  if (url.includes('/thumb/')) {
+    // e.g. .../thumb/a/ab/Filename.jpg/400px-Filename.jpg — filename is second-to-last segment
+    const parts = url.split('/');
+    filename = parts[parts.length - 2] ?? '';
+  } else if (url.includes('Special:FilePath/')) {
+    filename = url.split('Special:FilePath/')[1]?.split('?')[0] ?? '';
+  } else {
+    filename = url.split('/').pop() ?? '';
+  }
+  return `https://commons.wikimedia.org/wiki/File:${decodeURIComponent(filename)}`;
 }
 
 @localized()
@@ -120,6 +153,39 @@ export class BuildingDetail extends LitElement {
         height: 100%;
         object-fit: cover;
         display: block;
+      }
+
+      .photo-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+        margin-top: var(--space-6);
+      }
+
+      .photo-gallery a {
+        display: block;
+        width: 96px;
+        height: 96px;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      :host([expanded]) .photo-gallery a {
+        width: 180px;
+        height: 180px;
+      }
+
+      .photo-gallery img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: opacity var(--transition-fast);
+      }
+
+      .photo-gallery a:hover img {
+        opacity: 0.85;
       }
 
       .header {
@@ -389,6 +455,7 @@ export class BuildingDetail extends LitElement {
         box-sizing: border-box;
         padding: var(--space-6) var(--space-5);
       }
+
     `,
   ];
 
@@ -400,6 +467,7 @@ export class BuildingDetail extends LitElement {
   @property({ attribute: false }) ohmElementId: string | undefined;
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
   @property({ attribute: false }) authenticated = false;
+  @property({ attribute: false }) depictingPhotos: string[] = [];
   @property({ attribute: false }) newBuildingCoords: { lat: number; lng: number } | null = null;
   @property({ attribute: false }) ohmPrefill: OhmBuildingPrefill | null = null;
 
@@ -539,6 +607,13 @@ export class BuildingDetail extends LitElement {
     if (!this.building) return html`<div class="panel"></div>`;
     const { label, type, image, id } = this.building;
     const { detail, detailLoading } = this;
+    const seenFilenames = new Set<string>();
+    const photos = [...(detail?.images ?? []), ...this.depictingPhotos].filter((url) => {
+      const key = photoFilename(url);
+      if (seenFilenames.has(key)) return false;
+      seenFilenames.add(key);
+      return true;
+    });
 
     if (this.editMode) {
       return html`
@@ -557,7 +632,7 @@ export class BuildingDetail extends LitElement {
 
     return html`
       <div class="panel">
-        ${image ? keyed(image, html`<div class="image-wrap"><img src=${image} alt=${label}></div>`) : ''}
+        ${image ? html`<div class="image-wrap"><img src=${image} alt=${label}></div>` : ''}
 
         ${this.expanded ? html`
           <div class="back-btn-wrap">
@@ -635,6 +710,16 @@ export class BuildingDetail extends LitElement {
           ${detail && detail.commissionedBy.length > 0
             ? this._renderSection(msg('Bauherr'), this._entityItems(detail.commissionedBy))
             : ''}
+
+          ${photos.length > 0 ? html`
+            <div class="photo-gallery">
+              ${photos.map((url) => html`
+                <a href=${photoPageUrl(url)} target="_blank" rel="noopener">
+                  <img src=${photoThumbUrl(url)} alt="" loading="lazy">
+                </a>
+              `)}
+            </div>
+          ` : ''}
         </div>
 
         <div class="footer">

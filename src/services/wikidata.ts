@@ -112,6 +112,7 @@ export async function fetchBuildings(
 function buildDetailQuery(id: string, langs: string): string {
   return `
 SELECT ?demolished ?heritage ?heritageLabel
+  ?image
   ?occupant ?occupantLabel ?occupStart ?occupEnd
   ?owner ?ownerLabel ?ownerStart ?ownerEnd
   ?address ?addrStart ?addrEnd
@@ -122,6 +123,7 @@ SELECT ?demolished ?heritage ?heritageLabel
 WHERE {
   BIND(wd:${id} AS ?item)
   OPTIONAL { ?item wdt:P576 ?demolished . }
+  OPTIONAL { ?item wdt:P18 ?image . }
   OPTIONAL {
     ?item p:P1435 ?hStmt .
     ?hStmt ps:P1435 ?heritage .
@@ -163,6 +165,7 @@ interface DetailBinding {
   demolished?: SparqlBinding;
   heritage?: SparqlBinding;
   heritageLabel?: SparqlBinding;
+  image?: SparqlBinding;
   occupant?: SparqlBinding;
   occupantLabel?: SparqlBinding;
   occupStart?: SparqlBinding;
@@ -255,6 +258,7 @@ export async function fetchBuildingDetail(
   let govId: string | undefined;
   let modified: string | undefined;
   const heritageSet = new Set<string>();
+  const imageSet = new Set<string>();
   const occupants = new Map<string, PersonRef>();
   const owners = new Map<string, PersonRef>();
   const addresses = new Map<string, AddressEntry>();
@@ -267,6 +271,7 @@ export async function fetchBuildingDetail(
     if (row.govId && !govId) govId = row.govId.value;
     if (row.modified && !modified) modified = row.modified.value;
     if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
+    if (row.image) imageSet.add(row.image.value);
 
     if (row.occupant) {
       const key = `${row.occupant.value}|${row.occupStart?.value ?? ''}|${row.occupEnd?.value ?? ''}`;
@@ -337,12 +342,41 @@ export async function fetchBuildingDetail(
     govId,
     modified,
     heritages: [...heritageSet],
+    images: [...imageSet],
     architects: [...architects.values()],
     commissionedBy: [...commissionedBy.values()],
     occupants: [...occupants.values()].sort(byStart),
     owners: [...owners.values()].sort(byStart),
     addresses: [...addresses.values()].sort(byStart),
   };
+}
+
+export async function fetchDepictingPhotos(
+  id: string,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  const params = new URLSearchParams({
+    action: 'query',
+    generator: 'search',
+    gsrnamespace: '6',
+    gsrsearch: `haswbstatement:P180=${id}`,
+    gsrlimit: '50',
+    prop: 'imageinfo',
+    iiprop: 'url',
+    iiurlwidth: '400',
+    format: 'json',
+    origin: '*',
+  });
+  const response = await fetch(`https://commons.wikimedia.org/w/api.php?${params}`, { signal });
+  if (!response.ok) throw new Error(`Commons API error: ${response.status}`);
+
+  const data: {
+    query?: { pages?: Record<string, { imageinfo?: Array<{ url: string; thumburl?: string }> }> };
+  } = await response.json();
+  const pages = data.query?.pages ?? {};
+  return Object.values(pages)
+    .map((p) => p.imageinfo?.[0]?.thumburl ?? p.imageinfo?.[0]?.url)
+    .filter((v): v is string => !!v);
 }
 
 export function buildingsToGeoJSON(

@@ -32,6 +32,7 @@ export interface AddressEntry {
 export interface BuildingDetail {
   demolished?: string;
   heritages: string[];
+  images: string[];
   architects: PersonRef[];
   commissionedBy: PersonRef[];
   occupants: PersonRef[];

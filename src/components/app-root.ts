@@ -3,7 +3,7 @@ import { customElement, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { designTokens, buttonStyles } from '../styles/design-tokens';
 import type { WikidataBuilding, BuildingDetail } from '../types/building';
-import { fetchBuildingById, fetchBuildingDetail } from '../services/wikidata';
+import { fetchBuildingById, fetchBuildingDetail, fetchDepictingPhotos } from '../services/wikidata';
 import { handleOAuthCallback, isAuthenticated, logout, login } from '../services/wikimedia-auth';
 import { cleanupExpired, isStale, clearEdit, scheduleRefreshes } from '../services/edit-tracker';
 import type { OhmBuildingPrefill } from '../services/ohm';
@@ -104,8 +104,10 @@ export class AppRoot extends LitElement {
   @state() private showLoginNotice = false;
   @state() private newBuildingCoords: { lat: number; lng: number } | null = null;
   @state() private ohmPrefill: OhmBuildingPrefill | null = null;
+  @state() private depictingPhotos: string[] = [];
 
   private detailController: AbortController | null = null;
+  private depictingController: AbortController | null = null;
 
   async connectedCallback() {
     super.connectedCallback();
@@ -140,6 +142,7 @@ export class AppRoot extends LitElement {
     super.disconnectedCallback();
     window.removeEventListener('popstate', this._onPopState);
     this.detailController?.abort();
+    this.depictingController?.abort();
   }
 
   private _onPopState = () => {
@@ -184,6 +187,17 @@ export class AppRoot extends LitElement {
     }).finally(() => {
       this.detailLoading = false;
     });
+
+    this.depictingController?.abort();
+    this.depictingController = new AbortController();
+    this.depictingPhotos = [];
+    fetchDepictingPhotos(id, this.depictingController.signal).then((photos) => {
+      this.depictingPhotos = photos;
+    }).catch((err) => {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('Depicting photos fetch failed:', err);
+      }
+    });
   }
 
   private _checkStaleness(id: string, modified?: string) {
@@ -215,6 +229,7 @@ export class AppRoot extends LitElement {
   private _onPanelClose() {
     this.selectedBuilding = null;
     this.buildingDetail = null;
+    this.depictingPhotos = [];
     this.newBuildingCoords = null;
     this.ohmPrefill = null;
     this.hasOhmFootprint = false;
@@ -339,6 +354,7 @@ export class AppRoot extends LitElement {
         .authenticated=${this.authenticated}
         .newBuildingCoords=${this.newBuildingCoords}
         .ohmPrefill=${this.ohmPrefill}
+        .depictingPhotos=${this.depictingPhotos}
         @close=${this._onPanelClose}
         @login=${this._onLogin}
         @logout=${this._onLogout}
