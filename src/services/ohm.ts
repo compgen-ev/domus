@@ -7,6 +7,7 @@ export interface OhmBuildingPrefill {
   lat: number;
   lng: number;
   ohmId?: string;
+  elementType?: 'way' | 'relation';
   name?: string;
   buildingTag?: string;
   startDate?: string;
@@ -152,6 +153,14 @@ export function fetchOhmRelationGeometry(
   signal?: AbortSignal,
 ): Promise<OhmFetchResult> {
   const query = `[out:json];relation(${relationId});way(r);out geom;`;
+  return _fetchOhmWays(query, signal);
+}
+
+export function fetchOhmWayGeometry(
+  wayId: string,
+  signal?: AbortSignal,
+): Promise<OhmFetchResult> {
+  const query = `[out:json];way(${wayId});out geom;`;
   return _fetchOhmWays(query, signal);
 }
 

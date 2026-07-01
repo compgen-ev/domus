@@ -4,7 +4,7 @@ import { localized, msg } from '@lit/localize';
 import maplibregl, { type Map, type MapLayerMouseEvent, type MapMouseEvent, type GeoJSONSource } from 'maplibre-gl';
 import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
-import { fetchOhmRelationGeometry, fetchOhmByWikidataId, fetchOhmWayTags } from '../services/ohm';
+import { fetchOhmRelationGeometry, fetchOhmByWikidataId, fetchOhmWayTags, fetchOhmWayGeometry } from '../services/ohm';
 import type { WikidataBuilding } from '../types/building';
 import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
@@ -174,6 +174,7 @@ export class MapView extends LitElement {
   @property({ attribute: false }) selectedBuilding: WikidataBuilding | null = null;
   @property({ type: Boolean }) authenticated = false;
   @property({ attribute: false }) pendingLocation: { lat: number; lng: number } | null = null;
+  @property({ attribute: false }) pendingOhmWayId: string | undefined = undefined;
 
   @state() private showHint = true;
   @state() private loading = false;
@@ -194,7 +195,7 @@ export class MapView extends LitElement {
   private _shouldCenterOnBuilding = false;
 
   protected updated(changed: PropertyValues) {
-    if (changed.has('ohmId') || changed.has('wikidataId')) {
+    if (changed.has('ohmId') || changed.has('wikidataId') || changed.has('pendingOhmWayId')) {
       this._scheduleOhmFetch();
     }
     if (changed.has('selectedBuilding') && this.selectedBuilding && this._shouldCenterOnBuilding) {
@@ -236,6 +237,7 @@ export class MapView extends LitElement {
                   detail: {
                     lat, lng,
                     ohmId: osmId ? String(osmId) : undefined,
+                    elementType: osmId ? 'way' as const : undefined,
                     name: tags['name'],
                     buildingTag: tags['building'] ?? tileType,
                     startDate: tags['start_date'],
@@ -426,16 +428,18 @@ export class MapView extends LitElement {
     const source = this.map?.getSource('ohm-footprint') as GeoJSONSource | undefined;
     if (!source) return;
 
-    if (!this.ohmId && !this.wikidataId) {
+    if (!this.ohmId && !this.wikidataId && !this.pendingOhmWayId) {
       source.setData({ type: 'FeatureCollection', features: [] });
       return;
     }
 
     this.ohmController = new AbortController();
     try {
-      const result = this.ohmId
-        ? await fetchOhmRelationGeometry(this.ohmId, this.ohmController.signal)
-        : await fetchOhmByWikidataId(this.wikidataId!, this.ohmController.signal);
+      const result = this.pendingOhmWayId && !this.ohmId && !this.wikidataId
+        ? await fetchOhmWayGeometry(this.pendingOhmWayId, this.ohmController.signal)
+        : this.ohmId
+          ? await fetchOhmRelationGeometry(this.ohmId, this.ohmController.signal)
+          : await fetchOhmByWikidataId(this.wikidataId!, this.ohmController.signal);
       source.setData(result.geojson);
 
       if (result.geojson.features.length > 0) {
@@ -557,7 +561,7 @@ export class MapView extends LitElement {
         'fill-color': '#f2c14e',
         'fill-opacity': 0.3,
       },
-    }, 'buildings-circle'); // Insert below Wikidata pins
+    }, 'ohm-footprint-fill'); // Insert below footprint highlight
 
     this.map.addLayer({
       id: 'ohm-buildings-outline',
@@ -570,7 +574,7 @@ export class MapView extends LitElement {
         'line-width': 1,
         'line-opacity': 0.6,
       },
-    }, 'buildings-circle');
+    }, 'ohm-footprint-fill'); // Insert below footprint highlight
 
     // Initialize date filter to current year
     (this.map as any).filterByDate(new Date().getFullYear().toString());

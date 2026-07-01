@@ -4,7 +4,8 @@ import { localized, msg } from '@lit/localize';
 import { designTokens, buttonStyles } from '../styles/design-tokens';
 import type { WikidataBuilding, BuildingDetail } from '../types/building';
 import { fetchBuildingById, fetchBuildingDetail, fetchDepictingPhotos } from '../services/wikidata';
-import { handleOAuthCallback, isAuthenticated, logout, login } from '../services/wikimedia-auth';
+import { handleOAuthCallback, isAuthenticated, logout, login, getStoredUsername, fetchAndStoreUsername, getValidAccessToken } from '../services/wikimedia-auth';
+import { handleOhmOAuthCallback, isOhmAuthenticated, ohmLogin, ohmLogout, getStoredOhmUsername } from '../services/ohm-auth';
 import { cleanupExpired, isStale, clearEdit, scheduleRefreshes } from '../services/edit-tracker';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import './map-view';
@@ -12,8 +13,8 @@ import './building-detail';
 import './app-toast';
 import './app-button';
 import './login-notice';
+import './account-menu';
 import IconLogin from '~icons/mdi/login';
-import IconLogout from '~icons/mdi/logout';
 
 @localized()
 @customElement('app-root')
@@ -101,7 +102,10 @@ export class AppRoot extends LitElement {
   @state() private ohmElementId: string | undefined;
   @state() private ohmElementType: 'way' | 'relation' | undefined;
   @state() private authenticated = false;
+  @state() private ohmAuthenticated = false;
   @state() private showLoginNotice = false;
+  @state() private wikimediaUsername: string | null = null;
+  @state() private ohmUsername: string | null = null;
   @state() private newBuildingCoords: { lat: number; lng: number } | null = null;
   @state() private ohmPrefill: OhmBuildingPrefill | null = null;
   @state() private depictingPhotos: string[] = [];
@@ -116,7 +120,7 @@ export class AppRoot extends LitElement {
     // Clean up expired edit timestamps
     cleanupExpired();
 
-    // Handle OAuth callback
+    // Handle OAuth callbacks (Wikimedia and OHM use different sessionStorage keys, safe to call both)
     try {
       const hadCallback = await handleOAuthCallback();
       if (hadCallback) {
@@ -127,6 +131,28 @@ export class AppRoot extends LitElement {
     } catch (err) {
       console.error('OAuth callback failed:', err);
       this.authenticated = false;
+    }
+
+    try {
+      await handleOhmOAuthCallback();
+    } catch (err) {
+      console.error('OHM OAuth callback failed:', err);
+    }
+    this.ohmAuthenticated = isOhmAuthenticated();
+
+    // Load usernames — from storage if available, else fetch from API
+    this.wikimediaUsername = getStoredUsername();
+    if (this.authenticated && !this.wikimediaUsername) {
+      const token = await getValidAccessToken();
+      if (token) this.wikimediaUsername = await fetchAndStoreUsername(token);
+    }
+    this.ohmUsername = getStoredOhmUsername();
+
+    // Dev mode: stub usernames
+    if (import.meta.env.DEV) {
+      this.wikimediaUsername = this.wikimediaUsername ?? 'DevUser';
+      this.ohmAuthenticated = true;
+      this.ohmUsername = this.ohmUsername ?? 'DevUserOHM';
     }
 
     // Dev mode: auto-authenticate when running dev server
@@ -260,9 +286,23 @@ export class AppRoot extends LitElement {
     this.showLoginNotice = false;
   }
 
-  private _onLogout() {
+  private _onLogoutAll() {
     logout();
+    ohmLogout();
     this.authenticated = false;
+    this.ohmAuthenticated = false;
+    this.wikimediaUsername = null;
+    this.ohmUsername = null;
+  }
+
+  private _onOhmLogin() {
+    ohmLogin(); // Redirects, never resolves
+  }
+
+  private _onOhmLogout() {
+    ohmLogout();
+    this.ohmAuthenticated = false;
+    this.ohmUsername = null;
   }
 
   private _onSaveSuccessRefresh() {
@@ -322,9 +362,14 @@ export class AppRoot extends LitElement {
         <a href="/"><img src="/map/domus.svg" alt="">Domus</a>
         <div class="auth-section">
           ${this.authenticated ? html`
-            <app-button variant="secondary" .leadingIcon=${IconLogout} @click=${this._onLogout}>
-              ${msg('Abmelden')}
-            </app-button>
+            <account-menu
+              .wikimediaUsername=${this.wikimediaUsername}
+              .ohmUsername=${this.ohmUsername}
+              .ohmAuthenticated=${this.ohmAuthenticated}
+              @logout-all=${this._onLogoutAll}
+              @ohm-login=${this._onOhmLogin}
+              @ohm-logout=${this._onOhmLogout}
+            ></account-menu>
           ` : html`
             <app-button variant="primary" .leadingIcon=${IconLogin} @click=${this._onLogin}>
               ${msg('Anmelden')}
@@ -338,6 +383,7 @@ export class AppRoot extends LitElement {
         .selectedBuilding=${this.selectedBuilding}
         .authenticated=${this.authenticated}
         .pendingLocation=${this.newBuildingCoords}
+        .pendingOhmWayId=${this.ohmPrefill?.ohmId}
         @building-selected=${this._onBuildingSelected}
         @ohm-data-loaded=${this._onOhmDataLoaded}
         @location-picked=${this._onLocationPicked}
@@ -352,12 +398,13 @@ export class AppRoot extends LitElement {
         .ohmElementId=${this.ohmElementId}
         .ohmElementType=${this.ohmElementType}
         .authenticated=${this.authenticated}
+        .ohmAuthenticated=${this.ohmAuthenticated}
         .newBuildingCoords=${this.newBuildingCoords}
         .ohmPrefill=${this.ohmPrefill}
         .depictingPhotos=${this.depictingPhotos}
         @close=${this._onPanelClose}
         @login=${this._onLogin}
-        @logout=${this._onLogout}
+        @logout=${this._onLogoutAll}
         @save-success-refresh=${this._onSaveSuccessRefresh}
         @show-toast=${this._onShowToast}
         @refresh=${this._refreshBuilding}

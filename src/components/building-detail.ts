@@ -470,6 +470,7 @@ export class BuildingDetail extends LitElement {
   @property({ attribute: false }) ohmElementId: string | undefined;
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
   @property({ attribute: false }) authenticated = false;
+  @property({ attribute: false }) ohmAuthenticated = false;
   @property({ attribute: false }) depictingPhotos: string[] = [];
   @property({ attribute: false }) newBuildingCoords: { lat: number; lng: number } | null = null;
   @property({ attribute: false }) ohmPrefill: OhmBuildingPrefill | null = null;
@@ -600,6 +601,7 @@ export class BuildingDetail extends LitElement {
             .lat=${this.newBuildingCoords.lat}
             .lng=${this.newBuildingCoords.lng}
             .ohmPrefill=${this.ohmPrefill}
+            .ohmAuthenticated=${this.ohmAuthenticated}
             @cancel=${this._close}
             @building-created=${this._onBuildingCreated}
           ></building-create-form>

@@ -6,7 +6,8 @@ import type { WikidataItem } from '../types/building';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { createBuilding, type SourceRef } from '../services/wikidata-edit-rest';
 import type { OhmBuildingPrefill } from '../services/ohm';
-import { buildingTagToWikidataType } from '../services/ohm';
+import { buildingTagToWikidataType, addWikidataTag } from '../services/ohm';
+import { getValidOhmAccessToken } from '../services/ohm-auth';
 import './entity-search';
 import './app-button';
 import './icon';
@@ -177,12 +178,34 @@ export class BuildingCreateForm extends LitElement {
         color: var(--color-text-secondary);
         font-size: var(--font-size-sm);
       }
+
+      .ohm-link-section {
+        margin-top: var(--space-3);
+        padding: var(--space-2) var(--space-3);
+        background: var(--color-primary-lighter);
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-md);
+        font-size: var(--font-size-sm);
+      }
+
+      .ohm-link-section p {
+        margin: 0;
+        color: var(--color-text-secondary);
+      }
+
+      .ohm-link-connected {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        color: var(--color-primary);
+      }
     `,
   ];
 
   @property({ type: Number }) lat = 0;
   @property({ type: Number }) lng = 0;
   @property({ attribute: false }) ohmPrefill: OhmBuildingPrefill | null = null;
+  @property({ attribute: false }) ohmAuthenticated = false;
 
   @state() private formLabel = '';
   @state() private formType: WikidataItem | undefined;
@@ -201,6 +224,7 @@ export class BuildingCreateForm extends LitElement {
   @state() private bookPage = '';
   @state() private saving = false;
   @state() private saveError: string | null = null;
+  @state() private ohmSaveError: string | null = null;
 
   updated(changed: PropertyValues) {
     if (changed.has('ohmPrefill') && this.ohmPrefill) {
@@ -270,6 +294,17 @@ export class BuildingCreateForm extends LitElement {
         source,
       });
 
+      if (this.ohmAuthenticated && this.ohmPrefill?.ohmId && this.ohmPrefill.elementType) {
+        const token = await getValidOhmAccessToken();
+        if (token) {
+          try {
+            await addWikidataTag(this.ohmPrefill.elementType, this.ohmPrefill.ohmId, item.id, token);
+          } catch (err) {
+            this.ohmSaveError = err instanceof Error ? err.message : String(err);
+          }
+        }
+      }
+
       this.dispatchEvent(new CustomEvent('building-created', {
         detail: { id: item.id, label: item.label, lat: this.lat, lng: this.lng },
         bubbles: true,
@@ -290,6 +325,20 @@ export class BuildingCreateForm extends LitElement {
         <p class="form-subtitle">${msg('Koordinaten')}: ${this.lat.toFixed(5)}, ${this.lng.toFixed(5)}</p>
         ${this.ohmPrefill ? html`
           <div class="ohm-banner">${msg('Vorausgefüllt aus OpenHistoricalMap')}</div>
+        ` : ''}
+        ${this.ohmPrefill?.ohmId && this.ohmPrefill.elementType ? html`
+          <div class="ohm-link-section">
+            ${this.ohmAuthenticated ? html`
+              <span class="ohm-link-connected"><domus-icon .svg=${IconCheck}></domus-icon>${msg('Wird auch auf OpenHistoricalMap verknüpft')}</span>
+              ${this.ohmSaveError ? html`
+                <div style="color: #c00; font-size: var(--font-size-sm); margin-top: var(--space-1);">
+                  ${msg('Verknüpfung fehlgeschlagen:')} ${this.ohmSaveError}
+                </div>
+              ` : ''}
+            ` : html`
+              <p>${msg('Im Kontomenü bei OpenHistoricalMap anmelden, um dieses Gebäude dort automatisch zu verknüpfen.')}</p>
+            `}
+          </div>
         ` : ''}
         ${this.saveError ? html`
           <div class="error-message" role="alert">${this.saveError}</div>
@@ -473,6 +522,7 @@ export class BuildingCreateForm extends LitElement {
             `}
           `}
         </div>
+
       </div>
 
       <div class="form-footer">

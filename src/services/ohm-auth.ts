@@ -30,5 +30,24 @@ export function isOhmAuthenticated(): boolean {
 
 export async function handleOhmOAuthCallback(): Promise<boolean> {
   const token = await handleCallback(OHM_CONFIG);
+  if (token) fetchAndStoreOhmUsername(token.access_token);
   return token !== null;
+}
+
+export async function fetchAndStoreOhmUsername(token: string): Promise<string | null> {
+  try {
+    const res = await fetch('https://api.openhistoricalmap.org/api/0.6/user/details.json', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as Record<string, unknown>;
+    const user = data['user'] as Record<string, unknown> | undefined;
+    const username = user?.['display_name'] as string | undefined;
+    if (username) sessionStorage.setItem(`oauth_${OHM_CONFIG.clientId}_username`, username);
+    return username ?? null;
+  } catch { return null; }
+}
+
+export function getStoredOhmUsername(): string | null {
+  return sessionStorage.getItem(`oauth_${OHM_CONFIG.clientId}_username`);
 }

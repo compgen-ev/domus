@@ -1,6 +1,7 @@
 import type { OAuthConfig } from './oauth';
 import { initiateLogin, handleCallback, getStoredToken, clearStoredToken, getValidToken } from './oauth';
 
+
 // Wikimedia OAuth 2.0 config
 // Use production consumer for domus.genealogy.net, dev consumer for localhost
 const isProd = location.hostname === 'domus.genealogy.net';
@@ -43,5 +44,23 @@ export function isAuthenticated(): boolean {
 
 export async function handleOAuthCallback(): Promise<boolean> {
   const token = await handleCallback(WIKIMEDIA_CONFIG);
+  if (token) fetchAndStoreUsername(token.access_token);
   return token !== null;
+}
+
+export async function fetchAndStoreUsername(token: string): Promise<string | null> {
+  try {
+    const res = await fetch('https://meta.wikimedia.org/w/rest.php/oauth2/resource/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as Record<string, unknown>;
+    const username = data['username'] as string | undefined;
+    if (username) sessionStorage.setItem(`oauth_${WIKIMEDIA_CONFIG.clientId}_username`, username);
+    return username ?? null;
+  } catch { return null; }
+}
+
+export function getStoredUsername(): string | null {
+  return sessionStorage.getItem(`oauth_${WIKIMEDIA_CONFIG.clientId}_username`);
 }

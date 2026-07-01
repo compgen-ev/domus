@@ -215,11 +215,12 @@ export function getStoredToken(clientId: string): string | null {
   return sessionStorage.getItem(k(clientId, 'token'));
 }
 
-/** Removes all stored tokens and expiry data. */
+/** Removes all stored tokens, expiry data, and username. */
 export function clearStoredToken(clientId: string): void {
   sessionStorage.removeItem(k(clientId, 'token'));
   sessionStorage.removeItem(k(clientId, 'refresh_token'));
   sessionStorage.removeItem(k(clientId, 'token_expiry'));
+  sessionStorage.removeItem(k(clientId, 'username'));
 }
 
 /**

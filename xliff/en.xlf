@@ -54,10 +54,6 @@
   <source>Zur Karte</source>
   <target>Back to map</target>
 </trans-unit>
-<trans-unit id="sf7421fc8f5906183">
-  <source>Abmelden</source>
-  <target>Log out</target>
-</trans-unit>
 <trans-unit id="s55dd3f9792622892">
   <source>Wohnhaus</source>
   <target>dwelling</target>
@@ -493,6 +489,38 @@
 <trans-unit id="s5039ecf0a9074ef2">
   <source>Maximieren</source>
   <target>Expand</target>
+</trans-unit>
+<trans-unit id="saae07aaac113a84e">
+  <source>Konto</source>
+  <target>Account</target>
+</trans-unit>
+<trans-unit id="s6bdf6fade5c67ac9">
+  <source>Angemeldet</source>
+  <target>Logged in</target>
+</trans-unit>
+<trans-unit id="s6e0e9bbe2051b6fa">
+  <source>Verbunden</source>
+  <target>Connected</target>
+</trans-unit>
+<trans-unit id="s560a62f706a56738">
+  <source>Für automatische Verknüpfung beim Anlegen von Gebäuden.</source>
+  <target>For automatic linking when creating buildings.</target>
+</trans-unit>
+<trans-unit id="se3720f81c0cb2f87">
+  <source>Alle abmelden</source>
+  <target>Log out all</target>
+</trans-unit>
+<trans-unit id="s9cec02292998ebc8">
+  <source>Wird auch auf OpenHistoricalMap verknüpft</source>
+  <target>Will also be linked on OpenHistoricalMap</target>
+</trans-unit>
+<trans-unit id="saa73508c311ea37b">
+  <source>Verknüpfung fehlgeschlagen:</source>
+  <target>Linking failed:</target>
+</trans-unit>
+<trans-unit id="s532e3fc11fc2ea34">
+  <source>Im Kontomenü bei OpenHistoricalMap anmelden, um dieses Gebäude dort automatisch zu verknüpfen.</source>
+  <target>Log in to OpenHistoricalMap via the account menu to automatically link this building there.</target>
 </trans-unit>
 </body>
 </file>
