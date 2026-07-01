@@ -700,7 +700,8 @@ export function buildBuildingItemPayload(data: BuildingCreateData) {
     }
   }
 
-  return { labels: { [getLocale()]: data.label.trim() }, statements };
+  const label = data.label.trim();
+  return { labels: { [getLocale()]: label, mul: label }, statements };
 }
 
 export async function createBuilding(data: BuildingCreateData): Promise<WikidataItem> {
@@ -739,7 +740,7 @@ export interface PersonItemPayload {
 
 export function buildPersonItemPayload(name: string, description?: string): PersonItemPayload {
   const payload: PersonItemPayload = {
-    labels: { [getLocale()]: name },
+    labels: { [getLocale()]: name, mul: name },
     statements: {
       P31: [{ property: { id: 'P31' }, value: { type: 'value', content: 'Q5' } }],
     },
