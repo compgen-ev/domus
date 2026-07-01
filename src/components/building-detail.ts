@@ -2,7 +2,7 @@ import { LitElement, html, css, type PropertyValues, type TemplateResult } from 
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { keyed } from 'lit/directives/keyed.js';
-import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
+import type { WikidataBuilding, BuildingDetail as BuildingDetailData, PersonRef, AddressEntry } from '../types/building';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
@@ -33,8 +33,8 @@ function yearRange(start?: string, end?: string): string {
 }
 
 @localized()
-@customElement('building-panel')
-export class BuildingPanel extends LitElement {
+@customElement('building-detail')
+export class BuildingDetail extends LitElement {
   static styles = [
     baseStyles,
     buttonStyles,
@@ -393,7 +393,7 @@ export class BuildingPanel extends LitElement {
   ];
 
   @property({ attribute: false }) building: WikidataBuilding | null = null;
-  @property({ attribute: false }) detail: BuildingDetail | null = null;
+  @property({ attribute: false }) detail: BuildingDetailData | null = null;
   @property({ attribute: false }) detailLoading = false;
   @property({ attribute: false }) dataIsStale = false;
   @property({ attribute: false }) hasOhmFootprint = false;
@@ -678,6 +678,6 @@ export class BuildingPanel extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'building-panel': BuildingPanel;
+    'building-detail': BuildingDetail;
   }
 }

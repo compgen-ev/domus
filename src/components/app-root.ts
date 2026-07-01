@@ -8,7 +8,7 @@ import { handleOAuthCallback, isAuthenticated, logout, login } from '../services
 import { cleanupExpired, isStale, clearEdit, scheduleRefreshes } from '../services/edit-tracker';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import './map-view';
-import './building-panel';
+import './building-detail';
 import './app-toast';
 import './app-button';
 import './login-notice';
@@ -328,7 +328,7 @@ export class AppRoot extends LitElement {
         @location-picked=${this._onLocationPicked}
         @ohm-feature-picked=${this._onOhmFeaturePicked}
       ></map-view>
-      <building-panel
+      <building-detail
         .building=${this.selectedBuilding}
         .detail=${this.buildingDetail}
         .detailLoading=${this.detailLoading}
@@ -346,7 +346,7 @@ export class AppRoot extends LitElement {
         @show-toast=${this._onShowToast}
         @refresh=${this._refreshBuilding}
         @building-created=${this._onBuildingCreated}
-      ></building-panel>
+      ></building-detail>
       <app-toast></app-toast>
       <login-notice
         ?open=${this.showLoginNotice}
