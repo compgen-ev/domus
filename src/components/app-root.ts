@@ -6,7 +6,7 @@ import type { WikidataBuilding, BuildingDetail } from '../types/building';
 import { fetchBuildingById, fetchBuildingDetail, fetchDepictingPhotos } from '../services/wikidata';
 import { handleOAuthCallback, isAuthenticated, logout, login, getStoredUsername, fetchAndStoreUsername, getValidAccessToken } from '../services/wikimedia-auth';
 import { handleOhmOAuthCallback, isOhmAuthenticated, ohmLogin, ohmLogout, getStoredOhmUsername } from '../services/ohm-auth';
-import { cleanupExpired, isStale, clearEdit, scheduleRefreshes } from '../services/edit-tracker';
+import { cleanupExpired, isStale, clearEdit, recordEdit, scheduleRefreshes } from '../services/edit-tracker';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import './map-view';
 import './building-detail';
@@ -187,6 +187,11 @@ export class AppRoot extends LitElement {
     try {
       const building = await fetchBuildingById(id);
       if (building) {
+        // SPARQL returns the QID as label when the item isn't indexed yet — keep any
+        // real label we already have rather than overwriting it with the QID fallback
+        if (building.label === id && this.selectedBuilding?.id === id && this.selectedBuilding.label !== id) {
+          building.label = this.selectedBuilding.label;
+        }
         this.selectedBuilding = building;
         this._checkStaleness(id, building.modified);
         this._fetchDetail(id);
@@ -337,12 +342,23 @@ export class AppRoot extends LitElement {
   private async _onBuildingCreated(e: CustomEvent<{ id: string; label: string; lat: number; lng: number }>) {
     this.newBuildingCoords = null;
     this.ohmPrefill = null;
-    const { id } = e.detail;
+    const { id, label, lat, lng } = e.detail;
     const params = new URLSearchParams(location.search);
     params.set('id', id);
     history.pushState(null, '', `?${params}`);
-    await this._loadBuildingById(id);
+
+    // Show drawer immediately with stub; stale banner will show until SPARQL propagates
+    recordEdit(id);
+    this.selectedBuilding = { id, label, lat, lng };
+    this.dataIsStale = true;
     this._showToast(msg('Gebäude angelegt'));
+
+    await this._loadBuildingById(id);
+    scheduleRefreshes(
+      id,
+      () => this._refreshBuilding(),
+      () => this.dataIsStale,
+    );
   }
 
   private _showToast(message: string) {

@@ -296,12 +296,22 @@ export class BuildingCreateForm extends LitElement {
 
       if (this.ohmAuthenticated && this.ohmPrefill?.ohmId && this.ohmPrefill.elementType) {
         const token = await getValidOhmAccessToken();
+        let ohmError: string | null = null;
         if (token) {
           try {
             await addWikidataTag(this.ohmPrefill.elementType, this.ohmPrefill.ohmId, item.id, token);
           } catch (err) {
-            this.ohmSaveError = err instanceof Error ? err.message : String(err);
+            ohmError = err instanceof Error ? err.message : String(err);
           }
+        } else {
+          ohmError = 'OHM session expired — please log in again';
+        }
+        if (ohmError) {
+          this.dispatchEvent(new CustomEvent('show-toast', {
+            detail: { message: `${msg('Verknüpfung fehlgeschlagen:')} ${ohmError}` },
+            bubbles: true,
+            composed: true,
+          }));
         }
       }
 

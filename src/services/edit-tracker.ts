@@ -48,7 +48,8 @@ export function getLastEdit(entityId: string): string | null {
  */
 export function isStale(entityId: string, sparqlModified?: string): boolean {
   const lastEdit = getLastEdit(entityId);
-  if (!lastEdit || !sparqlModified) return false;
+  if (!lastEdit) return false;
+  if (!sparqlModified) return true; // edited/created but not yet visible in SPARQL
 
   try {
     return new Date(sparqlModified) < new Date(lastEdit);
