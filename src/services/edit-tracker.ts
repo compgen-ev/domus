@@ -52,7 +52,8 @@ export function isStale(entityId: string, sparqlModified?: string): boolean {
   if (!sparqlModified) return true; // edited/created but not yet visible in SPARQL
 
   try {
-    return new Date(sparqlModified) < new Date(lastEdit);
+    const GRACE_MS = 30_000; // tolerate up to 30s clock skew between browser and Wikidata server
+    return new Date(sparqlModified).getTime() < new Date(lastEdit).getTime() - GRACE_MS;
   } catch {
     return false;
   }
