@@ -91,9 +91,8 @@ export async function handleCallback(config: OAuthConfig): Promise<TokenResponse
   const savedState   = sessionStorage.getItem(k(config.clientId, 'state'));
   const codeVerifier = sessionStorage.getItem(k(config.clientId, 'verifier'));
 
-  if (!savedState || state !== savedState) {
-    throw new Error('State mismatch — possible CSRF attempt');
-  }
+  if (!savedState) return null; // not our callback
+  if (state !== savedState) throw new Error('State mismatch — possible CSRF attempt');
 
   sessionStorage.removeItem(k(config.clientId, 'state'));
   sessionStorage.removeItem(k(config.clientId, 'verifier'));
