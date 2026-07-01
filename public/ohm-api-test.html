@@ -130,7 +130,8 @@ const ENDPOINTS = [
   { label: 'PUT  /way/{id}',                method:'PUT',  url:`${API}/way/1`,                     reqHeaders:'authorization,content-type' },
   { label: 'GET  /relation/{id}',           method:'GET',  url:`${API}/relation/1`,                reqHeaders:'' },
   { label: 'PUT  /relation/{id}',           method:'PUT',  url:`${API}/relation/1`,                reqHeaders:'authorization,content-type' },
-  { label: 'PUT  /changeset/{id}/close',    method:'PUT',  url:`${API}/changeset/1/close`,         reqHeaders:'authorization' },
+  { label: 'POST /changeset/{id}/upload',   method:'POST', url:`${API}/changeset/1/upload`,        reqHeaders:'authorization,content-type' },
+  { label: 'PUT  /changeset/{id}/close',   method:'PUT',  url:`${API}/changeset/1/close`,          reqHeaders:'authorization' },
 ];
 
 async function runCorsPreflight() {
@@ -157,15 +158,15 @@ async function runCorsPreflight() {
       status = 'CORS block';
     }
 
-    const needsPut = ep.method === 'PUT';
-    const putOk = allowMethods.includes('PUT');
-    rows.push({ ep, status, allowOrigin, allowMethods, allowHeaders, needsPut, putOk, error });
+    const needsWrite = ep.method === 'PUT' || ep.method === 'POST';
+    const methodOk = allowMethods.includes(ep.method);
+    rows.push({ ep, status, allowOrigin, allowMethods, allowHeaders, needsWrite, methodOk, error });
   }
 
-  let html = '<table><tr><th>Endpoint</th><th>HTTP</th><th>Allow-Origin</th><th>Allow-Methods</th><th>Allow-Headers</th><th>PUT ok?</th></tr>';
+  let html = '<table><tr><th>Endpoint</th><th>HTTP</th><th>Allow-Origin</th><th>Allow-Methods</th><th>Allow-Headers</th><th>Method ok?</th></tr>';
   for (const r of rows) {
-    const putCell = r.needsPut
-      ? (r.putOk ? '<span class="present">✓</span>' : '<span class="missing">✗ MISSING</span>')
+    const putCell = r.needsWrite
+      ? (r.methodOk ? '<span class="present">✓</span>' : `<span class="missing">✗ ${r.ep.method} MISSING</span>`)
       : '<span style="color:#999">n/a</span>';
     const originCell = r.allowOrigin === location.origin
       ? `<span class="present">${r.allowOrigin}</span>`
@@ -241,32 +242,42 @@ async function runWriteFlow() {
     log('flow-result','ok',`  Changeset ID: ${changesetId}`);
   } catch(e) { log('flow-result','err',`✗ ${e.message}`); return; }
 
-  // Step 3: upload modified element
-  log('flow-result','hdr',`\n→ PUT ${API}/way/${wayId}  (add wikidata=${qid})`);
+  // Step 3: upload via POST /changeset/{id}/upload (OSChange) — avoids the element PUT CORS issue
+  log('flow-result','hdr',`\n→ POST ${API}/changeset/${changesetId}/upload  (OSChange, add wikidata=${qid})`);
   let uploadOk = false;
   try {
     const parser = new DOMParser();
     const doc    = parser.parseFromString(xmlText, 'application/xml');
     const way    = doc.querySelector('way');
-    const tag    = doc.createElement('tag');
-    tag.setAttribute('k', 'wikidata');
-    tag.setAttribute('v', qid);
-    way.appendChild(tag);
-    way.setAttribute('changeset', changesetId);
-    const body = new XMLSerializer().serializeToString(doc);
+    if (!way) throw new Error('No <way> element found');
 
-    const res = await fetch(`${API}/way/${wayId}`, {
-      method:'PUT',
+    // Build OSChange XML manually — all existing nd refs and tags, plus the new wikidata tag
+    const nds   = [...way.querySelectorAll('nd')].map(nd => `    <nd ref="${nd.getAttribute('ref')}"/>`).join('\n');
+    const tags  = [...way.querySelectorAll('tag')].map(t  => `    <tag k="${t.getAttribute('k')}" v="${t.getAttribute('v')}"/>`).join('\n');
+    const osmChange = `<osmChange version="0.6">
+  <modify>
+    <way id="${wayId}" version="${version}" changeset="${changesetId}">
+${nds}
+${tags}
+    <tag k="wikidata" v="${qid}"/>
+    </way>
+  </modify>
+</osmChange>`;
+
+    log('flow-result','hdr',`  OSChange body:\n${osmChange}`);
+
+    const res = await fetch(`${API}/changeset/${changesetId}/upload`, {
+      method:'POST',
       headers:{ Authorization:`Bearer ${token}`, 'Content-Type':'application/xml' },
-      body,
+      body: osmChange,
     });
     log('flow-result', res.ok ? 'ok' : 'err', `  HTTP ${res.status}`);
     if (!res.ok) {
       const txt = await res.text();
       log('flow-result','err',`  Response: ${txt}`);
     } else {
-      const newVersion = await res.text();
-      log('flow-result','ok',`  New version: ${newVersion}`);
+      const txt = await res.text();
+      log('flow-result','ok',`  Response: ${txt}`);
       uploadOk = true;
     }
   } catch(e) { log('flow-result','err',`✗ ${e.message}`); }
