@@ -177,34 +177,6 @@ export const controlPanelStyles = css`
     background: var(--color-text-muted);
   }
 
-  .historical-select {
-    width: 100%;
-    padding: var(--space-2) calc(var(--space-3) + 16px) var(--space-2) var(--space-2);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    font-size: var(--font-size-sm);
-    font-family: inherit;
-    background-color: var(--color-bg-primary);
-    color: var(--color-text-primary);
-    box-sizing: border-box;
-    -webkit-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath fill='%23475569' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right var(--space-2) center;
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  }
-
-  .historical-select:focus {
-    outline: none;
-    border-color: var(--color-border-focus);
-    box-shadow: var(--shadow-focus);
-  }
-
-  .historical-select:disabled {
-    opacity: 0.5;
-  }
-
   .attribution-note {
     font-size: var(--font-size-sm);
     color: var(--color-text-muted);

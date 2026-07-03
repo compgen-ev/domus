@@ -6,6 +6,8 @@ import { HISTORICAL_LAYERS, type HistoricalLayerSource } from '../config/histori
 import { isLayerRelevant, splitAttribution, type Bounds } from '../utils/historical-layers';
 import { controlPanelStyles } from '../styles/shared';
 import './icon';
+import './dropdown-select';
+import type { DropdownOption } from './dropdown-select';
 import IconLayers from '~icons/mdi/layers';
 import IconChevronDown from '~icons/mdi/chevron-down';
 import IconChevronUp from '~icons/mdi/chevron-up';
@@ -55,8 +57,10 @@ export class HistoricalLayerPicker extends LitElement {
       }
     }
     if (changed.has('controlsExpanded') && this.controlsExpanded) {
-      // Range inputs don't reliably pick up Lit's `.value` binding on the render
-      // where they're first created (e.g. right after the panel expands), so force it.
+      // The native range input doesn't reliably pick up Lit's `.value` binding on
+      // the render where it's first created (e.g. right after the panel expands
+      // and it re-enters the DOM), so force it. dropdown-select doesn't need this
+      // — its `value` is a plain property, not a native form control quirk.
       const opacitySlider = this.shadowRoot!.querySelector('.opacity-slider') as HTMLInputElement | null;
       if (opacitySlider) opacitySlider.value = this.historicalOpacity.toString();
     }
@@ -82,6 +86,16 @@ export class HistoricalLayerPicker extends LitElement {
     return isLayerRelevant(layer, this.viewportBounds, this.historicalLayerId);
   }
 
+  private _dropdownOptions(): DropdownOption[] {
+    return [
+      { value: '', label: msg('Keine') },
+      ...HISTORICAL_LAYERS.filter((layer) => this._isLayerRelevant(layer)).map((layer) => ({
+        value: layer.id,
+        label: `${layer.title} (${layer.yearRange[0]}–${layer.yearRange[1]})`,
+      })),
+    ];
+  }
+
   private _updateZoomHint() {
     const layer = this._activeLayer();
     this.zoomHintVisible = !!this.map && !!layer?.minzoom && this.map.getZoom() < layer.minzoom;
@@ -100,9 +114,8 @@ export class HistoricalLayerPicker extends LitElement {
     return html`${parts.before}<a href=${layer.attributionUrl!} target="_blank" rel="noopener">${parts.linked}</a>${parts.after}`;
   }
 
-  private _onSelect(e: Event) {
-    const id = (e.target as HTMLSelectElement).value || null;
-    this._setLayer(id);
+  private _onSelect(e: CustomEvent<{ value: string }>) {
+    this._setLayer(e.detail.value || null);
   }
 
   private _setLayer(id: string | null) {
@@ -158,17 +171,13 @@ export class HistoricalLayerPicker extends LitElement {
         </button>
 
         ${this.controlsExpanded ? html`
-          <select
-            class="historical-select"
+          <dropdown-select
             .value=${this.historicalLayerId ?? ''}
+            .options=${this._dropdownOptions()}
+            .placeholder=${msg('Keine')}
             @change=${this._onSelect}
             ?disabled=${!this.map}
-          >
-            <option value="">${msg('Keine')}</option>
-            ${HISTORICAL_LAYERS.filter((layer) => this._isLayerRelevant(layer)).map((layer) => html`
-              <option value=${layer.id}>${layer.title} (${layer.yearRange[0]}–${layer.yearRange[1]})</option>
-            `)}
-          </select>
+          ></dropdown-select>
           ${this.historicalLayerId ? html`
             <label class="slider-label">
               ${msg('Transparenz')}: ${Math.round(this.historicalOpacity * 100)}%
