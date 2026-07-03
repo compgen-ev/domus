@@ -166,6 +166,38 @@ export class MapView extends LitElement {
       z-index: var(--z-dropdown);
     }
 
+    .maplibregl-popup-content {
+      padding: 0;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .cluster-menu {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cluster-menu button {
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--color-border);
+      padding: var(--space-2) var(--space-3);
+      text-align: left;
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-primary);
+      cursor: pointer;
+    }
+
+    .cluster-menu button:last-child {
+      border-bottom: none;
+    }
+
+    .cluster-menu button:hover {
+      background: var(--color-bg-secondary);
+    }
+
   `,
   ];
 
@@ -482,12 +514,45 @@ export class MapView extends LitElement {
     this.map.addSource('buildings', {
       type: 'geojson',
       data: { type: 'FeatureCollection', features: [] },
+      cluster: true,
+      clusterMaxZoom: 24,
+      clusterRadius: 6,
+    });
+
+    this.map.addLayer({
+      id: 'buildings-cluster',
+      type: 'circle',
+      source: 'buildings',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-radius': 14,
+        'circle-color': '#c0392b',
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 1.5,
+        'circle-opacity': 0.85,
+      },
+    });
+
+    this.map.addLayer({
+      id: 'buildings-cluster-count',
+      type: 'symbol',
+      source: 'buildings',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['get', 'point_count_abbreviated'],
+        'text-font': ['Noto Sans Regular'],
+        'text-size': 11,
+      },
+      paint: {
+        'text-color': '#ffffff',
+      },
     });
 
     this.map.addLayer({
       id: 'buildings-circle',
       type: 'circle',
       source: 'buildings',
+      filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-radius': 7,
         'circle-color': '#c0392b',
@@ -501,6 +566,7 @@ export class MapView extends LitElement {
       id: 'buildings-label',
       type: 'symbol',
       source: 'buildings',
+      filter: ['!', ['has', 'point_count']],
       minzoom: 16,
       layout: {
         'text-field': ['get', 'label'],
@@ -514,6 +580,49 @@ export class MapView extends LitElement {
         'text-halo-color': '#ffffff',
         'text-halo-width': 1.5,
       },
+    });
+
+    this.map.on('click', 'buildings-cluster', (e: MapLayerMouseEvent) => {
+      const feature = e.features?.[0];
+      if (!feature) return;
+      const clusterId = feature.properties!['cluster_id'] as number;
+      const lngLat = (feature.geometry as GeoJSON.Point).coordinates as [number, number];
+      const source = this.map.getSource('buildings') as GeoJSONSource;
+      source.getClusterLeaves(clusterId, Infinity, 0).then((leaves) => {
+        if (!leaves) return;
+        const container = document.createElement('div');
+        container.className = 'cluster-menu';
+        for (const leaf of leaves) {
+          const p = leaf.properties as Record<string, string | null>;
+          const coords = (leaf.geometry as GeoJSON.Point).coordinates;
+          const building: WikidataBuilding = {
+            id: p['id'] ?? '',
+            label: p['label'] ?? '',
+            type: p['typeId'] && p['typeLabel']
+              ? { id: p['typeId'], label: p['typeLabel'] }
+              : undefined,
+            lat: coords[1],
+            lng: coords[0],
+            image: p['image'] ?? undefined,
+            inception: p['inception'] ?? undefined,
+          };
+          const btn = document.createElement('button');
+          btn.textContent = building.label || building.id;
+          btn.addEventListener('click', () => {
+            popup.remove();
+            this.dispatchEvent(new CustomEvent<WikidataBuilding>('building-selected', {
+              bubbles: true,
+              composed: true,
+              detail: building,
+            }));
+          });
+          container.appendChild(btn);
+        }
+        const popup = new maplibregl.Popup()
+          .setLngLat(lngLat)
+          .setDOMContent(container)
+          .addTo(this.map);
+      }).catch(() => {});
     });
 
     this.map.on('click', 'buildings-circle', (e: MapLayerMouseEvent) => {
@@ -538,6 +647,12 @@ export class MapView extends LitElement {
       }));
     });
 
+    this.map.on('mouseenter', 'buildings-cluster', () => {
+      this.map.getCanvas().style.cursor = 'pointer';
+    });
+    this.map.on('mouseleave', 'buildings-cluster', () => {
+      this.map.getCanvas().style.cursor = '';
+    });
     this.map.on('mouseenter', 'buildings-circle', () => {
       this.map.getCanvas().style.cursor = 'pointer';
     });
