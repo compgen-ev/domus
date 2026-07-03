@@ -7,6 +7,7 @@ export interface HistoricalLayerSource {
   tiles: string[];
   tileSize?: number; // default 256
   minzoom?: number; // hide below this zoom
+  maxzoom?: number; // cap MapLibre tile requests; it over-zooms (upscales) above this
   attribution: string;
   attributionUrl?: string;
   attributionLinkText?: string; // substring of `attribution` to link
@@ -66,6 +67,9 @@ export const HISTORICAL_LAYERS: HistoricalLayerSource[] = [
     // Pre-rendered WMTS pyramid — clean at every zoom, no oversampling/minzoom
     // fix needed unlike the LGL-BW WMS above. {z}/{x}/{y} = TileMatrix/Col/Row.
     tiles: ['https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.hiks-siegfried/default/1949/3857/{z}/{x}/{y}.png'],
+    // TileMatrixSet for this layer is "3857_17" — 17 is the real max zoom;
+    // without this, MapLibre requests nonexistent z18+ tiles (server 400s).
+    maxzoom: 17,
     bounds: [5.14, 45.40, 11.48, 48.23],
     attribution: '©swisstopo',
     attributionUrl: 'https://www.swisstopo.admin.ch/de/historische-karten',
