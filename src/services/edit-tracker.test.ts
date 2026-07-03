@@ -11,9 +11,9 @@ describe('edit-tracker', () => {
       expect(isStale('Q123', '2026-06-22T12:00:00Z')).toBe(false);
     });
 
-    it('returns false when no SPARQL timestamp provided', () => {
+    it('returns true when no SPARQL timestamp provided (edited/created but not yet visible in SPARQL)', () => {
       recordEdit('Q123');
-      expect(isStale('Q123', undefined)).toBe(false);
+      expect(isStale('Q123', undefined)).toBe(true);
     });
 
     it('returns true when SPARQL modified before our edit', () => {
