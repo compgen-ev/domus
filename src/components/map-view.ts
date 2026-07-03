@@ -6,6 +6,7 @@ import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
 import { fetchOhmRelationGeometry, fetchOhmByWikidataId, fetchOhmWayTags, fetchOhmWayGeometry } from '../services/ohm';
 import type { WikidataBuilding } from '../types/building';
+import { HISTORICAL_LAYERS, type HistoricalLayerSource } from '../config/historical-layers';
 import './search-box';
 import type { PlaceSelectedEvent } from './search-box';
 import { baseStyles, iconButtonStyles } from '../styles/shared';
@@ -15,6 +16,10 @@ import IconEye from '~icons/mdi/eye';
 import IconEyeOff from '~icons/mdi/eye-off';
 import IconMapMarker from '~icons/mdi/map-marker';
 import IconHomePlus from '~icons/mdi/home-plus';
+import IconLayers from '~icons/mdi/layers';
+import IconChevronDown from '~icons/mdi/chevron-down';
+import IconChevronUp from '~icons/mdi/chevron-up';
+import IconRectangleOutline from '~icons/mdi/rectangle-outline';
 
 const MIN_ZOOM_FOR_BUILDINGS = 14;
 const DEBOUNCE_MS = 400;
@@ -59,11 +64,18 @@ export class MapView extends LitElement {
       height: 100%;
     }
 
-    .zoom-hint {
+    .zoom-hints {
       position: absolute;
       bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .zoom-hint {
       background: rgba(0, 0, 0, 0.6);
       color: white;
       padding: 6px 14px;
@@ -106,19 +118,79 @@ export class MapView extends LitElement {
       }
     }
 
-    .time-controls {
+    .floating-controls {
       position: absolute;
       bottom: var(--space-3);
       left: var(--space-3);
+      display: flex;
+      flex-direction: column-reverse;
+      gap: var(--space-2);
+      width: 260px;
+      max-width: calc(100vw - var(--space-3) * 2);
+      max-height: calc(100vh - 120px);
+      z-index: var(--z-dropdown);
+    }
+
+    .control-panel {
       background: var(--color-bg-primary);
       border-radius: var(--radius-md);
       box-shadow: var(--shadow-md);
-      padding: var(--space-3);
+      padding: var(--space-2) var(--space-3);
       display: flex;
       flex-direction: column;
       gap: var(--space-2);
-      min-width: 200px;
-      z-index: var(--z-dropdown);
+      overflow-y: auto;
+      max-height: 100%;
+    }
+
+    .control-summary {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: none;
+      border: none;
+      padding: var(--space-1) 0;
+      margin: 0;
+      font-family: inherit;
+      font-size: var(--font-size-sm);
+      color: var(--icon-button-color);
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: color var(--transition-fast);
+    }
+
+    .control-summary:hover {
+      color: var(--icon-button-color-hover);
+    }
+
+    .control-summary > domus-icon,
+    .control-summary-icon domus-icon {
+      font-size: 22px;
+    }
+
+    .control-summary-icon {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .control-summary-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      border: 1.5px solid var(--color-bg-primary);
+    }
+
+    .control-summary-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-text-primary);
     }
 
     .time-header {
@@ -135,6 +207,13 @@ export class MapView extends LitElement {
       color: var(--color-text-primary);
     }
 
+    .slider-label {
+      display: block;
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      margin-bottom: calc(-1 * var(--space-1));
+    }
+
     .year-input {
       width: 80px;
       padding: var(--space-2);
@@ -146,8 +225,81 @@ export class MapView extends LitElement {
     }
 
     .year-slider {
+      -webkit-appearance: none;
+      appearance: none;
       width: 100%;
-      margin: var(--space-1) 0;
+      height: 4px;
+      margin: var(--space-2) 0;
+      background: var(--color-border);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    .year-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      border: 2px solid var(--color-bg-primary);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+
+    .year-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      border: 2px solid var(--color-bg-primary);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+    }
+
+    .year-slider:disabled::-webkit-slider-thumb {
+      background: var(--color-text-muted);
+    }
+
+    .year-slider:disabled::-moz-range-thumb {
+      background: var(--color-text-muted);
+    }
+
+    .historical-select {
+      width: 100%;
+      padding: var(--space-2) calc(var(--space-3) + 16px) var(--space-2) var(--space-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      font-family: inherit;
+      background-color: var(--color-bg-primary);
+      color: var(--color-text-primary);
+      box-sizing: border-box;
+      -webkit-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath fill='%23475569' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right var(--space-2) center;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .historical-select:focus {
+      outline: none;
+      border-color: var(--color-border-focus);
+      box-shadow: var(--shadow-focus);
+    }
+
+    .historical-select:disabled {
+      opacity: 0.5;
+    }
+
+    .attribution-note {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-muted);
+      line-height: 1.4;
+    }
+
+    .attribution-note a {
+      color: inherit;
     }
 
     .spinner {
@@ -220,6 +372,13 @@ export class MapView extends LitElement {
   @state() private selectedYear = new Date().getFullYear();
   @state() private ohmLayerVisible = true;
   @state() private addingBuilding = false;
+  @state() private historicalLayerId: string | null = null;
+  @state() private historicalOpacity = 1;
+  @state() private mapReady = false;
+  @state() private ohmControlsExpanded = false;
+  @state() private historicalControlsExpanded = false;
+  @state() private historicalZoomHintVisible = false;
+  @state() private viewportBounds: [west: number, south: number, east: number, north: number] | null = null;
 
   private _pendingMarker: maplibregl.Marker | null = null;
   private _addingClickHandler: ((e: MapMouseEvent) => void) | null = null;
@@ -236,6 +395,16 @@ export class MapView extends LitElement {
   protected updated(changed: PropertyValues) {
     if (changed.has('ohmId') || changed.has('wikidataId') || changed.has('pendingOhmWayId')) {
       this._scheduleOhmFetch();
+    }
+    if (changed.has('ohmControlsExpanded') && this.ohmControlsExpanded) {
+      // Range inputs don't reliably pick up Lit's `.value` binding on the render
+      // where they're first created (e.g. right after the panel expands), so force it.
+      const yearSlider = this.shadowRoot!.querySelector('.year-slider') as HTMLInputElement | null;
+      if (yearSlider) yearSlider.value = this.selectedYear.toString();
+    }
+    if (changed.has('historicalControlsExpanded') && this.historicalControlsExpanded) {
+      const opacitySlider = this.shadowRoot!.querySelector('.opacity-slider') as HTMLInputElement | null;
+      if (opacitySlider) opacitySlider.value = this.historicalOpacity.toString();
     }
     if (changed.has('selectedBuilding') && this._mapReady) {
       this._updateSelectedSource();
@@ -344,35 +513,103 @@ export class MapView extends LitElement {
 
       <search-box @place-selected=${this._onPlaceSelected}></search-box>
 
-      <div class="time-controls">
-        <div class="time-header">
-          <h4>${msg('Historische Gebäudeumrisse')}</h4>
-          <button class="btn-icon" @click=${this._toggleOhmLayer}>
-            <domus-icon .svg=${this.ohmLayerVisible ? IconEye : IconEyeOff}></domus-icon>
+      <div class="floating-controls">
+        <div class="control-panel">
+          <button
+            class="control-summary"
+            @click=${() => { this.ohmControlsExpanded = !this.ohmControlsExpanded; }}
+          >
+            <span class="control-summary-icon">
+              <domus-icon .svg=${IconRectangleOutline}></domus-icon>
+              ${!this.ohmLayerVisible ? html`<span class="control-summary-dot"></span>` : ''}
+            </span>
+            <span class="control-summary-text">${msg('Gebäudeumrisse')} · ${this.selectedYear}</span>
+            <domus-icon .svg=${this.ohmControlsExpanded ? IconChevronDown : IconChevronUp}></domus-icon>
           </button>
+
+          ${this.ohmControlsExpanded ? html`
+            <div class="time-header">
+              <h4>${msg('Historische Gebäudeumrisse anzeigen')}</h4>
+              <button class="btn-icon" @click=${this._toggleOhmLayer}>
+                <domus-icon .svg=${this.ohmLayerVisible ? IconEye : IconEyeOff}></domus-icon>
+              </button>
+            </div>
+            <label class="slider-label">${msg('Jahr')}</label>
+            <input
+              type="number"
+              class="year-input"
+              .valueAsNumber=${this.selectedYear}
+              @input=${this._onYearInput}
+              min="500"
+              max=${new Date().getFullYear()}
+              ?disabled=${!this.ohmLayerVisible}
+            />
+            <input
+              type="range"
+              class="year-slider"
+              .value=${String(this.selectedYear)}
+              @input=${this._onYearSlide}
+              min="500"
+              max=${new Date().getFullYear()}
+              ?disabled=${!this.ohmLayerVisible}
+            />
+            <div class="attribution-note">
+              ${msg('Daten:')} © <a href="https://www.openhistoricalmap.org/copyright" target="_blank" rel="noopener">OpenHistoricalMap</a> ${msg('Mitwirkende')}
+            </div>
+          ` : ''}
         </div>
-        <input
-          type="number"
-          class="year-input"
-          .valueAsNumber=${this.selectedYear}
-          @input=${this._onYearInput}
-          min="500"
-          max=${new Date().getFullYear()}
-          ?disabled=${!this.ohmLayerVisible}
-        />
-        <input
-          type="range"
-          class="year-slider"
-          .value=${String(this.selectedYear)}
-          @input=${this._onYearSlide}
-          min="500"
-          max=${new Date().getFullYear()}
-          ?disabled=${!this.ohmLayerVisible}
-        />
+
+        <div class="control-panel">
+          <button
+            class="control-summary"
+            @click=${() => { this.historicalControlsExpanded = !this.historicalControlsExpanded; }}
+          >
+            <span class="control-summary-icon">
+              <domus-icon .svg=${IconLayers}></domus-icon>
+              ${this.historicalLayerId ? html`<span class="control-summary-dot"></span>` : ''}
+            </span>
+            <span class="control-summary-text">${msg('Historische Karte')}</span>
+            <domus-icon .svg=${this.historicalControlsExpanded ? IconChevronDown : IconChevronUp}></domus-icon>
+          </button>
+
+          ${this.historicalControlsExpanded ? html`
+            <select
+              class="historical-select"
+              .value=${this.historicalLayerId ?? ''}
+              @change=${this._onHistoricalSelect}
+              ?disabled=${!this.mapReady}
+            >
+              <option value="">${msg('Keine')}</option>
+              ${HISTORICAL_LAYERS.filter((layer) => this._isLayerRelevant(layer)).map((layer) => html`
+                <option value=${layer.id}>${layer.title} (${layer.yearRange[0]}–${layer.yearRange[1]})</option>
+              `)}
+            </select>
+            ${this.historicalLayerId ? html`
+              <label class="slider-label">
+                ${msg('Transparenz')}: ${Math.round(this.historicalOpacity * 100)}%
+              </label>
+              <input
+                type="range"
+                class="year-slider opacity-slider"
+                min="0"
+                max="1"
+                step="0.05"
+                .value=${String(this.historicalOpacity)}
+                @input=${this._onHistoricalOpacity}
+              />
+              <div class="attribution-note">${this._renderAttribution(this._activeHistoricalLayer())}</div>
+            ` : ''}
+          ` : ''}
+        </div>
       </div>
 
-      <div class="zoom-hint" ?hidden=${!this.showHint}>
-        ${msg('Hineinzoomen, um Gebäude zu entdecken')}
+      <div class="zoom-hints">
+        <div class="zoom-hint" ?hidden=${!this.showHint}>
+          ${msg('Hineinzoomen, um Gebäude zu entdecken')}
+        </div>
+        <div class="zoom-hint" ?hidden=${!this.historicalZoomHintVisible}>
+          ${msg('Hineinzoomen, um die historische Karte zu sehen')}
+        </div>
       </div>
       <div class="loading-indicator" ?hidden=${!this.loading}>
         <div class="spinner"></div>
@@ -419,16 +656,16 @@ export class MapView extends LitElement {
     }), 'top-right');
 
     this.map.on('load', () => this._onMapLoad());
-    this.map.on('moveend', () => { saveView(this.map); this._updateUrlPosition(); this._scheduleFetch(); });
+    this.map.on('moveend', () => {
+      saveView(this.map);
+      this._updateUrlPosition();
+      this._scheduleFetch();
+      this._updateHistoricalZoomHint();
+      this._updateViewportBounds();
+    });
 
     this.resizeObserver = new ResizeObserver(() => this.map?.resize());
     this.resizeObserver.observe(container);
-
-    // Force slider to sync with selectedYear value
-    const slider = this.shadowRoot!.querySelector('.year-slider') as HTMLInputElement;
-    if (slider) {
-      slider.value = this.selectedYear.toString();
-    }
   }
 
   disconnectedCallback() {
@@ -712,11 +949,13 @@ export class MapView extends LitElement {
     (this.map as any).filterByDate(new Date().getFullYear().toString());
 
     this._mapReady = true;
+    this.mapReady = true;
     if (this.selectedBuilding) {
       this._updateSelectedSource();
     }
 
     this._scheduleFetch();
+    this._updateViewportBounds();
 
     // If ohmId/wikidataId were set before map loaded, fetch now
     if (this.ohmId || this.wikidataId) {
@@ -821,6 +1060,85 @@ export class MapView extends LitElement {
     const visibility = this.ohmLayerVisible ? 'visible' : 'none';
     this.map.setLayoutProperty('ohm-buildings-fill', 'visibility', visibility);
     this.map.setLayoutProperty('ohm-buildings-outline', 'visibility', visibility);
+  }
+
+  private _activeHistoricalLayer(): HistoricalLayerSource | undefined {
+    return HISTORICAL_LAYERS.find((l) => l.id === this.historicalLayerId);
+  }
+
+  private _renderAttribution(layer: HistoricalLayerSource | undefined) {
+    if (!layer) return '';
+    if (!layer.attributionUrl || !layer.attributionLinkText) return layer.attribution;
+
+    const idx = layer.attribution.indexOf(layer.attributionLinkText);
+    if (idx === -1) return layer.attribution;
+
+    const before = layer.attribution.slice(0, idx);
+    const linked = layer.attribution.slice(idx, idx + layer.attributionLinkText.length);
+    const after = layer.attribution.slice(idx + layer.attributionLinkText.length);
+    return html`${before}<a href=${layer.attributionUrl} target="_blank" rel="noopener">${linked}</a>${after}`;
+  }
+
+  private _updateHistoricalZoomHint() {
+    const layer = this._activeHistoricalLayer();
+    this.historicalZoomHintVisible = !!layer?.minzoom && this.map.getZoom() < layer.minzoom;
+  }
+
+  private _updateViewportBounds() {
+    const b = this.map.getBounds();
+    this.viewportBounds = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()];
+  }
+
+  // Layers without `bounds` are treated as globally relevant (e.g. demo/basemap
+  // sources). The currently active layer always stays selectable so the user
+  // can turn it off even after panning away from its coverage.
+  private _isLayerRelevant(layer: HistoricalLayerSource): boolean {
+    if (!layer.bounds || layer.id === this.historicalLayerId) return true;
+    if (!this.viewportBounds) return true;
+    const [w1, s1, e1, n1] = layer.bounds;
+    const [w2, s2, e2, n2] = this.viewportBounds;
+    return w1 <= e2 && e1 >= w2 && s1 <= n2 && n1 >= s2;
+  }
+
+  private _onHistoricalSelect(e: Event) {
+    const id = (e.target as HTMLSelectElement).value || null;
+    this._setHistoricalLayer(id);
+  }
+
+  private _setHistoricalLayer(id: string | null) {
+    if (this.map?.getLayer('historical-raster')) this.map.removeLayer('historical-raster');
+    if (this.map?.getSource('historical-raster')) this.map.removeSource('historical-raster');
+
+    this.historicalLayerId = id;
+    if (!id || !this.map) {
+      this.historicalZoomHintVisible = false;
+      return;
+    }
+
+    const layer = HISTORICAL_LAYERS.find((l) => l.id === id);
+    if (!layer) return;
+
+    this.map.addSource('historical-raster', {
+      type: 'raster',
+      tiles: layer.tiles,
+      tileSize: layer.tileSize ?? 256,
+    });
+    this.map.addLayer({
+      id: 'historical-raster',
+      type: 'raster',
+      source: 'historical-raster',
+      minzoom: layer.minzoom ?? 0,
+      paint: { 'raster-opacity': this.historicalOpacity },
+    }, 'ohm-buildings-fill'); // sit above base style, below OHM building outlines/footprint/pins
+
+    this._updateHistoricalZoomHint();
+  }
+
+  private _onHistoricalOpacity(e: Event) {
+    this.historicalOpacity = parseFloat((e.target as HTMLInputElement).value);
+    if (this.map?.getLayer('historical-raster')) {
+      this.map.setPaintProperty('historical-raster', 'raster-opacity', this.historicalOpacity);
+    }
   }
 
   private _onPlaceSelected(e: CustomEvent<PlaceSelectedEvent>) {

@@ -298,10 +298,6 @@
   <source>Suche läuft...</source>
   <target>Searching...</target>
 </trans-unit>
-<trans-unit id="sceb7f9cb34dc85bc">
-  <source>Historische Gebäudeumrisse</source>
-  <target>Historical Building Outlines</target>
-</trans-unit>
 <trans-unit id="s7d71df856f30aa5e">
   <source>Von (Jahr)</source>
   <target>From (year)</target>
@@ -521,6 +517,50 @@
 <trans-unit id="s532e3fc11fc2ea34">
   <source>Im Kontomenü bei OpenHistoricalMap anmelden, um dieses Gebäude dort automatisch zu verknüpfen.</source>
   <target>Log in to OpenHistoricalMap via the account menu to automatically link this building there.</target>
+</trans-unit>
+<trans-unit id="s0c60e65fffeaaad1">
+  <source>Gebäude nicht gefunden</source>
+  <target>Building not found</target>
+</trans-unit>
+<trans-unit id="sf4e8e75c5b05443b">
+  <source>Abgelöst durch</source>
+  <target>Replaced by</target>
+</trans-unit>
+<trans-unit id="s07de791a0abd290d">
+  <source>Vorgängerbau</source>
+  <target>Predecessor building</target>
+</trans-unit>
+<trans-unit id="s623f13294e99193b">
+  <source>Gebäudeumrisse</source>
+  <target>Building outlines</target>
+</trans-unit>
+<trans-unit id="s861bae6b5ce61bd9">
+  <source>Historische Gebäudeumrisse anzeigen</source>
+  <target>Show historical building outlines</target>
+</trans-unit>
+<trans-unit id="s12b7f9a6d2096a7d">
+  <source>Daten:</source>
+  <target>Data:</target>
+</trans-unit>
+<trans-unit id="sab67b46abd9cdd5e">
+  <source>Mitwirkende</source>
+  <target>contributors</target>
+</trans-unit>
+<trans-unit id="s8edf14198814fd9f">
+  <source>Historische Karte</source>
+  <target>Historical map</target>
+</trans-unit>
+<trans-unit id="s15949dfe375e52e9">
+  <source>Keine</source>
+  <target>None</target>
+</trans-unit>
+<trans-unit id="sd0e93fb97c0c3c9f">
+  <source>Transparenz</source>
+  <target>Opacity</target>
+</trans-unit>
+<trans-unit id="s54e4307e41f588fa">
+  <source>Hineinzoomen, um die historische Karte zu sehen</source>
+  <target>Zoom in to see the historical map</target>
 </trans-unit>
 </body>
 </file>
