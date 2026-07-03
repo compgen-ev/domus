@@ -389,16 +389,14 @@ export class MapView extends LitElement {
     await import('@openhistoricalmap/maplibre-gl-dates');
 
     const urlParams = new URLSearchParams(window.location.search);
-    const hasUrlId = urlParams.has('id');
-
     const urlLat = urlParams.get('lat');
     const urlLng = urlParams.get('lng');
     const urlZoom = urlParams.get('zoom');
-    const urlView = !hasUrlId && urlLat && urlLng && urlZoom
+    const urlView = urlLat && urlLng && urlZoom
       ? { center: [parseFloat(urlLng), parseFloat(urlLat)] as [number, number], zoom: parseFloat(urlZoom) }
       : null;
 
-    const saved = !hasUrlId && !urlView ? loadSavedView() : null;
+    const saved = !urlView ? loadSavedView() : null;
     this.map = new maplibregl.Map({
       container,
       style: 'https://tiles.openfreemap.org/styles/liberty',

@@ -186,20 +186,34 @@ export class AppRoot extends LitElement {
     }
   };
 
-  private async _loadBuildingById(id: string, { focus = false } = {}) {
+  private async _loadBuildingById(id: string, { focus = false, pushHistory = false } = {}) {
     try {
       const building = await fetchBuildingById(id);
-      if (building) {
-        // SPARQL returns the QID as label when the item isn't indexed yet — keep any
-        // real label we already have rather than overwriting it with the QID fallback
-        if (building.label === id && this.selectedBuilding?.id === id && this.selectedBuilding.label !== id) {
-          building.label = this.selectedBuilding.label;
+      if (!building) {
+        if (!pushHistory) {
+          // Strip invalid id from URL (came from the URL, not in-app navigation)
+          const params = new URLSearchParams(location.search);
+          params.delete('id');
+          const qs = params.toString();
+          history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
         }
-        this.selectedBuilding = building;
-        if (focus) this._mapView?.flyToBuilding(building);
-        this._checkStaleness(id, building.modified);
-        this._fetchDetail(id);
+        this._showToast(msg('Gebäude nicht gefunden'));
+        return;
       }
+      if (pushHistory) {
+        const params = new URLSearchParams(location.search);
+        params.set('id', building.id);
+        history.pushState(null, '', `?${params}`);
+      }
+      // SPARQL returns the QID as label when the item isn't indexed yet — keep any
+      // real label we already have rather than overwriting it with the QID fallback
+      if (building.label === id && this.selectedBuilding?.id === id && this.selectedBuilding.label !== id) {
+        building.label = this.selectedBuilding.label;
+      }
+      this.selectedBuilding = building;
+      if (focus) this._mapView?.flyToBuilding(building);
+      this._checkStaleness(id, building.modified);
+      this._fetchDetail(id);
     } catch (err) {
       if (err instanceof Error && err.name !== 'AbortError') {
         console.error('Failed to load building by ID:', err);
@@ -377,7 +391,7 @@ export class AppRoot extends LitElement {
   }
 
   private _onNavigateBuilding(e: CustomEvent<{ id: string }>) {
-    this._loadBuildingById(e.detail.id, { focus: true });
+    this._loadBuildingById(e.detail.id, { focus: true, pushHistory: true });
   }
 
   render() {

@@ -608,9 +608,6 @@ export class BuildingDetail extends LitElement {
   }
 
   private _navigateBuilding(id: string) {
-    const params = new URLSearchParams(location.search);
-    params.set('id', id);
-    history.pushState(null, '', `?${params}`);
     this.dispatchEvent(new CustomEvent('navigate-building', { detail: { id }, bubbles: true, composed: true }));
   }
 

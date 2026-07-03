@@ -226,14 +226,16 @@ LIMIT 1`;
   if (!row) return null;
 
   const coords = row.coord ? parseCoord(row.coord.value) : null;
+  if (!coords) return null;
+
   return {
     id,
     label: row.itemLabel?.value ?? id,
     type: row.type?.value && row.typeLabel?.value
       ? { id: extractQid(row.type.value), label: row.typeLabel.value }
       : undefined,
-    lat: coords?.lat ?? 0,
-    lng: coords?.lng ?? 0,
+    lat: coords.lat,
+    lng: coords.lng,
     image: row.image?.value,
     inception: row.inception?.value,
     modified: row.modified?.value,
