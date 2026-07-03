@@ -20,6 +20,13 @@ const MIN_ZOOM_FOR_BUILDINGS = 14;
 const DEBOUNCE_MS = 400;
 const MAP_STORAGE_KEY = 'domus.map';
 
+// Literal color values required by MapLibre (CSS variables are not supported in layer paint)
+const COLOR_PIN = '#c0392b';
+const COLOR_PRIMARY = '#000052'; // --color-primary
+const COLOR_ACCENT = '#f2c14e'; // --color-accent
+const COLOR_WHITE = '#ffffff';
+const COLOR_TEXT = '#0f172a'; // --color-text-primary
+
 function loadSavedView(): { center: [number, number]; zoom: number } | null {
   try {
     const raw = localStorage.getItem(MAP_STORAGE_KEY);
@@ -217,6 +224,7 @@ export class MapView extends LitElement {
   private _pendingMarker: maplibregl.Marker | null = null;
   private _addingClickHandler: ((e: MapMouseEvent) => void) | null = null;
   private _addingFetchController: AbortController | null = null;
+  private _mapReady = false;
 
   private map!: Map;
   private debounceTimer = 0;
@@ -224,19 +232,13 @@ export class MapView extends LitElement {
   private ohmController: AbortController | null = null;
   private ohmDebounceTimer: number | null = null;
   private resizeObserver!: ResizeObserver;
-  private _shouldCenterOnBuilding = false;
 
   protected updated(changed: PropertyValues) {
     if (changed.has('ohmId') || changed.has('wikidataId') || changed.has('pendingOhmWayId')) {
       this._scheduleOhmFetch();
     }
-    if (changed.has('selectedBuilding') && this.selectedBuilding && this._shouldCenterOnBuilding) {
-      this.map.flyTo({
-        center: [this.selectedBuilding.lng, this.selectedBuilding.lat],
-        zoom: 17,
-        duration: 1000,
-      });
-      this._shouldCenterOnBuilding = false;
+    if (changed.has('selectedBuilding') && this._mapReady) {
+      this._updateSelectedSource();
     }
     if (changed.has('addingBuilding')) {
       if (this.addingBuilding) {
@@ -322,7 +324,7 @@ export class MapView extends LitElement {
 
   private _makePinElement(): HTMLElement {
     const el = document.createElement('div');
-    el.style.cssText = 'font-size:40px;color:#c0392b;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));line-height:0;';
+    el.style.cssText = `font-size:40px;color:${COLOR_PIN};filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));line-height:0;`;
     el.innerHTML = IconMapMarker;
     return el;
   }
@@ -388,9 +390,6 @@ export class MapView extends LitElement {
 
     const urlParams = new URLSearchParams(window.location.search);
     const hasUrlId = urlParams.has('id');
-    if (hasUrlId) {
-      this._shouldCenterOnBuilding = true;
-    }
 
     const urlLat = urlParams.get('lat');
     const urlLng = urlParams.get('lng');
@@ -508,7 +507,7 @@ export class MapView extends LitElement {
       id: 'ohm-footprint-outline',
       type: 'line',
       source: 'ohm-footprint',
-      paint: { 'line-color': '#000052', 'line-width': 2, 'line-opacity': 0.7 },
+      paint: { 'line-color': COLOR_PRIMARY, 'line-width': 2, 'line-opacity': 0.7 },
     });
 
     this.map.addSource('buildings', {
@@ -516,7 +515,14 @@ export class MapView extends LitElement {
       data: { type: 'FeatureCollection', features: [] },
       cluster: true,
       clusterMaxZoom: 24,
-      clusterRadius: 6,
+      clusterRadius: 4,
+    });
+
+    // Separate unclustered source for the selected building — always renders as a
+    // single pin on top regardless of whether the building is inside a cluster.
+    this.map.addSource('selected-building', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
     });
 
     this.map.addLayer({
@@ -526,8 +532,8 @@ export class MapView extends LitElement {
       filter: ['has', 'point_count'],
       paint: {
         'circle-radius': 14,
-        'circle-color': '#c0392b',
-        'circle-stroke-color': '#ffffff',
+        'circle-color': COLOR_PIN,
+        'circle-stroke-color': COLOR_WHITE,
         'circle-stroke-width': 1.5,
         'circle-opacity': 0.85,
       },
@@ -544,7 +550,7 @@ export class MapView extends LitElement {
         'text-size': 11,
       },
       paint: {
-        'text-color': '#ffffff',
+        'text-color': COLOR_WHITE,
       },
     });
 
@@ -555,10 +561,23 @@ export class MapView extends LitElement {
       filter: ['!', ['has', 'point_count']],
       paint: {
         'circle-radius': 7,
-        'circle-color': '#c0392b',
-        'circle-stroke-color': '#ffffff',
+        'circle-color': COLOR_PIN,
+        'circle-stroke-color': COLOR_WHITE,
         'circle-stroke-width': 1.5,
         'circle-opacity': 0.85,
+      },
+    });
+
+    this.map.addLayer({
+      id: 'buildings-selected',
+      type: 'circle',
+      source: 'selected-building',
+      paint: {
+        'circle-radius': 9,
+        'circle-color': COLOR_PIN,
+        'circle-stroke-color': COLOR_ACCENT,
+        'circle-stroke-width': 3,
+        'circle-opacity': 1,
       },
     });
 
@@ -576,8 +595,8 @@ export class MapView extends LitElement {
         'text-anchor': 'top',
       },
       paint: {
-        'text-color': '#1a1a1a',
-        'text-halo-color': '#ffffff',
+        'text-color': COLOR_TEXT,
+        'text-halo-color': COLOR_WHITE,
         'text-halo-width': 1.5,
       },
     });
@@ -685,7 +704,7 @@ export class MapView extends LitElement {
       type: 'line',
       minzoom: 14,
       paint: {
-        'line-color': '#c0392b',
+        'line-color': COLOR_PIN,
         'line-width': 1,
         'line-opacity': 0.6,
       },
@@ -694,12 +713,39 @@ export class MapView extends LitElement {
     // Initialize date filter to current year
     (this.map as any).filterByDate(new Date().getFullYear().toString());
 
+    this._mapReady = true;
+    if (this.selectedBuilding) {
+      this._updateSelectedSource();
+    }
+
     this._scheduleFetch();
 
     // If ohmId/wikidataId were set before map loaded, fetch now
     if (this.ohmId || this.wikidataId) {
       this._scheduleOhmFetch();
     }
+  }
+
+  flyToBuilding(building: WikidataBuilding) {
+    this.map?.flyTo({ center: [building.lng, building.lat], zoom: 17, duration: 1000 });
+  }
+
+  private _updateSelectedSource() {
+    const source = this.map.getSource('selected-building') as GeoJSONSource | undefined;
+    if (!source) return;
+    if (!this.selectedBuilding) {
+      source.setData({ type: 'FeatureCollection', features: [] });
+      return;
+    }
+    const b = this.selectedBuilding;
+    source.setData({
+      type: 'FeatureCollection',
+      features: [{
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [b.lng, b.lat] },
+        properties: { id: b.id },
+      }],
+    });
   }
 
   private _updateUrlPosition() {

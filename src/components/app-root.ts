@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement, state, query } from 'lit/decorators.js';
+import type { MapView } from './map-view';
 import { localized, msg } from '@lit/localize';
 import { designTokens, buttonStyles } from '../styles/design-tokens';
 import type { WikidataBuilding, BuildingDetail } from '../types/building';
@@ -94,6 +95,8 @@ export class AppRoot extends LitElement {
     }
   `;
 
+  @query('map-view') private _mapView!: MapView;
+
   @state() private selectedBuilding: WikidataBuilding | null = null;
   @state() private buildingDetail: BuildingDetail | null = null;
   @state() private detailLoading = false;
@@ -161,7 +164,7 @@ export class AppRoot extends LitElement {
     }
 
     const id = new URLSearchParams(location.search).get('id');
-    if (id) this._loadBuildingById(id);
+    if (id) this._loadBuildingById(id, { focus: true });
   }
 
   disconnectedCallback() {
@@ -175,7 +178,7 @@ export class AppRoot extends LitElement {
     const id = new URLSearchParams(location.search).get('id');
     if (id) {
       if (!this.selectedBuilding || this.selectedBuilding.id !== id) {
-        this._loadBuildingById(id);
+        this._loadBuildingById(id, { focus: true });
       }
     } else {
       this.selectedBuilding = null;
@@ -183,7 +186,7 @@ export class AppRoot extends LitElement {
     }
   };
 
-  private async _loadBuildingById(id: string) {
+  private async _loadBuildingById(id: string, { focus = false } = {}) {
     try {
       const building = await fetchBuildingById(id);
       if (building) {
@@ -193,6 +196,7 @@ export class AppRoot extends LitElement {
           building.label = this.selectedBuilding.label;
         }
         this.selectedBuilding = building;
+        if (focus) this._mapView?.flyToBuilding(building);
         this._checkStaleness(id, building.modified);
         this._fetchDetail(id);
       }
