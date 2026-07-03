@@ -1,7 +1,7 @@
 import { LitElement, html, css, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import type { WikidataBuilding, BuildingDetail as BuildingDetailData, PersonRef, AddressEntry } from '../types/building';
+import type { WikidataBuilding, WikidataItem, BuildingDetail as BuildingDetailData, PersonRef, AddressEntry } from '../types/building';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
@@ -382,6 +382,23 @@ export class BuildingDetail extends LitElement {
         text-decoration-color: currentColor;
       }
 
+      .link-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+        text-decoration: underline;
+        text-decoration-color: var(--color-border);
+        text-underline-offset: 2px;
+        transition: text-decoration-color var(--transition-fast);
+      }
+
+      .link-btn:hover {
+        text-decoration-color: currentColor;
+      }
+
       .footer {
         padding: var(--space-4);
         border-top: 1px solid var(--color-border-light);
@@ -547,15 +564,17 @@ export class BuildingDetail extends LitElement {
 
   private _renderSection(
     title: string,
-    items: Array<{ primary: string; href?: string; range?: string }>,
+    items: Array<{ primary: string; href?: string; onClick?: () => void; range?: string }>,
   ): TemplateResult {
     return html`
       <div class="section">
         <h3>${title}</h3>
-        ${items.map(({ primary, href, range }) => html`
+        ${items.map(({ primary, href, onClick, range }) => html`
           <div class="entry">
             <span class="entry-label">
-              ${href
+              ${onClick
+                ? html`<button class="link-btn" @click=${onClick}>${primary}</button>`
+                : href
                 ? html`<a href=${href} target="_blank" rel="noopener">${primary}</a>`
                 : primary}
             </span>
@@ -579,6 +598,20 @@ export class BuildingDetail extends LitElement {
       primary: e.label,
       href: `https://www.wikidata.org/wiki/${e.id}`,
     }));
+  }
+
+  private _buildingItems(buildings: WikidataItem[]) {
+    return buildings.map((b) => ({
+      primary: b.label,
+      onClick: () => this._navigateBuilding(b.id),
+    }));
+  }
+
+  private _navigateBuilding(id: string) {
+    const params = new URLSearchParams(location.search);
+    params.set('id', id);
+    history.pushState(null, '', `?${params}`);
+    this.dispatchEvent(new CustomEvent('navigate-building', { detail: { id }, bubbles: true, composed: true }));
   }
 
   private _addressItems(addresses: AddressEntry[]) {
@@ -714,6 +747,14 @@ export class BuildingDetail extends LitElement {
 
           ${detail && detail.commissionedBy.length > 0
             ? this._renderSection(msg('Bauherr'), this._entityItems(detail.commissionedBy))
+            : ''}
+
+          ${detail && detail.replacedBy.length > 0
+            ? this._renderSection(msg('Abgelöst durch'), this._buildingItems(detail.replacedBy))
+            : ''}
+
+          ${detail && detail.replaces.length > 0
+            ? this._renderSection(msg('Vorgängerbau'), this._buildingItems(detail.replaces))
             : ''}
 
           ${photos.length > 0 ? html`

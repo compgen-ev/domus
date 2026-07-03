@@ -1,4 +1,4 @@
-import type { WikidataBuilding, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
+import type { WikidataBuilding, WikidataItem, BuildingDetail, PersonRef, AddressEntry } from '../types/building';
 import { getLocale } from '../locale';
 import { BUILDING_TYPE_SET } from './building-types';
 
@@ -118,6 +118,8 @@ SELECT ?demolished ?heritage ?heritageLabel
   ?address ?addrStart ?addrEnd
   ?architect ?architectLabel
   ?commissioned ?commissionedLabel
+  ?replacedBy ?replacedByLabel
+  ?replaces ?replacesLabel
   ?ohmId ?govId
   ?modified
 WHERE {
@@ -154,6 +156,8 @@ WHERE {
     ?item p:P88 ?commStmt .
     ?commStmt ps:P88 ?commissioned .
   }
+  OPTIONAL { ?item wdt:P167 ?replacedBy . }
+  OPTIONAL { ?item wdt:P1398 ?replaces . }
   OPTIONAL { ?item wdt:P8424 ?ohmId . }
   OPTIONAL { ?item wdt:P2503 ?govId . }
   OPTIONAL { ?item schema:dateModified ?modified . }
@@ -181,6 +185,10 @@ interface DetailBinding {
   architectLabel?: SparqlBinding;
   commissioned?: SparqlBinding;
   commissionedLabel?: SparqlBinding;
+  replacedBy?: SparqlBinding;
+  replacedByLabel?: SparqlBinding;
+  replaces?: SparqlBinding;
+  replacesLabel?: SparqlBinding;
   ohmId?: SparqlBinding;
   govId?: SparqlBinding;
   modified?: SparqlBinding;
@@ -264,6 +272,8 @@ export async function fetchBuildingDetail(
   const addresses = new Map<string, AddressEntry>();
   const architects = new Map<string, PersonRef>();
   const commissionedBy = new Map<string, PersonRef>();
+  const replacedByMap = new Map<string, WikidataItem>();
+  const replacesMap = new Map<string, WikidataItem>();
 
   for (const row of rows) {
     if (row.demolished && !demolished) demolished = row.demolished.value;
@@ -327,6 +337,26 @@ export async function fetchBuildingDetail(
         });
       }
     }
+
+    if (row.replacedBy) {
+      const key = row.replacedBy.value;
+      if (!replacedByMap.has(key)) {
+        replacedByMap.set(key, {
+          id: extractQid(key),
+          label: row.replacedByLabel?.value ?? extractQid(key),
+        });
+      }
+    }
+
+    if (row.replaces) {
+      const key = row.replaces.value;
+      if (!replacesMap.has(key)) {
+        replacesMap.set(key, {
+          id: extractQid(key),
+          label: row.replacesLabel?.value ?? extractQid(key),
+        });
+      }
+    }
   }
 
   const byStart = (a: { start?: string }, b: { start?: string }) => {
@@ -348,6 +378,8 @@ export async function fetchBuildingDetail(
     occupants: [...occupants.values()].sort(byStart),
     owners: [...owners.values()].sort(byStart),
     addresses: [...addresses.values()].sort(byStart),
+    replacedBy: [...replacedByMap.values()],
+    replaces: [...replacesMap.values()],
   };
 }
 

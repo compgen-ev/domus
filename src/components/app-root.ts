@@ -376,6 +376,10 @@ export class AppRoot extends LitElement {
     this._showToast(e.detail.message);
   }
 
+  private _onNavigateBuilding(e: CustomEvent<{ id: string }>) {
+    this._loadBuildingById(e.detail.id, { focus: true });
+  }
+
   render() {
     return html`
       <div class="app-bar">
@@ -429,6 +433,7 @@ export class AppRoot extends LitElement {
         @show-toast=${this._onShowToast}
         @refresh=${this._refreshBuilding}
         @building-created=${this._onBuildingCreated}
+        @navigate-building=${this._onNavigateBuilding}
       ></building-detail>
       <app-toast></app-toast>
       <login-notice

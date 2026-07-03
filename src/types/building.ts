@@ -38,6 +38,8 @@ export interface BuildingDetail {
   occupants: PersonRef[];
   owners: PersonRef[];
   addresses: AddressEntry[];
+  replacedBy: WikidataItem[];
+  replaces: WikidataItem[];
   ohmId?: string;
   govId?: string;
   modified?: string;
