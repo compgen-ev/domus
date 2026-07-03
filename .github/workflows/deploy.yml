@@ -26,6 +26,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npx lit-localize build
+
       - run: npx vitest run
 
       - run: npm run build
