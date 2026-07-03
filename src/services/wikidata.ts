@@ -83,7 +83,6 @@ export async function fetchBuildings(
 
     const id = extractQid(row.item.value);
     if (seen.has(id)) continue;
-    seen.add(id);
 
     const coords = parseCoord(row.coord.value);
     if (!coords) continue;
@@ -92,6 +91,7 @@ export async function fetchBuildings(
     const typeId = row.type?.value ? extractQid(row.type.value) : null;
     if (!typeId || !BUILDING_TYPE_SET.has(typeId)) continue;
 
+    seen.add(id);
     buildings.push({
       id,
       label: row.itemLabel?.value ?? id,
