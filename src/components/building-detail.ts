@@ -5,7 +5,7 @@ import type { WikidataBuilding, WikidataItem, BuildingDetail as BuildingDetailDa
 import type { OhmBuildingPrefill } from '../services/ohm';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
-import { formatDate } from '../utils/dates';
+import { formatStatementDate, formatDateValue, type WikidataTime } from '../utils/dates';
 import { renderExternalLinks } from './external-links';
 import './building-edit-form';
 import './building-create-form';
@@ -20,13 +20,18 @@ import IconCheck from '~icons/mdi/check';
 import IconArrowLeft from '~icons/mdi/arrow-left';
 import IconArrowRight from '~icons/mdi/arrow-right';
 
-function extractYear(iso: string): string {
-  return iso.match(/^[+-]?(\d{1,4})/)?.[1] ?? '';
+/**
+ * Compact form of a date for range display: at most year granularity,
+ * but coarser precisions (decade, century, …) keep their proper label.
+ */
+function rangeYear(t?: WikidataTime): string {
+  if (!t) return '';
+  return formatDateValue({ ...t, precision: Math.min(t.precision, 9) });
 }
 
-function yearRange(start?: string, end?: string): string {
-  const s = start ? extractYear(start) : '';
-  const e = end ? extractYear(end) : '';
+function yearRange(start?: WikidataTime, end?: WikidataTime): string {
+  const s = rangeYear(start);
+  const e = rangeYear(end);
   if (!s && !e) return '';
   return `${s}–${e}`;
 }
@@ -642,6 +647,8 @@ export class BuildingDetail extends LitElement {
     if (!this.building) return html`<div class="panel"></div>`;
     const { label, type, image, id } = this.building;
     const { detail, detailLoading } = this;
+    const inceptionText = this.building.inception ? formatStatementDate(this.building.inception) : '';
+    const demolishedText = detail?.demolished ? formatStatementDate(detail.demolished) : '';
     const seenFilenames = new Set<string>();
     const photos = [...(detail?.images ?? []), ...this.depictingPhotos].filter((url) => {
       const key = photoFilename(url);
@@ -708,19 +715,19 @@ export class BuildingDetail extends LitElement {
             </div>
           ` : ''}
 
-          ${this.building.inception || detail?.demolished ? html`
+          ${inceptionText || demolishedText ? html`
             <div class="dates-section">
               <h3>${msg('Daten')}</h3>
-              ${this.building.inception ? html`
+              ${inceptionText ? html`
                 <div class="date-item">
                   <span class="date-label">${msg('Erbaut')}</span>
-                  <span>${formatDate(this.building.inception)}</span>
+                  <span>${inceptionText}</span>
                 </div>
               ` : ''}
-              ${detail?.demolished ? html`
+              ${demolishedText ? html`
                 <div class="date-item">
                   <span class="date-label">${msg('Abgerissen')}</span>
-                  <span>${formatDate(detail.demolished)}</span>
+                  <span>${demolishedText}</span>
                 </div>
               ` : ''}
             </div>

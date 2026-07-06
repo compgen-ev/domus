@@ -7,9 +7,11 @@ import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/bu
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData, type SourceRef } from '../services/wikidata-edit-rest';
+import { dateValueToInputString } from '../utils/dates';
 import './entity-search';
 import './app-button';
 import './icon';
+import './date-input';
 import IconCheck from '~icons/mdi/check';
 import IconClose from '~icons/mdi/close';
 import IconUnfoldMore from '~icons/mdi/unfold-more-horizontal';
@@ -158,22 +160,6 @@ export class BuildingEditForm extends LitElement {
 
       .field-group {
         margin-bottom: var(--space-4);
-      }
-
-      .date-range {
-        display: flex;
-        gap: var(--space-3);
-        margin-top: var(--space-2);
-      }
-
-      .date-field {
-        flex: 1;
-      }
-
-      .date-field label {
-        font-size: var(--font-size-xs);
-        color: var(--color-text-secondary);
-        margin-bottom: var(--space-1);
       }
 
       input, textarea, select {
@@ -343,6 +329,18 @@ export class BuildingEditForm extends LitElement {
   @state() private saveError: string | null = null;
   @state() private saveErrorDetails: any = null;
 
+  // Only a statement's own value is editable as a plain date input.
+  // Unknown-value dates ("vor 1409", bounds in earliest/latest) map to ''
+  // here; editing those means editing the qualifiers, which the form
+  // doesn't support yet.
+  private get _currentInceptionInput(): string {
+    return this.building?.inception?.value ? dateValueToInputString(this.building.inception.value) : '';
+  }
+
+  private get _currentDemolishedInput(): string {
+    return this.detail?.demolished?.value ? dateValueToInputString(this.detail.demolished.value) : '';
+  }
+
   private get _typeSuggestions(): WikidataItem[] {
     return BUILDING_TYPE_IDS.map(id => ({ id, label: getBuildingTypeLabel(id) }));
   }
@@ -352,8 +350,8 @@ export class BuildingEditForm extends LitElement {
     if (changed.has('building') && this.building) {
       this.formLabel = this.building.label;
       this.formType = this.building.type;
-      this.formInception = this.building.inception || '';
-      this.formDemolished = this.detail?.demolished || '';
+      this.formInception = this._currentInceptionInput;
+      this.formDemolished = this._currentDemolishedInput;
       this.sourceUrl = '';
       this.sourcePage = '';
       this.archiveItem = undefined;
@@ -375,8 +373,8 @@ export class BuildingEditForm extends LitElement {
     const hasChanges =
       (this.formLabel !== this.building?.label) ||
       (this.formType !== undefined && this.formType !== this.building?.type) ||
-      (this.formInception !== (this.building?.inception || '')) ||
-      (this.formDemolished !== (this.detail?.demolished || '')) ||
+      (this.formInception !== this._currentInceptionInput) ||
+      (this.formDemolished !== this._currentDemolishedInput) ||
       (this.formAddress.trim() !== '') ||
       (this.formAliases.trim() !== '') ||
       (this.formArchitect !== undefined) ||
@@ -392,8 +390,8 @@ export class BuildingEditForm extends LitElement {
     // Check if there are any claim changes (not label/aliases)
     const hasClaimChanges =
       (this.formType !== undefined && this.formType !== this.building?.type) ||
-      (this.formInception !== (this.building?.inception || '')) ||
-      (this.formDemolished !== (this.detail?.demolished || '')) ||
+      (this.formInception !== this._currentInceptionInput) ||
+      (this.formDemolished !== this._currentDemolishedInput) ||
       (this.formAddress.trim() !== '') ||
       (this.formArchitect !== undefined) ||
       (this.formCommissionedBy !== undefined) ||
@@ -464,8 +462,8 @@ export class BuildingEditForm extends LitElement {
       label: this.formLabel !== this.building.label ? this.formLabel : undefined,
       aliases: this.formAliases || undefined,
       type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
-      inception: this.formInception !== this.building.inception ? this.formInception : undefined,
-      demolished: this.formDemolished !== this.detail?.demolished ? this.formDemolished : undefined,
+      inception: this.formInception !== this._currentInceptionInput ? this.formInception : undefined,
+      demolished: this.formDemolished !== this._currentDemolishedInput ? this.formDemolished : undefined,
       address: this.formAddress || undefined,
       addressStartDate: this.formAddressStartDate || undefined,
       addressEndDate: this.formAddressEndDate || undefined,
@@ -583,21 +581,19 @@ export class BuildingEditForm extends LitElement {
           </div>
           <div class="field-group">
             <label>${msg('Erbaut')}</label>
-            <input
-              type="text"
-              placeholder="YYYY / YYYY-MM / YYYY-MM-DD"
+            <date-input
               .value=${this.formInception}
-              @input=${(e: Event) => this.formInception = (e.target as HTMLInputElement).value}
-              ?disabled=${this.saving}>
+              @value-changed=${(e: CustomEvent<string>) => this.formInception = e.detail}
+              ?disabled=${this.saving}
+            ></date-input>
           </div>
           <div class="field-group">
             <label>${msg('Abgerissen')}</label>
-            <input
-              type="text"
-              placeholder="YYYY / YYYY-MM / YYYY-MM-DD"
+            <date-input
               .value=${this.formDemolished}
-              @input=${(e: Event) => this.formDemolished = (e.target as HTMLInputElement).value}
-              ?disabled=${this.saving}>
+              @value-changed=${(e: CustomEvent<string>) => this.formDemolished = e.detail}
+              ?disabled=${this.saving}
+            ></date-input>
           </div>
         </div>
 
@@ -619,26 +615,13 @@ export class BuildingEditForm extends LitElement {
               .value=${this.formAddress}
               @input=${(e: Event) => this.formAddress = (e.target as HTMLInputElement).value}
               ?disabled=${this.saving}>
-            <div class="date-range">
-              <div class="date-field">
-                <label>${msg('Von (Jahr)')}</label>
-                <input
-                  type="text"
-                  placeholder="YYYY"
-                  .value=${this.formAddressStartDate}
-                  @input=${(e: Event) => this.formAddressStartDate = (e.target as HTMLInputElement).value}
-                  ?disabled=${this.saving}>
-              </div>
-              <div class="date-field">
-                <label>${msg('Bis (Jahr)')}</label>
-                <input
-                  type="text"
-                  placeholder="YYYY"
-                  .value=${this.formAddressEndDate}
-                  @input=${(e: Event) => this.formAddressEndDate = (e.target as HTMLInputElement).value}
-                  ?disabled=${this.saving}>
-              </div>
-            </div>
+            <date-range-input
+              .start=${this.formAddressStartDate}
+              .end=${this.formAddressEndDate}
+              @start-changed=${(e: CustomEvent<string>) => this.formAddressStartDate = e.detail}
+              @end-changed=${(e: CustomEvent<string>) => this.formAddressEndDate = e.detail}
+              ?disabled=${this.saving}
+            ></date-range-input>
           </div>
         </div>
 
@@ -705,26 +688,13 @@ export class BuildingEditForm extends LitElement {
               <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
                 ${msg('Ausgewählt:')} ${this.formOwner.label}
               </div>
-              <div class="date-range">
-                <div class="date-field">
-                  <label>${msg('Von (Jahr)')}</label>
-                  <input
-                    type="text"
-                    placeholder="YYYY"
-                    .value=${this.formOwnerStartDate}
-                    @input=${(e: Event) => this.formOwnerStartDate = (e.target as HTMLInputElement).value}
-                    ?disabled=${this.saving}>
-                </div>
-                <div class="date-field">
-                  <label>${msg('Bis (Jahr)')}</label>
-                  <input
-                    type="text"
-                    placeholder="YYYY"
-                    .value=${this.formOwnerEndDate}
-                    @input=${(e: Event) => this.formOwnerEndDate = (e.target as HTMLInputElement).value}
-                    ?disabled=${this.saving}>
-                </div>
-              </div>
+              <date-range-input
+                .start=${this.formOwnerStartDate}
+                .end=${this.formOwnerEndDate}
+                @start-changed=${(e: CustomEvent<string>) => this.formOwnerStartDate = e.detail}
+                @end-changed=${(e: CustomEvent<string>) => this.formOwnerEndDate = e.detail}
+                ?disabled=${this.saving}
+              ></date-range-input>
             ` : ''}
           </div>
 
@@ -745,26 +715,13 @@ export class BuildingEditForm extends LitElement {
               <div style="margin-top: var(--space-2); font-size: var(--font-size-sm); color: var(--color-primary);">
                 ${msg('Ausgewählt:')} ${this.formOccupant.label}
               </div>
-              <div class="date-range">
-                <div class="date-field">
-                  <label>${msg('Von (Jahr)')}</label>
-                  <input
-                    type="text"
-                    placeholder="YYYY"
-                    .value=${this.formOccupantStartDate}
-                    @input=${(e: Event) => this.formOccupantStartDate = (e.target as HTMLInputElement).value}
-                    ?disabled=${this.saving}>
-                </div>
-                <div class="date-field">
-                  <label>${msg('Bis (Jahr)')}</label>
-                  <input
-                    type="text"
-                    placeholder="YYYY"
-                    .value=${this.formOccupantEndDate}
-                    @input=${(e: Event) => this.formOccupantEndDate = (e.target as HTMLInputElement).value}
-                    ?disabled=${this.saving}>
-                </div>
-              </div>
+              <date-range-input
+                .start=${this.formOccupantStartDate}
+                .end=${this.formOccupantEndDate}
+                @start-changed=${(e: CustomEvent<string>) => this.formOccupantStartDate = e.detail}
+                @end-changed=${(e: CustomEvent<string>) => this.formOccupantEndDate = e.detail}
+                ?disabled=${this.saving}
+              ></date-range-input>
             ` : ''}
           </div>
         </div>

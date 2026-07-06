@@ -9,6 +9,7 @@ import type { OhmBuildingPrefill } from '../services/ohm';
 import { buildingTagToWikidataType, addWikidataTag } from '../services/ohm';
 import { getValidOhmAccessToken } from '../services/ohm-auth';
 import './entity-search';
+import './date-input';
 import './app-button';
 import './icon';
 import IconCheck from '~icons/mdi/check';
@@ -382,12 +383,11 @@ export class BuildingCreateForm extends LitElement {
 
         <div class="field-group">
           <label>${msg('Erbaut')}</label>
-          <input
-            type="text"
-            placeholder="YYYY / YYYY-MM / YYYY-MM-DD"
+          <date-input
             .value=${this.formInception}
-            @input=${(e: Event) => this.formInception = (e.target as HTMLInputElement).value}
-            ?disabled=${this.saving}>
+            @value-changed=${(e: CustomEvent<string>) => this.formInception = e.detail}
+            ?disabled=${this.saving}
+          ></date-input>
         </div>
 
         <div class="source-section">

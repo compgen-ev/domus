@@ -4,6 +4,7 @@ import { localized, msg } from '@lit/localize';
 import maplibregl, { type Map, type MapLayerMouseEvent, type MapMouseEvent, type GeoJSONSource } from 'maplibre-gl';
 import maplibreCSS from 'maplibre-gl/dist/maplibre-gl.css?inline';
 import { fetchBuildings, buildingsToGeoJSON } from '../services/wikidata';
+import { statementDateFromTimeString } from '../utils/dates';
 import { fetchOhmRelationGeometry, fetchOhmByWikidataId, fetchOhmWayTags, fetchOhmWayGeometry } from '../services/ohm';
 import type { WikidataBuilding } from '../types/building';
 import './search-box';
@@ -640,7 +641,7 @@ export class MapView extends LitElement {
             lat: coords[1],
             lng: coords[0],
             image: p['image'] ?? undefined,
-            inception: p['inception'] ?? undefined,
+            inception: p['inception'] ? statementDateFromTimeString(p['inception']) : undefined,
           };
           const btn = document.createElement('button');
           btn.textContent = building.label || building.id;
@@ -674,7 +675,7 @@ export class MapView extends LitElement {
         lat: (feature.geometry as GeoJSON.Point).coordinates[1],
         lng: (feature.geometry as GeoJSON.Point).coordinates[0],
         image: p['image'] ?? undefined,
-        inception: p['inception'] ?? undefined,
+        inception: p['inception'] ? statementDateFromTimeString(p['inception']) : undefined,
       };
       this.dispatchEvent(new CustomEvent<WikidataBuilding>('building-selected', {
         bubbles: true,

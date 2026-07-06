@@ -273,6 +273,29 @@ export class AppRoot extends LitElement {
     params.set('id', e.detail.id);
     history.pushState(null, '', `?${params}`);
     this._fetchDetail(e.detail.id);
+    this._refreshSelectedBuilding(e.detail.id);
+  }
+
+  // Map features come from the coarse bounds query, whose wdt: shortcut
+  // normalises date precision and drops unknown-value dates. Refetch the
+  // single building for authoritative inception data.
+  private async _refreshSelectedBuilding(id: string) {
+    try {
+      const fresh = await fetchBuildingById(id);
+      if (!fresh || this.selectedBuilding?.id !== id) return;
+      // Only swap when the date actually differs: replacing the building
+      // object resets an open edit form, so avoid it for the common case
+      // where the bounds query already had the right data.
+      if (JSON.stringify(fresh.inception) === JSON.stringify(this.selectedBuilding.inception)) return;
+      if (fresh.label === id && this.selectedBuilding.label !== id) {
+        fresh.label = this.selectedBuilding.label;
+      }
+      this.selectedBuilding = fresh;
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        console.error('Building refresh failed:', err);
+      }
+    }
   }
 
   private _onPanelClose() {

@@ -562,6 +562,42 @@
   <source>Hineinzoomen, um die historische Karte zu sehen</source>
   <target>Zoom in to see the historical map</target>
 </trans-unit>
+<trans-unit id="s0b6d79bde775a2c7">
+  <source>zwischen <x id="0" equiv-text="${earliest}"/> und <x id="1" equiv-text="${latest}"/></source>
+  <target>between <x id="0" equiv-text="${earliest}"/> and <x id="1" equiv-text="${latest}"/></target>
+</trans-unit>
+<trans-unit id="s98b2f882054a983a">
+  <source>vor <x id="0" equiv-text="${latest}"/></source>
+  <target>before <x id="0" equiv-text="${latest}"/></target>
+</trans-unit>
+<trans-unit id="sa1e8649579de5db5">
+  <source>nach <x id="0" equiv-text="${earliest}"/></source>
+  <target>after <x id="0" equiv-text="${earliest}"/></target>
+</trans-unit>
+<trans-unit id="s098e4be8c6c25490">
+  <source>Format muss YYYY, YYYY-MM, oder YYYY-MM-DD sein</source>
+  <target>Format must be YYYY, YYYY-MM, or YYYY-MM-DD</target>
+</trans-unit>
+<trans-unit id="s646c36691e77a536">
+  <source>Monat muss zwischen 01 und 12 liegen</source>
+  <target>Month must be between 01 and 12</target>
+</trans-unit>
+<trans-unit id="sc3fbae69e6326526">
+  <source>Tag muss zwischen 01 und 31 liegen</source>
+  <target>Day must be between 01 and 31</target>
+</trans-unit>
+<trans-unit id="s977b4818d7ababba">
+  <source><x id="0" equiv-text="${decade}"/>er</source>
+  <target><x id="0" equiv-text="${decade}"/>s</target>
+</trans-unit>
+<trans-unit id="s727354093f4403d9">
+  <source><x id="0" equiv-text="${century}"/>. Jh.</source>
+  <target><x id="0" equiv-text="${century}"/>. century</target>
+</trans-unit>
+<trans-unit id="s721474093ef3a5b5">
+  <source><x id="0" equiv-text="${millennium}"/>. Jt.</source>
+  <target><x id="0" equiv-text="${millennium}"/>. millennium</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
