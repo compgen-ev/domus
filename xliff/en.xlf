@@ -642,6 +642,14 @@
   <source>Quelle erforderlich, um Änderungen zu speichern</source>
   <target>Source required to save changes</target>
 </trans-unit>
+<trans-unit id="sf87660d1c4d9ec98">
+  <source>Alle anzeigen</source>
+  <target>Show all</target>
+</trans-unit>
+<trans-unit id="s8d051423c83c6c7b">
+  <source>Weniger anzeigen</source>
+  <target>Show less</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

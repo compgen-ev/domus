@@ -19,6 +19,8 @@ import IconContentCopy from '~icons/mdi/content-copy';
 import IconCheck from '~icons/mdi/check';
 import IconArrowLeft from '~icons/mdi/arrow-left';
 import IconArrowRight from '~icons/mdi/arrow-right';
+import IconChevronDown from '~icons/mdi/chevron-down';
+import IconChevronUp from '~icons/mdi/chevron-up';
 
 /**
  * Compact form of a date for range display: at most year granularity,
@@ -194,6 +196,12 @@ export class BuildingDetail extends LitElement {
 
       .photo-gallery a:hover img {
         opacity: 0.85;
+      }
+
+      .show-all-photos-btn {
+        display: block;
+        width: 100%;
+        margin-top: var(--space-2);
       }
 
       .header {
@@ -500,6 +508,7 @@ export class BuildingDetail extends LitElement {
   @state() private editMode = false;
   @state() private expanded = false;
   @state() private linkCopied = false;
+  @state() private showAllPhotos = false;
 
   protected willUpdate(changed: PropertyValues) {
     if (changed.has('building') || changed.has('newBuildingCoords')) {
@@ -511,6 +520,7 @@ export class BuildingDetail extends LitElement {
         this.expanded = false;
         this.toggleAttribute('expanded', false);
       }
+      if (this.showAllPhotos) this.showAllPhotos = false;
     }
   }
 
@@ -763,12 +773,22 @@ export class BuildingDetail extends LitElement {
 
           ${photos.length > 0 ? html`
             <div class="photo-gallery">
-              ${photos.map((url) => html`
+              ${(this.showAllPhotos ? photos : photos.slice(0, 12)).map((url) => html`
                 <a href=${photoPageUrl(url)} target="_blank" rel="noopener">
                   <img src=${photoThumbUrl(url)} alt="" loading="lazy">
                 </a>
               `)}
             </div>
+            ${photos.length > 12 ? html`
+              <app-button
+                class="show-all-photos-btn"
+                variant="secondary"
+                .trailingIcon=${this.showAllPhotos ? IconChevronUp : IconChevronDown}
+                @click=${() => { this.showAllPhotos = !this.showAllPhotos; }}
+              >
+                ${this.showAllPhotos ? msg('Weniger anzeigen') : msg('Alle anzeigen')}
+              </app-button>
+            ` : ''}
           ` : ''}
         </div>
 
