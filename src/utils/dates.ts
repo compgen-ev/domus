@@ -38,58 +38,104 @@ function getCalendarModel(year: number): string {
   return year < 1583 ? PROLEPTIC_JULIAN : PROLEPTIC_GREGORIAN;
 }
 
+/** Signed year of a Wikidata time string, or null if unparseable. */
+function signedYear(time: string): number | null {
+  const match = time.match(/^([+-]?)(\d{4,})/);
+  if (!match) return null;
+  return parseInt(match[2], 10) * (match[1] === '-' ? -1 : 1);
+}
+
 /**
- * Parse user input into Wikidata time format
- * Accepts: YYYY, YYYY-MM, YYYY-MM-DD (with optional +/- prefix)
+ * Calendar model for a (possibly edited) date. An explicitly recorded
+ * calendar wins over the year-based default rule as long as the year is
+ * unchanged — editing the month of a Gregorian-recorded 1580 date must
+ * not silently flip it to Julian.
  */
-export function parseDate(input: string): WikidataTime | null {
+function resolveCalendar(yearNum: number, previous?: WikidataTime): string {
+  if (previous && signedYear(previous.time) === yearNum) {
+    return previous.calendarmodel;
+  }
+  return getCalendarModel(yearNum);
+}
+
+/**
+ * Parse user input into Wikidata time format.
+ *
+ * Accepted formats (optional +/- prefix on the year everywhere):
+ *   YYYY, YYYY-MM, YYYY-MM-DD                    (precision 9/10/11)
+ *   1950er, 1950s                                (decade, precision 8)
+ *   19. Jh., 19th century                        (century, precision 7)
+ *   2. Jt., 2nd millennium                       (millennium, precision 6)
+ *
+ * Coarse precisions store the Wikidata-conventional representative year:
+ * the decade year itself, N*100 for century N, N*1000 for millennium N.
+ *
+ * `previous` is the value being edited, if any — its calendar model is
+ * preserved when the year is unchanged (see resolveCalendar).
+ */
+export function parseDate(input: string, previous?: WikidataTime): WikidataTime | null {
   if (!input || !input.trim()) return null;
 
   const trimmed = input.trim();
+
+  const makeTime = (sign: string, yearNum4: string, month: string, day: string, precision: number): WikidataTime => {
+    const yearNum = parseInt(yearNum4, 10) * (sign === '-' ? -1 : 1);
+    return {
+      time: `${sign || '+'}${yearNum4}-${month}-${day}T00:00:00Z`,
+      precision,
+      calendarmodel: resolveCalendar(yearNum, previous),
+    };
+  };
 
   // Match year only: 1950, -500, +1950
   const yearMatch = trimmed.match(/^([+-]?)(\d{1,4})$/);
   if (yearMatch) {
     const [, sign, year] = yearMatch;
-    const paddedYear = year.padStart(4, '0');
-    const yearNum = parseInt(year, 10) * (sign === '-' ? -1 : 1);
-    return {
-      time: `${sign || '+'}${paddedYear}-00-00T00:00:00Z`,
-      precision: 9,
-      calendarmodel: getCalendarModel(yearNum),
-    };
+    return makeTime(sign, year.padStart(4, '0'), '00', '00', 9);
   }
 
   // Match year-month: 1950-06, -500-03
   const monthMatch = trimmed.match(/^([+-]?)(\d{1,4})-(\d{2})$/);
   if (monthMatch) {
     const [, sign, year, month] = monthMatch;
-    const paddedYear = year.padStart(4, '0');
     const monthNum = parseInt(month, 10);
     if (monthNum < 1 || monthNum > 12) return null;
-    const yearNum = parseInt(year, 10) * (sign === '-' ? -1 : 1);
-    return {
-      time: `${sign || '+'}${paddedYear}-${month}-00T00:00:00Z`,
-      precision: 10,
-      calendarmodel: getCalendarModel(yearNum),
-    };
+    return makeTime(sign, year.padStart(4, '0'), month, '00', 10);
   }
 
   // Match full date: 1950-06-15, -500-03-21
   const dayMatch = trimmed.match(/^([+-]?)(\d{1,4})-(\d{2})-(\d{2})$/);
   if (dayMatch) {
     const [, sign, year, month, day] = dayMatch;
-    const paddedYear = year.padStart(4, '0');
     const monthNum = parseInt(month, 10);
     const dayNum = parseInt(day, 10);
     if (monthNum < 1 || monthNum > 12) return null;
     if (dayNum < 1 || dayNum > 31) return null;
-    const yearNum = parseInt(year, 10) * (sign === '-' ? -1 : 1);
-    return {
-      time: `${sign || '+'}${paddedYear}-${month}-${day}T00:00:00Z`,
-      precision: 11,
-      calendarmodel: getCalendarModel(yearNum),
-    };
+    return makeTime(sign, year.padStart(4, '0'), month, day, 11);
+  }
+
+  // Match decade: 1950er, 1950s, -500er
+  const decadeMatch = trimmed.match(/^([+-]?)(\d{1,4})(?:er|s)$/);
+  if (decadeMatch) {
+    const [, sign, year] = decadeMatch;
+    if (parseInt(year, 10) % 10 !== 0) return null;
+    return makeTime(sign, year.padStart(4, '0'), '00', '00', 8);
+  }
+
+  // Match century: 19. Jh., 19.Jh, 19th century, -5. Jh.
+  const centuryMatch = trimmed.match(/^([+-]?)(\d{1,2})(?:\.|st|nd|rd|th)?\s*(?:Jh\.?|century)$/i);
+  if (centuryMatch) {
+    const [, sign, century] = centuryMatch;
+    const year = String(parseInt(century, 10) * 100).padStart(4, '0');
+    return makeTime(sign, year, '00', '00', 7);
+  }
+
+  // Match millennium: 2. Jt., 2nd millennium, -1. Jt.
+  const millenniumMatch = trimmed.match(/^([+-]?)(\d{1,2})(?:\.|st|nd|rd|th)?\s*(?:Jt\.?|millennium)$/i);
+  if (millenniumMatch) {
+    const [, sign, millennium] = millenniumMatch;
+    const year = String(parseInt(millennium, 10) * 1000).padStart(4, '0');
+    return makeTime(sign, year, '00', '00', 6);
   }
 
   return null;
@@ -219,11 +265,18 @@ export function statementDateFromTimeString(timeStr: string): StatementDate | un
 
 /**
  * Convert a WikidataTime to the user-editable input string accepted by
- * parseDate(). Coarser-than-year precisions fall back to the year.
+ * parseDate(). Round-trips all supported precisions:
  *
  *   precision 11 → YYYY-MM-DD
  *   precision 10 → YYYY-MM
- *   precision ≤9 → YYYY
+ *   precision 9  → YYYY
+ *   precision 8  → 1950er
+ *   precision 7  → 19. Jh.
+ *   precision 6  → 2. Jt.
+ *   coarser      → YYYY fallback
+ *
+ * Coarse forms are re-encoded canonically (a 19th-century date stored as
+ * 1850 becomes "19. Jh." → year 1900 when saved again).
  */
 export function dateValueToInputString(wdt: WikidataTime): string {
   const match = wdt.time.match(/^([+-]?)(\d{4,})-(\d{2})-(\d{2})/);
@@ -231,11 +284,15 @@ export function dateValueToInputString(wdt: WikidataTime): string {
 
   const [, sign, yearStr, month, day] = match;
   const yearNum = parseInt(yearStr, 10);
-  const displayYear = (sign === '-' ? '-' : '') + yearNum;
+  const bce = sign === '-' ? '-' : '';
+  const displayYear = bce + yearNum;
 
   switch (wdt.precision) {
     case 11: return `${displayYear}-${month}-${day}`;
     case 10: return `${displayYear}-${month}`;
+    case 8:  return `${bce}${Math.floor(yearNum / 10) * 10}er`;
+    case 7:  return `${bce}${Math.ceil(yearNum / 100)}. Jh.`;
+    case 6:  return `${bce}${Math.ceil(yearNum / 1000)}. Jt.`;
     default:  return displayYear;
   }
 }
@@ -277,10 +334,16 @@ export function getDateValidationError(input: string): string | null {
   if (!input || !input.trim()) return null;
 
   const trimmed = input.trim();
+  if (parseDate(trimmed)) return null;
+
+  // Decade suffix present but the year doesn't end in 0
+  if (/^[+-]?\d{1,4}(?:er|s)$/.test(trimmed)) {
+    return msg('Jahrzehnt muss auf 0 enden (z.B. 1950er)');
+  }
 
   // Check if it matches any of the expected patterns
   if (!/^[+-]?\d{1,4}(-\d{2}(-\d{2})?)?$/.test(trimmed)) {
-    return msg('Format muss YYYY, YYYY-MM, oder YYYY-MM-DD sein');
+    return msg('Format muss YYYY, YYYY-MM, YYYY-MM-DD, "1950er", "19. Jh." oder "2. Jt." sein');
   }
 
   // Try to parse and check for logical errors

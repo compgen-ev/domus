@@ -574,10 +574,6 @@
   <source>nach <x id="0" equiv-text="${earliest}"/></source>
   <target>after <x id="0" equiv-text="${earliest}"/></target>
 </trans-unit>
-<trans-unit id="s098e4be8c6c25490">
-  <source>Format muss YYYY, YYYY-MM, oder YYYY-MM-DD sein</source>
-  <target>Format must be YYYY, YYYY-MM, or YYYY-MM-DD</target>
-</trans-unit>
 <trans-unit id="s646c36691e77a536">
   <source>Monat muss zwischen 01 und 12 liegen</source>
   <target>Month must be between 01 and 12</target>
@@ -597,6 +593,14 @@
 <trans-unit id="s721474093ef3a5b5">
   <source><x id="0" equiv-text="${millennium}"/>. Jt.</source>
   <target><x id="0" equiv-text="${millennium}"/>. millennium</target>
+</trans-unit>
+<trans-unit id="s9eeca1fefa67e5c0">
+  <source>Jahrzehnt muss auf 0 enden (z.B. 1950er)</source>
+  <target>Decade must end in 0 (e.g. 1950s)</target>
+</trans-unit>
+<trans-unit id="s1c760e3cbf70a264">
+  <source>Format muss YYYY, YYYY-MM, YYYY-MM-DD, "1950er", "19. Jh." oder "2. Jt." sein</source>
+  <target>Format must be YYYY, YYYY-MM, YYYY-MM-DD, "1950s", "19th century", or "2nd millennium"</target>
 </trans-unit>
 </body>
 </file>

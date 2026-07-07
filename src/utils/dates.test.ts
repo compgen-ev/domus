@@ -499,11 +499,11 @@ describe('dateValueToInputString', () => {
   it('precision 9 → YYYY', () => {
     expect(dateValueToInputString(wdt('+1950-00-00T00:00:00Z', 9))).toBe('1950');
   });
-  it('precision 8 (decade) → YYYY fallback', () => {
-    expect(dateValueToInputString(wdt('+1950-00-00T00:00:00Z', 8))).toBe('1950');
+  it('precision 8 (decade) → decade form', () => {
+    expect(dateValueToInputString(wdt('+1950-00-00T00:00:00Z', 8))).toBe('1950er');
   });
-  it('precision 7 (century) → YYYY fallback', () => {
-    expect(dateValueToInputString(wdt('+1850-00-00T00:00:00Z', 7))).toBe('1850');
+  it('precision 7 (century) → century form', () => {
+    expect(dateValueToInputString(wdt('+1850-00-00T00:00:00Z', 7))).toBe('19. Jh.');
   });
   it('handles BCE dates', () => {
     expect(dateValueToInputString(wdt('-0500-03-21T00:00:00Z', 11))).toBe('-500-03-21');
@@ -578,5 +578,179 @@ describe('statementDateFromTimeString', () => {
     expect(statementDateFromTimeString(
       'http://www.wikidata.org/.well-known/genid/1234abcd',
     )).toBeUndefined();
+  });
+});
+
+// ─── coarse-precision input (decade / century / millennium) ──────────────────
+
+describe('parseDate coarse precisions', () => {
+  const GREGORIAN = 'http://www.wikidata.org/entity/Q1985727';
+  const JULIAN = 'http://www.wikidata.org/entity/Q1985786';
+
+  describe('decade (precision 8)', () => {
+    it('parses German decade "1950er"', () => {
+      expect(parseDate('1950er')).toEqual({
+        time: '+1950-00-00T00:00:00Z',
+        precision: 8,
+        calendarmodel: GREGORIAN,
+      });
+    });
+    it('parses English decade "1950s"', () => {
+      expect(parseDate('1950s')?.precision).toBe(8);
+      expect(parseDate('1950s')?.time).toBe('+1950-00-00T00:00:00Z');
+    });
+    it('parses pre-1583 decade as Julian', () => {
+      expect(parseDate('1400er')?.calendarmodel).toBe(JULIAN);
+    });
+    it('parses BCE decade', () => {
+      expect(parseDate('-500er')).toEqual({
+        time: '-0500-00-00T00:00:00Z',
+        precision: 8,
+        calendarmodel: JULIAN,
+      });
+    });
+    it('rejects a decade not ending in 0', () => {
+      expect(parseDate('1953er')).toBeNull();
+    });
+  });
+
+  describe('century (precision 7)', () => {
+    it('parses German century "19. Jh." to Wikidata convention year N*100', () => {
+      expect(parseDate('19. Jh.')).toEqual({
+        time: '+1900-00-00T00:00:00Z',
+        precision: 7,
+        calendarmodel: GREGORIAN,
+      });
+    });
+    it('accepts missing trailing dot and tight spacing', () => {
+      expect(parseDate('19.Jh')?.precision).toBe(7);
+      expect(parseDate('19. Jh')?.time).toBe('+1900-00-00T00:00:00Z');
+    });
+    it('parses English ordinal century "19th century"', () => {
+      expect(parseDate('19th century')?.time).toBe('+1900-00-00T00:00:00Z');
+      expect(parseDate('19th century')?.precision).toBe(7);
+    });
+    it('parses "15. Jh." as Julian (year 1500 < 1583)', () => {
+      expect(parseDate('15. Jh.')).toEqual({
+        time: '+1500-00-00T00:00:00Z',
+        precision: 7,
+        calendarmodel: JULIAN,
+      });
+    });
+    it('parses BCE century "-5. Jh."', () => {
+      expect(parseDate('-5. Jh.')).toEqual({
+        time: '-0500-00-00T00:00:00Z',
+        precision: 7,
+        calendarmodel: JULIAN,
+      });
+    });
+  });
+
+  describe('millennium (precision 6)', () => {
+    it('parses German millennium "2. Jt." to year N*1000', () => {
+      expect(parseDate('2. Jt.')).toEqual({
+        time: '+2000-00-00T00:00:00Z',
+        precision: 6,
+        calendarmodel: GREGORIAN,
+      });
+    });
+    it('parses English "2nd millennium"', () => {
+      expect(parseDate('2nd millennium')?.precision).toBe(6);
+      expect(parseDate('2nd millennium')?.time).toBe('+2000-00-00T00:00:00Z');
+    });
+    it('parses BCE millennium "-1. Jt."', () => {
+      expect(parseDate('-1. Jt.')).toEqual({
+        time: '-1000-00-00T00:00:00Z',
+        precision: 6,
+        calendarmodel: JULIAN,
+      });
+    });
+  });
+
+  describe('round-trips', () => {
+    it.each(['1950er', '19. Jh.', '2. Jt.', '-5. Jh.', '1400er'])(
+      'dateValueToInputString(parseDate(%j)) is identity',
+      (input) => {
+        expect(dateValueToInputString(parseDate(input)!)).toBe(input);
+      },
+    );
+    it('formatDateValue agrees with input for decade', () => {
+      expect(formatDateValue(parseDate('1950er')!)).toBe('1950er');
+    });
+    it('formatDateValue agrees with input for century', () => {
+      expect(formatDateValue(parseDate('19. Jh.')!)).toBe('19. Jh.');
+    });
+    it('normalises non-canonical stored years on re-encode', () => {
+      // Wikidata items store e.g. 1850 or 1801 for the 19th century
+      const stored: WikidataTime = {
+        time: '+1850-00-00T00:00:00Z',
+        precision: 7,
+        calendarmodel: 'http://www.wikidata.org/entity/Q1985727',
+      };
+      expect(dateValueToInputString(stored)).toBe('19. Jh.');
+    });
+  });
+});
+
+// ─── calendar model preservation ──────────────────────────────────────────────
+
+describe('parseDate calendar preservation', () => {
+  const GREGORIAN = 'http://www.wikidata.org/entity/Q1985727';
+  const JULIAN = 'http://www.wikidata.org/entity/Q1985786';
+
+  it('keeps the previous calendar when the year is unchanged', () => {
+    // A 1580 date explicitly recorded in Gregorian must not silently
+    // flip to Julian when the user edits only month/day
+    const previous: WikidataTime = {
+      time: '+1580-06-15T00:00:00Z',
+      precision: 11,
+      calendarmodel: GREGORIAN,
+    };
+    expect(parseDate('1580-07-01', previous)?.calendarmodel).toBe(GREGORIAN);
+    expect(parseDate('1580', previous)?.calendarmodel).toBe(GREGORIAN);
+  });
+
+  it('re-derives the calendar when the year changes', () => {
+    const previous: WikidataTime = {
+      time: '+1580-06-15T00:00:00Z',
+      precision: 11,
+      calendarmodel: GREGORIAN,
+    };
+    expect(parseDate('1590', previous)?.calendarmodel).toBe(GREGORIAN);
+    expect(parseDate('1500', previous)?.calendarmodel).toBe(JULIAN);
+  });
+
+  it('distinguishes BCE from CE years of the same magnitude', () => {
+    const previous: WikidataTime = {
+      time: '-0500-00-00T00:00:00Z',
+      precision: 9,
+      calendarmodel: GREGORIAN, // unusual, but explicitly recorded
+    };
+    expect(parseDate('-500', previous)?.calendarmodel).toBe(GREGORIAN);
+    expect(parseDate('500', previous)?.calendarmodel).toBe(JULIAN);
+  });
+
+  it('works without a previous value (unchanged default rule)', () => {
+    expect(parseDate('1580')?.calendarmodel).toBe(JULIAN);
+  });
+});
+
+// ─── validation for coarse formats ────────────────────────────────────────────
+
+describe('getDateValidationError coarse formats', () => {
+  it('accepts valid coarse inputs', () => {
+    expect(getDateValidationError('1950er')).toBeNull();
+    expect(getDateValidationError('19. Jh.')).toBeNull();
+    expect(getDateValidationError('2. Jt.')).toBeNull();
+  });
+  it('explains the decade multiple-of-10 rule', () => {
+    expect(getDateValidationError('1953er')).toContain('Jahrzehnt');
+  });
+  it('still reports month/day errors', () => {
+    expect(getDateValidationError('1950-13')).toContain('Monat');
+    expect(getDateValidationError('1950-06-32')).toContain('Tag');
+  });
+  it('rejects garbage with a format hint', () => {
+    expect(getDateValidationError('not a date')).toContain('Format');
   });
 });
