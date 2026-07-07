@@ -602,6 +602,46 @@
   <source>Format muss YYYY, YYYY-MM, YYYY-MM-DD, "1950er", "19. Jh." oder "2. Jt." sein</source>
   <target>Format must be YYYY, YYYY-MM, YYYY-MM-DD, "1950s", "19th century", or "2nd millennium"</target>
 </trans-unit>
+<trans-unit id="sf9041799ee406af6">
+  <source>Ungültiges Datum</source>
+  <target>Invalid date</target>
+</trans-unit>
+<trans-unit id="s4c25199a7358aa4b">
+  <source>genau</source>
+  <target>exactly</target>
+</trans-unit>
+<trans-unit id="s68fd08194ecb2360">
+  <source>vor</source>
+  <target>before</target>
+</trans-unit>
+<trans-unit id="sc49aaeba8e4636d3">
+  <source>nach</source>
+  <target>after</target>
+</trans-unit>
+<trans-unit id="s0fe09b821328de46">
+  <source>zwischen</source>
+  <target>between</target>
+</trans-unit>
+<trans-unit id="sc87fb86b973fe406">
+  <source>Beide Daten angeben</source>
+  <target>Enter both dates</target>
+</trans-unit>
+<trans-unit id="s2fe268313e8f3498">
+  <source>Frühestes Datum muss vor spätestem liegen</source>
+  <target>Earliest date must be before latest</target>
+</trans-unit>
+<trans-unit id="sc76ccc38f66a314f">
+  <source>(julianischer Kalender)</source>
+  <target>(Julian calendar)</target>
+</trans-unit>
+<trans-unit id="s5427bfd77016e9f3">
+  <source>z.B. 1409, 1409-06-15, 15. Jh.</source>
+  <target>e.g. 1409, 1409-06-15, 15. century</target>
+</trans-unit>
+<trans-unit id="sf7f6f8ce8776e520">
+  <source>Quelle erforderlich, um Änderungen zu speichern</source>
+  <target>Source required to save changes</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

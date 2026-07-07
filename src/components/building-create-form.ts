@@ -3,13 +3,14 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { BUILDING_TYPE_IDS, getBuildingTypeLabel, BUILDING_TYPE_SET } from '../services/building-type-options';
 import type { WikidataItem } from '../types/building';
+import { statementDateToEdit, editToStatementDate, type StatementDateEdit } from '../utils/dates';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { createBuilding, type SourceRef } from '../services/wikidata-edit-rest';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import { buildingTagToWikidataType, addWikidataTag } from '../services/ohm';
 import { getValidOhmAccessToken } from '../services/ohm-auth';
 import './entity-search';
-import './date-input';
+import './statement-date-input';
 import './app-button';
 import './icon';
 import IconCheck from '~icons/mdi/check';
@@ -210,7 +211,7 @@ export class BuildingCreateForm extends LitElement {
 
   @state() private formLabel = '';
   @state() private formType: WikidataItem | undefined;
-  @state() private formInception = '';
+  @state() private formInception: StatementDateEdit = statementDateToEdit(undefined);
   @state() private sourceType: 'url' | 'archive' | 'book' = 'url';
   @state() private sourceUrl = '';
   @state() private sourcePage = '';
@@ -232,7 +233,7 @@ export class BuildingCreateForm extends LitElement {
       this.formLabel = this.ohmPrefill.name ?? '';
       const type = buildingTagToWikidataType(this.ohmPrefill.buildingTag);
       if (type) this.formType = type;
-      if (this.ohmPrefill.startDate) this.formInception = this.ohmPrefill.startDate;
+      if (this.ohmPrefill.startDate) this.formInception = { mode: 'value', value: this.ohmPrefill.startDate, earliest: '', latest: '' };
     }
   }
 
@@ -285,13 +286,20 @@ export class BuildingCreateForm extends LitElement {
       };
     }
 
+    const inception = editToStatementDate(this.formInception);
+    if (inception === null) {
+      this.saveError = msg('Ungültiges Datum');
+      this.saving = false;
+      return;
+    }
+
     try {
       const item = await createBuilding({
         label: this.formLabel.trim(),
         type: this.formType,
         lat: this.lat,
         lng: this.lng,
-        inception: this.formInception.trim() || undefined,
+        inception: inception ?? undefined,
         source,
       });
 
@@ -383,11 +391,11 @@ export class BuildingCreateForm extends LitElement {
 
         <div class="field-group">
           <label>${msg('Erbaut')}</label>
-          <date-input
-            .value=${this.formInception}
-            @value-changed=${(e: CustomEvent<string>) => this.formInception = e.detail}
+          <statement-date-input
+            .edit=${this.formInception}
+            @edit-changed=${(e: CustomEvent<StatementDateEdit>) => this.formInception = e.detail}
             ?disabled=${this.saving}
-          ></date-input>
+          ></statement-date-input>
         </div>
 
         <div class="source-section">

@@ -12,7 +12,7 @@
 
 import type { WikidataItem } from '../types/building';
 import { getValidAccessToken } from './wikimedia-auth';
-import { parseDate } from '../utils/dates';
+import { parseDate, type StatementDate, type WikidataTime } from '../utils/dates';
 import { recordEdit } from './edit-tracker';
 import { getLocale } from '../locale';
 
@@ -76,8 +76,8 @@ export interface BuildingEditData {
   label?: string;
   aliases?: string;
   type?: WikidataItem;
-  inception?: string;
-  demolished?: string;
+  inception?: StatementDate;
+  demolished?: StatementDate;
   address?: string;
   addressStartDate?: string;
   addressEndDate?: string;
@@ -112,26 +112,18 @@ export function validateEditData(data: BuildingEditData): { valid: boolean; erro
     errors.push('Building type ID must be in format Q123');
   }
 
-  if (data.inception) {
-    // Try to parse as user input (YYYY, YYYY-MM, YYYY-MM-DD)
-    const parsed = parseDate(data.inception);
-    if (!parsed) {
-      errors.push('Inception must be a year (YYYY) or ISO date');
-    }
+  if (data.inception && !data.inception.value && !data.inception.earliest && !data.inception.latest) {
+    errors.push('Inception date is empty');
   }
 
-  if (data.demolished) {
-    // Try to parse as user input (YYYY, YYYY-MM, YYYY-MM-DD)
-    const parsed = parseDate(data.demolished);
-    if (!parsed) {
-      errors.push('Demolished date must be a year (YYYY) or ISO date');
-    }
+  if (data.demolished && !data.demolished.value && !data.demolished.earliest && !data.demolished.latest) {
+    errors.push('Demolished date is empty');
   }
 
   // Check if there are any non-empty changes to claims
   const hasClaimChanges = (data.type !== undefined) ||
-                          (data.inception !== undefined && data.inception !== '') ||
-                          (data.demolished !== undefined && data.demolished !== '') ||
+                          (data.inception !== undefined) ||
+                          (data.demolished !== undefined) ||
                           (data.address !== undefined && data.address !== '') ||
                           (data.architect !== undefined) ||
                           (data.commissionedBy !== undefined) ||
@@ -202,6 +194,55 @@ function createStatementValue(value: string | WikidataItem, type: 'string' | 'ti
     const item = value as WikidataItem;
     return { type: 'value', content: item.id };
   }
+}
+
+function createTimeContent(t: WikidataTime) {
+  return {
+    type: 'value',
+    content: { time: t.time, precision: t.precision, calendarmodel: t.calendarmodel },
+  };
+}
+
+/**
+ * Builds a REST API statement for a time property. A date without a value
+ * becomes an unknown-value (somevalue) statement; earliest/latest bounds
+ * become P1319/P1326 qualifiers.
+ */
+export function createDateStatement(prop: string, date: StatementDate, source?: SourceRef) {
+  const qualifiers: Array<{ property: { id: string }; value: ReturnType<typeof createTimeContent> }> = [];
+  if (date.earliest) qualifiers.push({ property: { id: 'P1319' }, value: createTimeContent(date.earliest) });
+  if (date.latest) qualifiers.push({ property: { id: 'P1326' }, value: createTimeContent(date.latest) });
+  return {
+    property: { id: prop },
+    value: date.value ? createTimeContent(date.value) : { type: 'somevalue' },
+    ...(qualifiers.length > 0 && { qualifiers }),
+    ...(source && { references: [createReference(source)] }),
+  };
+}
+
+function timeContentMatches(value: any, t: WikidataTime): boolean {
+  return value?.type === 'value'
+    && value?.content?.time === t.time
+    && value?.content?.precision === t.precision;
+}
+
+/**
+ * Whether an existing REST API statement already records exactly this
+ * date (value or somevalue, including its earliest/latest qualifiers) —
+ * in that case only a reference is added instead of replacing it.
+ */
+export function dateStatementMatches(stmt: any, date: StatementDate): boolean {
+  const valueMatches = date.value
+    ? timeContentMatches(stmt.value, date.value)
+    : stmt.value?.type === 'somevalue';
+  if (!valueMatches) return false;
+
+  const qualifierMatches = (prop: string, t?: WikidataTime) => {
+    const quals = (stmt.qualifiers ?? []).filter((q: any) => q.property?.id === prop);
+    if (!t) return quals.length === 0;
+    return quals.some((q: any) => timeContentMatches(q.value, t));
+  };
+  return qualifierMatches('P1319', date.earliest) && qualifierMatches('P1326', date.latest);
 }
 
 /**
@@ -364,9 +405,8 @@ export async function editBuilding(
 
   if (editData.inception) {
     const existingStatements = item.statements?.P571 || [];
-    const normalizedInception = editData.inception.startsWith('+') ? editData.inception : `+${editData.inception}`;
     const matchingIdx = existingStatements.findIndex((stmt: any) =>
-      stmt.value?.content?.time === normalizedInception
+      dateStatementMatches(stmt, editData.inception!)
     );
 
     if (matchingIdx >= 0 && editData.source) {
@@ -380,13 +420,7 @@ export async function editBuilding(
         value: existingRefs.length > 0 ? createReference(editData.source) : [createReference(editData.source)],
       });
     } else {
-      const newStatement = {
-        property: { id: 'P571' },
-        value: createStatementValue(editData.inception, 'time'),
-        ...(editData.source && {
-          references: [createReference(editData.source)],
-        }),
-      };
+      const newStatement = createDateStatement('P571', editData.inception, editData.source);
 
       patchOps.push({
         op: existingStatements.length > 0 ? 'replace' : 'add',
@@ -398,9 +432,8 @@ export async function editBuilding(
 
   if (editData.demolished) {
     const existingStatements = item.statements?.P576 || [];
-    const normalizedDemolished = editData.demolished.startsWith('+') ? editData.demolished : `+${editData.demolished}`;
     const matchingIdx = existingStatements.findIndex((stmt: any) =>
-      stmt.value?.content?.time === normalizedDemolished
+      dateStatementMatches(stmt, editData.demolished!)
     );
 
     if (matchingIdx >= 0 && editData.source) {
@@ -414,13 +447,7 @@ export async function editBuilding(
         value: existingRefs.length > 0 ? createReference(editData.source) : [createReference(editData.source)],
       });
     } else {
-      const newStatement = {
-        property: { id: 'P576' },
-        value: createStatementValue(editData.demolished, 'time'),
-        ...(editData.source && {
-          references: [createReference(editData.source)],
-        }),
-      };
+      const newStatement = createDateStatement('P576', editData.demolished, editData.source);
 
       patchOps.push({
         op: existingStatements.length > 0 ? 'replace' : 'add',
@@ -654,7 +681,7 @@ export interface BuildingCreateData {
   type?: WikidataItem;
   lat: number;
   lng: number;
-  inception?: string;
+  inception?: StatementDate;
   source: SourceRef;
 }
 
@@ -687,17 +714,7 @@ export function buildBuildingItemPayload(data: BuildingCreateData) {
   };
 
   if (data.inception) {
-    const parsed = parseDate(data.inception);
-    if (parsed) {
-      statements['P571'] = [{
-        property: { id: 'P571' },
-        value: {
-          type: 'value',
-          content: { time: parsed.time, precision: parsed.precision, calendarmodel: parsed.calendarmodel },
-        },
-        references: [reference],
-      }];
-    }
+    statements['P571'] = [createDateStatement('P571', data.inception, data.source)];
   }
 
   const label = data.label.trim();

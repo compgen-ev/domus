@@ -7,14 +7,19 @@ import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/bu
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData, type SourceRef } from '../services/wikidata-edit-rest';
-import { dateValueToInputString } from '../utils/dates';
+import { statementDateToEdit, editToStatementDate, type StatementDateEdit } from '../utils/dates';
 import './entity-search';
 import './app-button';
 import './icon';
 import './date-input';
+import './statement-date-input';
 import IconCheck from '~icons/mdi/check';
 import IconClose from '~icons/mdi/close';
 import IconUnfoldMore from '~icons/mdi/unfold-more-horizontal';
+
+function dateEditsEqual(a: StatementDateEdit, b: StatementDateEdit): boolean {
+  return a.mode === b.mode && a.value === b.value && a.earliest === b.earliest && a.latest === b.latest;
+}
 
 @localized()
 @customElement('building-edit-form')
@@ -236,9 +241,19 @@ export class BuildingEditForm extends LitElement {
         background: var(--color-bg-primary);
         border-top: 1px solid var(--color-border);
         padding: var(--space-4);
+        box-sizing: border-box;
+      }
+
+      .form-footer-buttons {
         display: flex;
         gap: var(--space-3);
-        box-sizing: border-box;
+      }
+
+      .save-hint {
+        margin-top: var(--space-2);
+        font-size: var(--font-size-xs);
+        color: var(--color-error);
+        text-align: center;
       }
 
       .btn-primary {
@@ -312,8 +327,8 @@ export class BuildingEditForm extends LitElement {
   @state() private formLabel = '';
   @state() private formAliases = '';
   @state() private formType: WikidataItem | undefined;
-  @state() private formInception = '';
-  @state() private formDemolished = '';
+  @state() private formInception: StatementDateEdit = statementDateToEdit(undefined);
+  @state() private formDemolished: StatementDateEdit = statementDateToEdit(undefined);
   @state() private formAddress = '';
   @state() private formAddressStartDate = '';
   @state() private formAddressEndDate = '';
@@ -329,16 +344,20 @@ export class BuildingEditForm extends LitElement {
   @state() private saveError: string | null = null;
   @state() private saveErrorDetails: any = null;
 
-  // Only a statement's own value is editable as a plain date input.
-  // Unknown-value dates ("vor 1409", bounds in earliest/latest) map to ''
-  // here; editing those means editing the qualifiers, which the form
-  // doesn't support yet.
-  private get _currentInceptionInput(): string {
-    return this.building?.inception?.value ? dateValueToInputString(this.building.inception.value) : '';
+  private get _inceptionChanged(): boolean {
+    return !dateEditsEqual(this.formInception, this._currentInceptionEdit);
   }
 
-  private get _currentDemolishedInput(): string {
-    return this.detail?.demolished?.value ? dateValueToInputString(this.detail.demolished.value) : '';
+  private get _demolishedChanged(): boolean {
+    return !dateEditsEqual(this.formDemolished, this._currentDemolishedEdit);
+  }
+
+  private get _currentInceptionEdit(): StatementDateEdit {
+    return statementDateToEdit(this.building?.inception);
+  }
+
+  private get _currentDemolishedEdit(): StatementDateEdit {
+    return statementDateToEdit(this.detail?.demolished);
   }
 
   private get _typeSuggestions(): WikidataItem[] {
@@ -350,8 +369,8 @@ export class BuildingEditForm extends LitElement {
     if (changed.has('building') && this.building) {
       this.formLabel = this.building.label;
       this.formType = this.building.type;
-      this.formInception = this._currentInceptionInput;
-      this.formDemolished = this._currentDemolishedInput;
+      this.formInception = this._currentInceptionEdit;
+      this.formDemolished = this._currentDemolishedEdit;
       this.sourceUrl = '';
       this.sourcePage = '';
       this.archiveItem = undefined;
@@ -368,47 +387,50 @@ export class BuildingEditForm extends LitElement {
     }
   }
 
-  private get _canSave(): boolean {
-    // Check if there are any changes or additions
-    const hasChanges =
-      (this.formLabel !== this.building?.label) ||
+  private get _hasChanges(): boolean {
+    return (this.formLabel !== this.building?.label) ||
       (this.formType !== undefined && this.formType !== this.building?.type) ||
-      (this.formInception !== this._currentInceptionInput) ||
-      (this.formDemolished !== this._currentDemolishedInput) ||
+      this._inceptionChanged ||
+      this._demolishedChanged ||
       (this.formAddress.trim() !== '') ||
       (this.formAliases.trim() !== '') ||
       (this.formArchitect !== undefined) ||
       (this.formCommissionedBy !== undefined) ||
       (this.formOwner !== undefined) ||
       (this.formOccupant !== undefined);
+  }
 
-    // No changes = can't save
-    if (!hasChanges) {
-      return false;
-    }
-
-    // Check if there are any claim changes (not label/aliases)
-    const hasClaimChanges =
-      (this.formType !== undefined && this.formType !== this.building?.type) ||
-      (this.formInception !== this._currentInceptionInput) ||
-      (this.formDemolished !== this._currentDemolishedInput) ||
+  private get _hasClaimChanges(): boolean {
+    // Same as _hasChanges but excludes label/aliases, which don't need a source
+    return (this.formType !== undefined && this.formType !== this.building?.type) ||
+      this._inceptionChanged ||
+      this._demolishedChanged ||
       (this.formAddress.trim() !== '') ||
       (this.formArchitect !== undefined) ||
       (this.formCommissionedBy !== undefined) ||
       (this.formOwner !== undefined) ||
       (this.formOccupant !== undefined);
+  }
 
-    // Source is required when there are claim changes
-    if (hasClaimChanges) {
-      if (this.sourceType === 'url' && !this.sourceUrl.trim()) return false;
-      if (this.sourceType === 'archive' && (!this.archiveItem || !this.archiveCallNumber.trim())) return false;
-      if (this.sourceType === 'book') {
-        if (this.bookMode === 'item' && !this.bookItem) return false;
-        if (this.bookMode === 'freetext' && !this.bookTitle.trim()) return false;
-      }
+  private get _sourceIncomplete(): boolean {
+    if (this.sourceType === 'url') return !this.sourceUrl.trim();
+    if (this.sourceType === 'archive') return !this.archiveItem || !this.archiveCallNumber.trim();
+    if (this.bookMode === 'item') return !this.bookItem;
+    return !this.bookTitle.trim();
+  }
+
+  /** Why the save button is disabled, or null if it isn't. Drives both
+   * the button state and the hint shown next to it. */
+  private get _saveBlockedReason(): string | null {
+    if (!this._hasChanges) return null; // nothing to save — no hint needed
+    if (this._hasClaimChanges && this._sourceIncomplete) {
+      return msg('Quelle erforderlich, um Änderungen zu speichern');
     }
+    return null;
+  }
 
-    return true;
+  private get _canSave(): boolean {
+    return this._hasChanges && this._saveBlockedReason === null;
   }
 
   private _cancel() {
@@ -457,13 +479,26 @@ export class BuildingEditForm extends LitElement {
       }
     }
 
+    // Parse changed dates; null means invalid input — abort with a message
+    const inceptionDate = this._inceptionChanged
+      ? editToStatementDate(this.formInception, this.building.inception)
+      : undefined;
+    const demolishedDate = this._demolishedChanged
+      ? editToStatementDate(this.formDemolished, this.detail?.demolished)
+      : undefined;
+    if (inceptionDate === null || demolishedDate === null) {
+      this.saveError = msg('Ungültiges Datum');
+      this.saving = false;
+      return;
+    }
+
     const editData: BuildingEditData = {
       id: this.building.id,
       label: this.formLabel !== this.building.label ? this.formLabel : undefined,
       aliases: this.formAliases || undefined,
       type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
-      inception: this.formInception !== this._currentInceptionInput ? this.formInception : undefined,
-      demolished: this.formDemolished !== this._currentDemolishedInput ? this.formDemolished : undefined,
+      inception: inceptionDate ?? undefined,
+      demolished: demolishedDate ?? undefined,
       address: this.formAddress || undefined,
       addressStartDate: this.formAddressStartDate || undefined,
       addressEndDate: this.formAddressEndDate || undefined,
@@ -581,19 +616,21 @@ export class BuildingEditForm extends LitElement {
           </div>
           <div class="field-group">
             <label>${msg('Erbaut')}</label>
-            <date-input
-              .value=${this.formInception}
-              @value-changed=${(e: CustomEvent<string>) => this.formInception = e.detail}
+            <statement-date-input
+              .edit=${this.formInception}
+              .previous=${this.building.inception}
+              @edit-changed=${(e: CustomEvent<StatementDateEdit>) => this.formInception = e.detail}
               ?disabled=${this.saving}
-            ></date-input>
+            ></statement-date-input>
           </div>
           <div class="field-group">
             <label>${msg('Abgerissen')}</label>
-            <date-input
-              .value=${this.formDemolished}
-              @value-changed=${(e: CustomEvent<string>) => this.formDemolished = e.detail}
+            <statement-date-input
+              .edit=${this.formDemolished}
+              .previous=${this.detail?.demolished}
+              @edit-changed=${(e: CustomEvent<StatementDateEdit>) => this.formDemolished = e.detail}
               ?disabled=${this.saving}
-            ></date-input>
+            ></statement-date-input>
           </div>
         </div>
 
@@ -884,12 +921,17 @@ export class BuildingEditForm extends LitElement {
       </div>
 
       <div class="form-footer">
-        <app-button variant="secondary" .leadingIcon=${IconClose} @click=${this._cancel} ?disabled=${this.saving}>
-          ${msg('Abbrechen')}
-        </app-button>
-        <app-button variant="primary" .leadingIcon=${IconCheck} @click=${this._save} ?disabled=${this.saving || !this._canSave}>
-          ${this.saving ? msg('Wird gespeichert …') : msg('Änderungen speichern')}
-        </button>
+        <div class="form-footer-buttons">
+          <app-button variant="secondary" .leadingIcon=${IconClose} @click=${this._cancel} ?disabled=${this.saving}>
+            ${msg('Abbrechen')}
+          </app-button>
+          <app-button variant="primary" .leadingIcon=${IconCheck} @click=${this._save} ?disabled=${this.saving || !this._canSave}>
+            ${this.saving ? msg('Wird gespeichert …') : msg('Änderungen speichern')}
+          </app-button>
+        </div>
+        ${!this.saving && this._saveBlockedReason ? html`
+          <div class="save-hint">${this._saveBlockedReason}</div>
+        ` : ''}
       </div>
     `);
   }

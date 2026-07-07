@@ -263,6 +263,94 @@ export function statementDateFromTimeString(timeStr: string): StatementDate | un
   return value ? { value } : undefined;
 }
 
+/** How a StatementDate is being edited in the form. */
+export type DateMode = 'value' | 'before' | 'after' | 'between';
+
+/**
+ * Editable representation of a StatementDate: a mode plus the raw input
+ * strings. Only the strings relevant for the mode are meaningful; the
+ * others may hold stale text from a previous mode.
+ */
+export interface StatementDateEdit {
+  mode: DateMode;
+  value: string;
+  earliest: string;
+  latest: string;
+}
+
+/** Derive the edit mode and input strings for an existing date. */
+export function statementDateToEdit(date?: StatementDate): StatementDateEdit {
+  const edit: StatementDateEdit = { mode: 'value', value: '', earliest: '', latest: '' };
+  if (!date) return edit;
+  // A statement with its own value is edited as that value, even if
+  // bounds qualifiers exist (they are preserved on save, see
+  // editToStatementDate)
+  if (date.value) {
+    edit.value = dateValueToInputString(date.value);
+    return edit;
+  }
+  if (date.earliest) edit.earliest = dateValueToInputString(date.earliest);
+  if (date.latest) edit.latest = dateValueToInputString(date.latest);
+  edit.mode = date.earliest && date.latest ? 'between' : date.earliest ? 'after' : 'before';
+  return edit;
+}
+
+/**
+ * Parse an edit state back into a StatementDate.
+ *
+ * Returns undefined when the relevant inputs are blank (no date), and
+ * null when they are invalid or inconsistent (unparseable text,
+ * incomplete "between", earliest after latest).
+ *
+ * `previous` is the date being edited, if any: each part's calendar
+ * model is preserved for unchanged years (see parseDate), and bounds
+ * qualifiers of a value statement are carried through untouched when
+ * editing in 'value' mode.
+ */
+export function editToStatementDate(
+  edit: StatementDateEdit,
+  previous?: StatementDate,
+): StatementDate | null | undefined {
+  if (edit.mode === 'value') {
+    if (!edit.value.trim()) return undefined;
+    const value = parseDate(edit.value, previous?.value);
+    if (!value) return null;
+    if (previous?.value && (previous.earliest || previous.latest)) {
+      return { value, earliest: previous.earliest, latest: previous.latest };
+    }
+    return { value };
+  }
+
+  const wantEarliest = edit.mode !== 'before';
+  const wantLatest = edit.mode !== 'after';
+  const hasEarliest = wantEarliest && !!edit.earliest.trim();
+  const hasLatest = wantLatest && !!edit.latest.trim();
+  if (!hasEarliest && !hasLatest) return undefined;
+  if ((wantEarliest && !hasEarliest) || (wantLatest && !hasLatest)) return null;
+
+  const earliest = hasEarliest ? parseDate(edit.earliest, previous?.earliest) : null;
+  const latest = hasLatest ? parseDate(edit.latest, previous?.latest) : null;
+  if ((hasEarliest && !earliest) || (hasLatest && !latest)) return null;
+
+  if (earliest && latest) {
+    const a = signedYear(earliest.time) ?? 0;
+    const b = signedYear(latest.time) ?? 0;
+    if (a > b) return null;
+  }
+
+  return {
+    ...(earliest && { earliest }),
+    ...(latest && { latest }),
+  };
+}
+
+/** Whether any part of the date is recorded in the Julian calendar. */
+export function usesJulianCalendar(date: StatementDate): boolean {
+  return [date.value, date.earliest, date.latest].some(
+    (t) => t?.calendarmodel === PROLEPTIC_JULIAN,
+  );
+}
+
 /**
  * Convert a WikidataTime to the user-editable input string accepted by
  * parseDate(). Round-trips all supported precisions:
@@ -290,9 +378,9 @@ export function dateValueToInputString(wdt: WikidataTime): string {
   switch (wdt.precision) {
     case 11: return `${displayYear}-${month}-${day}`;
     case 10: return `${displayYear}-${month}`;
-    case 8:  return `${bce}${Math.floor(yearNum / 10) * 10}er`;
-    case 7:  return `${bce}${Math.ceil(yearNum / 100)}. Jh.`;
-    case 6:  return `${bce}${Math.ceil(yearNum / 1000)}. Jt.`;
+    // Coarse forms share formatDateValue's localized strings; parseDate
+    // accepts every locale's syntax, so this round-trips in any locale
+    case 8: case 7: case 6: return formatDateValue(wdt);
     default:  return displayYear;
   }
 }

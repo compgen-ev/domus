@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { validateEditData, buildPersonItemPayload, buildBuildingItemPayload } from './wikidata-edit-rest';
+import { validateEditData, buildPersonItemPayload, buildBuildingItemPayload, createDateStatement, dateStatementMatches } from './wikidata-edit-rest';
 import type { BuildingEditData } from './wikidata-edit-rest';
+import { parseDate } from '../utils/dates';
+
+/** StatementDate with a plain value, for tests. */
+const date = (input: string) => ({ value: parseDate(input)! });
 
 const urlSource = { type: 'url' as const, url: 'https://example.com/source' };
 const archiveSource = {
@@ -71,52 +75,52 @@ describe('validateEditData', () => {
     expect(result.errors).toContain('Building type ID must be in format Q123');
   });
 
-  it('validates inception date format', () => {
+  it('rejects an empty inception date', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: 'not a date',
+      inception: {},
       source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Inception must be a year (YYYY) or ISO date');
+    expect(result.errors).toContain('Inception date is empty');
   });
 
-  it('accepts YYYY format for inception', () => {
+  it('accepts a value date for inception', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950',
+      inception: date('1950'),
       source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
   });
 
-  it('accepts YYYY-MM-DD format for inception', () => {
+  it('accepts an unknown-value inception with only a latest bound', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950-06-15',
+      inception: { latest: parseDate('1409')! },
       source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(true);
   });
 
-  it('validates demolished date format', () => {
+  it('rejects an empty demolished date', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      demolished: 'not a date',
+      demolished: {},
       source: urlSource,
     };
     const result = validateEditData(data);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('Demolished date must be a year (YYYY) or ISO date');
+    expect(result.errors).toContain('Demolished date is empty');
   });
 
   it('requires source when editing claims', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950',
+      inception: date('1950'),
       // no source
     };
     const result = validateEditData(data);
@@ -196,7 +200,7 @@ describe('validateEditData', () => {
   it('validates source URL format', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950',
+      inception: date('1950'),
       source: { type: 'url', url: 'not a url' },
     };
     const result = validateEditData(data);
@@ -207,7 +211,7 @@ describe('validateEditData', () => {
   it('accepts valid URL source', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950',
+      inception: date('1950'),
       source: urlSource,
     };
     const result = validateEditData(data);
@@ -217,7 +221,7 @@ describe('validateEditData', () => {
   it('accepts valid archive source', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950',
+      inception: date('1950'),
       source: archiveSource,
     };
     const result = validateEditData(data);
@@ -227,7 +231,7 @@ describe('validateEditData', () => {
   it('rejects archive source with invalid archive QID', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950',
+      inception: date('1950'),
       source: { type: 'archive', archive: { id: 'not-a-qid', label: 'Test' }, callNumber: 'Rep. 5' },
     };
     const result = validateEditData(data);
@@ -238,7 +242,7 @@ describe('validateEditData', () => {
   it('rejects archive source with empty call number', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950',
+      inception: date('1950'),
       source: { type: 'archive', archive: { id: 'Q594641', label: 'Stadtarchiv München' }, callNumber: '  ' },
     };
     const result = validateEditData(data);
@@ -249,7 +253,7 @@ describe('validateEditData', () => {
   it('accepts archive source with optional page', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1950',
+      inception: date('1950'),
       source: { ...archiveSource, page: 'S. 12' },
     };
     const result = validateEditData(data);
@@ -261,8 +265,8 @@ describe('validateEditData', () => {
       id: 'Q123',
       label: 'New Building Name',
       type: { id: 'Q3947', label: 'dwelling' },
-      inception: '1950',
-      demolished: '2020',
+      inception: date('1950'),
+      demolished: date('2020'),
       address: 'Hauptstraße 1',
       architect: { id: 'Q456', label: 'Test Architect' },
       commissionedBy: { id: 'Q789', label: 'Test Commissioner' },
@@ -278,7 +282,7 @@ describe('validateEditData', () => {
   it('accepts all new properties together with archive source', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1850',
+      inception: date('1850'),
       owner: { id: 'Q999', label: 'Test Owner' },
       source: archiveSource,
     };
@@ -329,7 +333,7 @@ describe('validateEditData', () => {
   it('accepts valid book item source', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1900',
+      inception: date('1900'),
       source: { type: 'book', mode: 'item', book: { id: 'Q456', label: 'Denkmäler in Bayern' } },
     };
     const result = validateEditData(data);
@@ -339,7 +343,7 @@ describe('validateEditData', () => {
   it('accepts book item source with optional page', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1900',
+      inception: date('1900'),
       source: { type: 'book', mode: 'item', book: { id: 'Q456', label: 'Denkmäler in Bayern' }, page: '42' },
     };
     const result = validateEditData(data);
@@ -349,7 +353,7 @@ describe('validateEditData', () => {
   it('rejects book item source with invalid QID', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1900',
+      inception: date('1900'),
       source: { type: 'book', mode: 'item', book: { id: 'not-a-qid', label: 'Test' } },
     };
     const result = validateEditData(data);
@@ -360,7 +364,7 @@ describe('validateEditData', () => {
   it('accepts valid book freetext source', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1900',
+      inception: date('1900'),
       source: { type: 'book', mode: 'freetext', title: 'Denkmäler in Bayern', titleLanguage: 'de' },
     };
     const result = validateEditData(data);
@@ -370,7 +374,7 @@ describe('validateEditData', () => {
   it('accepts book freetext source with all optional fields', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1900',
+      inception: date('1900'),
       source: { type: 'book', mode: 'freetext', title: 'Denkmäler in Bayern', titleLanguage: 'de', author: 'Georg Lill', year: '1934', page: '42' },
     };
     const result = validateEditData(data);
@@ -380,7 +384,7 @@ describe('validateEditData', () => {
   it('rejects book freetext source with empty title', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1900',
+      inception: date('1900'),
       source: { type: 'book', mode: 'freetext', title: '', titleLanguage: 'de' },
     };
     const result = validateEditData(data);
@@ -391,7 +395,7 @@ describe('validateEditData', () => {
   it('rejects book freetext source with invalid year', () => {
     const data: BuildingEditData = {
       id: 'Q123',
-      inception: '1900',
+      inception: date('1900'),
       source: { type: 'book', mode: 'freetext', title: 'Test', titleLanguage: 'de', year: '19ab' },
     };
     const result = validateEditData(data);
@@ -404,7 +408,7 @@ describe('validateEditData', () => {
       id: 'invalid-id',
       label: '   ',
       type: { id: 'bad-type', label: 'Test' },
-      inception: 'bad-date',
+      inception: {},
       source: { type: 'url', url: 'not-a-url' },
     };
     const result = validateEditData(data);
@@ -646,8 +650,8 @@ describe('buildBuildingItemPayload', () => {
     expect(payload.statements.P571).toBeUndefined();
   });
 
-  it('includes P571 when inception year is provided', () => {
-    const payload = buildBuildingItemPayload({ ...base, inception: '1890' });
+  it('includes P571 when inception is provided', () => {
+    const payload = buildBuildingItemPayload({ ...base, inception: date('1890') });
     const p571 = payload.statements.P571?.[0];
     expect(p571).toBeDefined();
     expect(p571.property.id).toBe('P571');
@@ -663,5 +667,136 @@ describe('buildBuildingItemPayload', () => {
     expect(Array.isArray(ref.parts)).toBe(true);
     const propIds = ref.parts.map((p: any) => p.property.id);
     expect(propIds).toContain('P485');
+  });
+});
+
+describe('createDateStatement', () => {
+  it('builds a plain value statement', () => {
+    const stmt = createDateStatement('P571', date('1950-06-15'), urlSource);
+    expect(stmt).toEqual({
+      property: { id: 'P571' },
+      value: {
+        type: 'value',
+        content: {
+          time: '+1950-06-15T00:00:00Z',
+          precision: 11,
+          calendarmodel: 'http://www.wikidata.org/entity/Q1985727',
+        },
+      },
+      references: [expect.anything()],
+    });
+  });
+
+  it('builds an unknown-value statement with a latest bound (vor 1409)', () => {
+    const stmt = createDateStatement('P571', { latest: parseDate('1409')! });
+    expect(stmt.value).toEqual({ type: 'somevalue' });
+    expect(stmt.qualifiers).toEqual([
+      {
+        property: { id: 'P1326' },
+        value: {
+          type: 'value',
+          content: {
+            time: '+1409-00-00T00:00:00Z',
+            precision: 9,
+            calendarmodel: 'http://www.wikidata.org/entity/Q1985786',
+          },
+        },
+      },
+    ]);
+  });
+
+  it('builds both bounds for between', () => {
+    const stmt = createDateStatement('P576', {
+      earliest: parseDate('1380')!,
+      latest: parseDate('1409')!,
+    });
+    expect(stmt.value).toEqual({ type: 'somevalue' });
+    expect(stmt.qualifiers?.map((q: any) => q.property.id)).toEqual(['P1319', 'P1326']);
+  });
+
+  it('keeps preserved bounds qualifiers on a value statement', () => {
+    const stmt = createDateStatement('P571', {
+      value: parseDate('1401')!,
+      latest: parseDate('1409')!,
+    });
+    expect(stmt.value.type).toBe('value');
+    expect(stmt.qualifiers?.map((q: any) => q.property.id)).toEqual(['P1326']);
+  });
+
+  it('omits qualifiers and references when absent', () => {
+    const stmt = createDateStatement('P571', date('1950'));
+    expect(stmt).not.toHaveProperty('qualifiers');
+    expect(stmt).not.toHaveProperty('references');
+  });
+});
+
+describe('dateStatementMatches', () => {
+  const somevalueStmt = {
+    value: { type: 'somevalue' },
+    qualifiers: [
+      {
+        property: { id: 'P1326' },
+        value: {
+          type: 'value',
+          content: {
+            time: '+1409-00-00T00:00:00Z',
+            precision: 9,
+            calendarmodel: 'http://www.wikidata.org/entity/Q1985786',
+          },
+        },
+      },
+    ],
+  };
+
+  it('matches an identical unknown-value statement', () => {
+    expect(dateStatementMatches(somevalueStmt, { latest: parseDate('1409')! })).toBe(true);
+  });
+  it('rejects when the bound differs', () => {
+    expect(dateStatementMatches(somevalueStmt, { latest: parseDate('1410')! })).toBe(false);
+  });
+  it('rejects when the mode differs (value vs somevalue)', () => {
+    expect(dateStatementMatches(somevalueStmt, date('1409'))).toBe(false);
+  });
+  it('rejects when the edit has no bound but the statement does', () => {
+    expect(dateStatementMatches(somevalueStmt, { earliest: parseDate('1380')! })).toBe(false);
+  });
+  it('matches a plain value statement on time and precision', () => {
+    const stmt = createDateStatement('P571', date('1950'));
+    expect(dateStatementMatches(stmt, date('1950'))).toBe(true);
+    expect(dateStatementMatches(stmt, date('1950-06'))).toBe(false);
+  });
+});
+
+describe('buildBuildingItemPayload unknown-value inception', () => {
+  const base = {
+    label: 'Testhaus',
+    lat: 48.1,
+    lng: 11.5,
+    source: urlSource,
+  };
+
+  it('creates a somevalue P571 with a latest bound (vor 1409)', () => {
+    const payload = buildBuildingItemPayload({ ...base, inception: { latest: parseDate('1409')! } });
+    const p571 = payload.statements.P571?.[0];
+    expect(p571.value).toEqual({ type: 'somevalue' });
+    expect(p571.qualifiers).toEqual([
+      {
+        property: { id: 'P1326' },
+        value: {
+          type: 'value',
+          content: {
+            time: '+1409-00-00T00:00:00Z',
+            precision: 9,
+            calendarmodel: 'http://www.wikidata.org/entity/Q1985786',
+          },
+        },
+      },
+    ]);
+    expect(p571.references).toHaveLength(1);
+  });
+
+  it('attaches the source reference to a plain-value inception too', () => {
+    const payload = buildBuildingItemPayload({ ...base, inception: date('1890') });
+    expect(payload.statements.P571[0].references).toHaveLength(1);
   });
 });

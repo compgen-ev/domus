@@ -22,6 +22,9 @@ export class DateInput extends LitElement {
       input {
         width: 100%;
         box-sizing: border-box;
+        /* Match the height of dropdown-select triggers and the forms'
+           other fields, which all use space-2 (inputStyles has space-3) */
+        padding: var(--space-2);
       }
 
       input[aria-invalid="true"] {

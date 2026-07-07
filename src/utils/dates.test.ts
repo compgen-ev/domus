@@ -7,9 +7,13 @@ import {
   dateValueToInputString,
   formatStatementDate,
   statementDateFromTimeString,
+  statementDateToEdit,
+  editToStatementDate,
+  usesJulianCalendar,
   isValidDateInput,
   getDateValidationError,
   type WikidataTime,
+  type StatementDate,
 } from './dates';
 
 describe('parseDate', () => {
@@ -626,6 +630,12 @@ describe('parseDate coarse precisions', () => {
       expect(parseDate('19.Jh')?.precision).toBe(7);
       expect(parseDate('19. Jh')?.time).toBe('+1900-00-00T00:00:00Z');
     });
+    it('parses the English emission forms "19. century" / "2. millennium"', () => {
+      // dateValueToInputString emits these via the localized formatter;
+      // the parser must accept them in any locale
+      expect(parseDate('19. century')?.precision).toBe(7);
+      expect(parseDate('2. millennium')?.precision).toBe(6);
+    });
     it('parses English ordinal century "19th century"', () => {
       expect(parseDate('19th century')?.time).toBe('+1900-00-00T00:00:00Z');
       expect(parseDate('19th century')?.precision).toBe(7);
@@ -752,5 +762,143 @@ describe('getDateValidationError coarse formats', () => {
   });
   it('rejects garbage with a format hint', () => {
     expect(getDateValidationError('not a date')).toContain('Format');
+  });
+});
+
+// ─── StatementDateEdit (structured edit state) ───────────────────────────────
+
+describe('statementDateToEdit / editToStatementDate', () => {
+  const GREGORIAN = 'http://www.wikidata.org/entity/Q1985727';
+  const JULIAN = 'http://www.wikidata.org/entity/Q1985786';
+  function wdt(time: string, precision: number, cal = GREGORIAN): WikidataTime {
+    return { time, precision, calendarmodel: cal };
+  }
+
+  describe('statementDateToEdit', () => {
+    it('maps absent date to empty exact mode', () => {
+      expect(statementDateToEdit(undefined)).toEqual({ mode: 'value', value: '', earliest: '', latest: '' });
+    });
+    it('maps a plain value to exact mode', () => {
+      expect(statementDateToEdit({ value: wdt('+1950-06-00T00:00:00Z', 10) })).toEqual({
+        mode: 'value', value: '1950-06', earliest: '', latest: '',
+      });
+    });
+    it('maps latest-only to before mode', () => {
+      expect(statementDateToEdit({ latest: wdt('+1409-00-00T00:00:00Z', 9, JULIAN) })).toEqual({
+        mode: 'before', value: '', earliest: '', latest: '1409',
+      });
+    });
+    it('maps earliest-only to after mode', () => {
+      expect(statementDateToEdit({ earliest: wdt('+1380-00-00T00:00:00Z', 9, JULIAN) })).toEqual({
+        mode: 'after', value: '', earliest: '1380', latest: '',
+      });
+    });
+    it('maps both bounds to between mode', () => {
+      expect(statementDateToEdit({
+        earliest: wdt('+1380-00-00T00:00:00Z', 9, JULIAN),
+        latest: wdt('+1409-00-00T00:00:00Z', 9, JULIAN),
+      })).toEqual({ mode: 'between', value: '', earliest: '1380', latest: '1409' });
+    });
+    it('a value with bounds qualifiers still edits as exact', () => {
+      expect(statementDateToEdit({
+        value: wdt('+1400-00-00T00:00:00Z', 9, JULIAN),
+        latest: wdt('+1409-00-00T00:00:00Z', 9, JULIAN),
+      }).mode).toBe('value');
+    });
+    it('uses coarse input forms', () => {
+      expect(statementDateToEdit({ value: wdt('+1900-00-00T00:00:00Z', 7) }).value).toBe('19. Jh.');
+    });
+  });
+
+  describe('editToStatementDate', () => {
+    it('returns undefined for an entirely blank exact edit', () => {
+      expect(editToStatementDate({ mode: 'value', value: '', earliest: '', latest: '' })).toBeUndefined();
+    });
+    it('parses exact mode', () => {
+      expect(editToStatementDate({ mode: 'value', value: '1950-06', earliest: '', latest: '' })).toEqual({
+        value: wdt('+1950-06-00T00:00:00Z', 10),
+      });
+    });
+    it('parses before mode, ignoring stale other fields', () => {
+      expect(editToStatementDate({ mode: 'before', value: '1950', earliest: '1300', latest: '1409' })).toEqual({
+        latest: wdt('+1409-00-00T00:00:00Z', 9, JULIAN),
+      });
+    });
+    it('parses after mode', () => {
+      expect(editToStatementDate({ mode: 'after', value: '', earliest: '1380', latest: '' })).toEqual({
+        earliest: wdt('+1380-00-00T00:00:00Z', 9, JULIAN),
+      });
+    });
+    it('parses between mode', () => {
+      expect(editToStatementDate({ mode: 'between', value: '', earliest: '1380', latest: '1409' })).toEqual({
+        earliest: wdt('+1380-00-00T00:00:00Z', 9, JULIAN),
+        latest: wdt('+1409-00-00T00:00:00Z', 9, JULIAN),
+      });
+    });
+    it('returns null for invalid input', () => {
+      expect(editToStatementDate({ mode: 'value', value: 'garbage', earliest: '', latest: '' })).toBeNull();
+    });
+    it('returns null for incomplete between', () => {
+      expect(editToStatementDate({ mode: 'between', value: '', earliest: '1380', latest: '' })).toBeNull();
+    });
+    it('returns null when earliest is after latest', () => {
+      expect(editToStatementDate({ mode: 'between', value: '', earliest: '1450', latest: '1409' })).toBeNull();
+    });
+    it('accepts equal-year bounds', () => {
+      expect(editToStatementDate({ mode: 'between', value: '', earliest: '1409', latest: '1409' })).not.toBeNull();
+    });
+    it('orders BCE before CE bounds correctly', () => {
+      expect(editToStatementDate({ mode: 'between', value: '', earliest: '-100', latest: '100' })).not.toBeNull();
+      expect(editToStatementDate({ mode: 'between', value: '', earliest: '100', latest: '-100' })).toBeNull();
+    });
+    it('preserves the previous calendar for an unchanged year', () => {
+      const previous: StatementDate = { value: wdt('+1580-06-15T00:00:00Z', 11, GREGORIAN) };
+      const result = editToStatementDate(
+        { mode: 'value', value: '1580-07', earliest: '', latest: '' },
+        previous,
+      );
+      expect(result?.value?.calendarmodel).toBe(GREGORIAN);
+    });
+    it('preserves the previous calendar per bound', () => {
+      const previous: StatementDate = { latest: wdt('+1409-00-00T00:00:00Z', 9, GREGORIAN) };
+      const result = editToStatementDate(
+        { mode: 'before', value: '', earliest: '', latest: '1409-06' },
+        previous,
+      );
+      expect(result?.latest?.calendarmodel).toBe(GREGORIAN);
+    });
+    it('keeps bounds qualifiers of a value statement untouched in exact mode', () => {
+      const previous: StatementDate = {
+        value: wdt('+1400-00-00T00:00:00Z', 9, JULIAN),
+        latest: wdt('+1409-00-00T00:00:00Z', 9, JULIAN),
+      };
+      const result = editToStatementDate(
+        { mode: 'value', value: '1401', earliest: '', latest: '' },
+        previous,
+      );
+      expect(result?.value?.time).toBe('+1401-00-00T00:00:00Z');
+      expect(result?.latest).toEqual(previous.latest);
+    });
+  });
+
+  describe('round-trip', () => {
+    it.each<StatementDate>([
+      { value: wdt('+1950-06-15T00:00:00Z', 11) },
+      { value: wdt('+1900-00-00T00:00:00Z', 7) },
+      { latest: wdt('+1409-00-00T00:00:00Z', 9, JULIAN) },
+      { earliest: wdt('+1380-00-00T00:00:00Z', 9, JULIAN) },
+      { earliest: wdt('+1380-00-00T00:00:00Z', 9, JULIAN), latest: wdt('+1409-00-00T00:00:00Z', 9, JULIAN) },
+    ])('editToStatementDate(statementDateToEdit(d), d) === d', (d) => {
+      expect(editToStatementDate(statementDateToEdit(d), d)).toEqual(d);
+    });
+  });
+});
+
+describe('usesJulianCalendar', () => {
+  const JULIAN = 'http://www.wikidata.org/entity/Q1985786';
+  const GREGORIAN = 'http://www.wikidata.org/entity/Q1985727';
+  it('detects Julian in any part', () => {
+    expect(usesJulianCalendar({ latest: { time: '+1409-00-00T00:00:00Z', precision: 9, calendarmodel: JULIAN } })).toBe(true);
+    expect(usesJulianCalendar({ value: { time: '+1950-00-00T00:00:00Z', precision: 9, calendarmodel: GREGORIAN } })).toBe(false);
   });
 });
