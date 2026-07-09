@@ -92,4 +92,71 @@ export const HISTORICAL_LAYERS: HistoricalLayerSource[] = [
     attributionUrl: 'https://staatsbibliothek-berlin.de',
     attributionLinkText: 'Staatsbibliothek zu Berlin',
   },
+  {
+    id: 'gdi-sh-chronologen-1',
+    title: 'Preußische Landesaufnahme / TK25 Chronologen 1878–1880',
+    region: 'Schleswig-Holstein',
+    yearRange: [1878, 1880],
+    // ArcGIS Server WMS, no token needed. LAYERS=3 selects the oldest of four
+    // chronology layers stacked on this one service (see siblings below).
+    tiles: [
+      'https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen' +
+      '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true' +
+      '&LAYERS=3&STYLES=&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}',
+    ],
+    // Server's MaxScaleDenominator (33073) blanks the layer above z14.
+    minzoom: 15,
+    bounds: [7.80, 53.38, 11.38, 55.10],
+    attribution: '© GeoBasis-DE/LVermGeo SH/CC BY 4.0',
+    attributionUrl: 'https://www.gdi-sh.de',
+    attributionLinkText: 'LVermGeo SH',
+  },
+  {
+    id: 'gdi-sh-chronologen-2',
+    title: 'Preußische Landesaufnahme / TK25 Chronologen 1902–1930',
+    region: 'Schleswig-Holstein',
+    yearRange: [1902, 1930],
+    tiles: [
+      'https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen' +
+      '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true' +
+      '&LAYERS=2&STYLES=&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}',
+    ],
+    minzoom: 15,
+    bounds: [7.80, 53.38, 11.38, 55.10],
+    attribution: '© GeoBasis-DE/LVermGeo SH/CC BY 4.0',
+    attributionUrl: 'https://www.gdi-sh.de',
+    attributionLinkText: 'LVermGeo SH',
+  },
+  {
+    id: 'gdi-sh-chronologen-3',
+    title: 'Preußische Landesaufnahme / TK25 Chronologen 1932–1950',
+    region: 'Schleswig-Holstein',
+    yearRange: [1932, 1950],
+    tiles: [
+      'https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen' +
+      '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true' +
+      '&LAYERS=1&STYLES=&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}',
+    ],
+    minzoom: 15,
+    bounds: [7.80, 53.38, 11.38, 55.10],
+    attribution: '© GeoBasis-DE/LVermGeo SH/CC BY 4.0',
+    attributionUrl: 'https://www.gdi-sh.de',
+    attributionLinkText: 'LVermGeo SH',
+  },
+  {
+    id: 'gdi-sh-chronologen-4',
+    title: 'Preußische Landesaufnahme / TK25 Chronologen 1953–1956',
+    region: 'Schleswig-Holstein',
+    yearRange: [1953, 1956],
+    tiles: [
+      'https://dienste.gdi-sh.de/WMS_SH_FD_Chronologen' +
+      '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true' +
+      '&LAYERS=0&STYLES=&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}',
+    ],
+    minzoom: 15,
+    bounds: [7.80, 53.38, 11.38, 55.10],
+    attribution: '© GeoBasis-DE/LVermGeo SH/CC BY 4.0',
+    attributionUrl: 'https://www.gdi-sh.de',
+    attributionLinkText: 'LVermGeo SH',
+  },
 ];
