@@ -408,7 +408,7 @@ export class EntitySearch extends LitElement {
         <div class="search-results">
           ${!this.searchQuery.trim() && this.suggestions.length > 0 ? html`
             ${this.suggestions.map(item => html`
-              <div class="result-item" @click=${() => this._onSelect(item)}>
+              <div class="result-item" @mousedown=${(e: Event) => e.preventDefault()} @click=${() => this._onSelect(item)}>
                 <div class="result-label">${item.label}</div>
               </div>
             `)}
@@ -416,7 +416,7 @@ export class EntitySearch extends LitElement {
             <div class="loading">${msg('Suche läuft...')}</div>
           ` : this.results.length > 0 ? html`
             ${this.results.map(item => html`
-              <div class="result-item" @click=${() => this._onSelect(item)}>
+              <div class="result-item" @mousedown=${(e: Event) => e.preventDefault()} @click=${() => this._onSelect(item)}>
                 <div class="result-label">${item.label}</div>
                 ${item.description ? html`
                   <div class="result-description">${item.description}</div>
@@ -425,14 +425,14 @@ export class EntitySearch extends LitElement {
               </div>
             `)}
             ${this.allowCreate ? html`
-              <div class="create-option" @click=${this._startCreate}>
+              <div class="create-option" @mousedown=${(e: Event) => e.preventDefault()} @click=${this._startCreate}>
                 + ${msg('Neue Person anlegen')}
               </div>
             ` : ''}
           ` : html`
             <div class="no-results">${msg('Keine Ergebnisse')}</div>
             ${this.allowCreate ? html`
-              <div class="create-option" @click=${this._startCreate}>
+              <div class="create-option" @mousedown=${(e: Event) => e.preventDefault()} @click=${this._startCreate}>
                 + ${msg(str`"${this.searchQuery}" als neue Person anlegen`)}
               </div>
             ` : ''}
