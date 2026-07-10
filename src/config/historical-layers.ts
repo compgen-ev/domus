@@ -159,4 +159,22 @@ export const HISTORICAL_LAYERS: HistoricalLayerSource[] = [
     attributionUrl: 'https://www.gdi-sh.de',
     attributionLinkText: 'LVermGeo SH',
   },
+  {
+    id: 'berlin-straubeplan-1910',
+    title: 'Straubes Übersichtsplan von Berlin (Historische Mitte)',
+    region: 'Berlin',
+    yearRange: [1910, 1910],
+    // GDI-BE WMS, CORS open (*), no token needed, EPSG:3857 native.
+    tiles: [
+      'https://gdi.berlin.de/services/wms/straubeplan' +
+      '?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=image%2Fpng&TRANSPARENT=true' +
+      '&LAYERS=straubeplan&STYLES=&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}',
+    ],
+    // Server's MaxScaleDenominator (250000) blanks the layer below z12.
+    minzoom: 12,
+    bounds: [13.294, 52.474, 13.499, 52.579],
+    attribution: 'Landesarchiv Berlin, Datenlizenz Deutschland – Zero – Version 2.0 (dl-de/zero-2-0)',
+    attributionUrl: 'https://www.govdata.de/dl-de/zero-2-0',
+    attributionLinkText: 'Landesarchiv Berlin',
+  },
 ];
