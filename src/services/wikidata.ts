@@ -206,7 +206,7 @@ SELECT ${timeStatementVars('demolished')} ?heritage ?heritageLabel
   ?commissioned ?commissionedLabel
   ?replacedBy ?replacedByLabel
   ?replaces ?replacesLabel
-  ?ohmId ?govId
+  ?ohmId ?govId ?wikiTreeId
   ?modified
 WHERE {
   BIND(wd:${id} AS ?item)
@@ -246,6 +246,7 @@ ${timeStatementPattern('P576', 'demolished')}
   OPTIONAL { ?item wdt:P1398 ?replaces . }
   OPTIONAL { ?item wdt:P8424 ?ohmId . }
   OPTIONAL { ?item wdt:P2503 ?govId . }
+  OPTIONAL { ?item wdt:P7607 ?wikiTreeId . }
   OPTIONAL { ?item schema:dateModified ?modified . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }`;
@@ -270,6 +271,7 @@ interface DetailBinding extends TimeStatementBindings {
   replacesLabel?: SparqlBinding;
   ohmId?: SparqlBinding;
   govId?: SparqlBinding;
+  wikiTreeId?: SparqlBinding;
   modified?: SparqlBinding;
 }
 
@@ -355,6 +357,7 @@ export async function fetchBuildingDetail(
   let demolished: StatementDate | undefined;
   let ohmId: string | undefined;
   let govId: string | undefined;
+  let wikiTreeId: string | undefined;
   let modified: string | undefined;
   const heritageSet = new Set<string>();
   const imageSet = new Set<string>();
@@ -370,6 +373,7 @@ export async function fetchBuildingDetail(
     if (!demolished) demolished = parseTimeStatement(row, 'demolished');
     if (row.ohmId && !ohmId) ohmId = row.ohmId.value;
     if (row.govId && !govId) govId = row.govId.value;
+    if (row.wikiTreeId && !wikiTreeId) wikiTreeId = row.wikiTreeId.value;
     if (row.modified && !modified) modified = row.modified.value;
     if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
     if (row.image) imageSet.add(row.image.value);
@@ -467,6 +471,7 @@ export async function fetchBuildingDetail(
     demolished,
     ohmId,
     govId,
+    wikiTreeId,
     modified,
     heritages: [...heritageSet],
     images: [...imageSet],

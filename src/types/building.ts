@@ -51,5 +51,6 @@ export interface BuildingDetail {
   replaces: WikidataItem[];
   ohmId?: string;
   govId?: string;
+  wikiTreeId?: string;
   modified?: string;
 }
