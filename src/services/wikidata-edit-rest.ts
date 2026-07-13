@@ -250,10 +250,24 @@ export function dateStatementMatches(stmt: any, date: StatementDate): boolean {
  */
 type ReferencePart = { property: { id: string }; value: { type: string; content: unknown } };
 
+/** Hostname suffix of any Wikimedia Foundation project wiki. Sources pointing here use
+ * P4656 (Wikimedia import URL) instead of P854 (reference URL). See compgen-ev/domus#10. */
+const WIKIMEDIA_HOSTNAME =
+  /\.(wikipedia|wiktionary|wikibooks|wikinews|wikiquote|wikisource|wikiversity|wikivoyage|wikidata|wikimedia)\.org$/i;
+
+function isWikimediaUrl(url: string): boolean {
+  try {
+    return WIKIMEDIA_HOSTNAME.test(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
 function createReference(source: SourceRef) {
   if (source.type === 'url') {
+    const urlProperty = isWikimediaUrl(source.url) ? 'P4656' : 'P854';
     const parts: ReferencePart[] = [
-      { property: { id: 'P854' }, value: { type: 'value', content: source.url } },
+      { property: { id: urlProperty }, value: { type: 'value', content: source.url } },
     ];
     if (source.page) {
       parts.push({ property: { id: 'P304' }, value: { type: 'value', content: source.page } });

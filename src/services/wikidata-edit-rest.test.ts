@@ -687,6 +687,38 @@ describe('createDateStatement', () => {
     });
   });
 
+  it('uses P854 for a non-Wikimedia URL source', () => {
+    const stmt = createDateStatement('P571', date('1950'), urlSource);
+    expect(stmt.references![0].parts[0]).toEqual({
+      property: { id: 'P854' },
+      value: { type: 'value', content: urlSource.url },
+    });
+  });
+
+  it.each([
+    'https://de.wikipedia.org/wiki/Foo',
+    'https://www.wikidata.org/wiki/Q1',
+    'https://commons.wikimedia.org/wiki/File:Foo.jpg',
+    'https://de.wikisource.org/wiki/Foo',
+    'https://en.wikivoyage.org/wiki/Foo',
+    'https://en.wiktionary.org/wiki/Foo',
+  ])('uses P4656 for Wikimedia URL %s', (url) => {
+    const stmt = createDateStatement('P571', date('1950'), { type: 'url', url });
+    expect(stmt.references![0].parts[0]).toEqual({
+      property: { id: 'P4656' },
+      value: { type: 'value', content: url },
+    });
+  });
+
+  it('does not use P4656 for a lookalike host spoofing a Wikimedia domain', () => {
+    const url = 'https://de.wikipedia.org.evil.example.com/wiki/Foo';
+    const stmt = createDateStatement('P571', date('1950'), { type: 'url', url });
+    expect(stmt.references![0].parts[0]).toEqual({
+      property: { id: 'P854' },
+      value: { type: 'value', content: url },
+    });
+  });
+
   it('builds an unknown-value statement with a latest bound (vor 1409)', () => {
     const stmt = createDateStatement('P571', { latest: parseDate('1409')! });
     expect(stmt.value).toEqual({ type: 'somevalue' });
