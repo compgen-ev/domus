@@ -214,7 +214,7 @@ export class BuildingCreateForm extends LitElement {
   @state() private formInception: StatementDateEdit = statementDateToEdit(undefined);
   @state() private sourceType: 'url' | 'archive' | 'book' = 'url';
   @state() private sourceUrl = '';
-  @state() private sourcePage = '';
+  @state() private sourceTitle = '';
   @state() private archiveItem: WikidataItem | undefined;
   @state() private archiveCallNumber = '';
   @state() private archivePage = '';
@@ -264,7 +264,12 @@ export class BuildingCreateForm extends LitElement {
 
     let source: SourceRef;
     if (this.sourceType === 'url') {
-      source = { type: 'url', url: this.sourceUrl.trim(), page: this.sourcePage.trim() || undefined };
+      source = {
+        type: 'url',
+        url: this.sourceUrl.trim(),
+        title: this.sourceTitle.trim() || undefined,
+        titleLanguage: this.sourceTitle.trim() ? (navigator.language.split('-')[0] || 'de') : undefined,
+      };
     } else if (this.sourceType === 'archive') {
       source = {
         type: 'archive',
@@ -431,11 +436,11 @@ export class BuildingCreateForm extends LitElement {
                 ?disabled=${this.saving}>
             </div>
             <div class="field-group">
-              <label>${msg('Beschreibung / Seite')} (${msg('optional')})</label>
+              <label>${msg('Titel')} (${msg('optional')})</label>
               <input
                 type="text"
-                .value=${this.sourcePage}
-                @input=${(e: Event) => this.sourcePage = (e.target as HTMLInputElement).value}
+                .value=${this.sourceTitle}
+                @input=${(e: Event) => this.sourceTitle = (e.target as HTMLInputElement).value}
                 ?disabled=${this.saving}>
             </div>
           ` : this.sourceType === 'archive' ? html`

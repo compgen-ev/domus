@@ -18,11 +18,12 @@ import { getLocale } from '../locale';
 
 const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
 
-/** Reference to an online source (P854 reference URL + optional P304 page). */
+/** Reference to an online source (P854/P4656 reference URL + optional P1476 title). */
 export interface UrlSource {
   type: 'url';
   url: string;
-  page?: string;
+  title?: string;      // P1476
+  titleLanguage?: string;
 }
 
 /**
@@ -269,8 +270,8 @@ function createReference(source: SourceRef) {
     const parts: ReferencePart[] = [
       { property: { id: urlProperty }, value: { type: 'value', content: source.url } },
     ];
-    if (source.page) {
-      parts.push({ property: { id: 'P304' }, value: { type: 'value', content: source.page } });
+    if (source.title) {
+      parts.push({ property: { id: 'P1476' }, value: { type: 'value', content: { text: source.title, language: source.titleLanguage } } });
     }
     return { parts };
   } else if (source.type === 'archive') {
