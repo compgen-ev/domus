@@ -41,6 +41,71 @@
 
     a { color: inherit; }
 
+    /* ── CompGen portal bar ── */
+
+    .compgen-bar {
+      font-size: 0.75rem;
+      line-height: 1.2;
+    }
+
+    .compgen-row {
+      display: flex;
+      flex-wrap: nowrap;
+      justify-content: center;
+      align-items: center;
+      gap: 0.1rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 0.15rem clamp(0.5rem, 3vw, 1.5rem);
+    }
+    .compgen-row::-webkit-scrollbar { display: none; }
+
+    /* keep the row left-aligned once it overflows, centred when it fits */
+    .compgen-row > :first-child { margin-left: auto; }
+    .compgen-row > :last-child  { margin-right: auto; }
+
+    .compgen-row a {
+      flex-shrink: 0;
+      padding: 0.28rem 0.5rem;
+      border-radius: 0.3rem;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .compgen-portal {
+      background: var(--bg);
+    }
+    .compgen-portal a {
+      color: var(--text-3);
+      font-weight: 400;
+    }
+    .compgen-portal a:hover {
+      background: color-mix(in srgb, var(--bg-2) 90%, white);
+      color: var(--text);
+    }
+
+    .compgen-projects {
+      background: var(--blue);
+    }
+    .compgen-projects a {
+      color: rgba(255, 255, 255, 0.88);
+      font-weight: 500;
+    }
+    .compgen-projects a:hover { color: #fff; }
+    .compgen-projects a:hover {
+      background: color-mix(in srgb, var(--blue) 78%, white);
+    }
+    .compgen-projects a[aria-current="page"] {
+      background: color-mix(in srgb, var(--blue) 62%, white);
+      cursor: default;
+    }
+
+    @media (max-width: 640px) {
+      .compgen-bar { font-size: 0.75rem; }
+      .compgen-row { justify-content: flex-start; }
+    }
+
     /* ── Hero ── */
 
     .hero {
@@ -292,6 +357,40 @@
 </head>
 <body>
 
+  <nav class="compgen-bar" aria-label="genealogy.net">
+    <div class="compgen-row compgen-portal">
+      <a href="https://www.genealogy.net" data-de="Home" data-en="Home">Home</a>
+      <a href="https://wiki.genealogy.net/">GenWiki</a>
+      <a href="https://wiki.genealogy.net/Computergenealogie" data-de="Zeitschrift" data-en="Magazine">Zeitschrift</a>
+      <a href="https://team.genealogy.net/group/treffpunkt/event/calendar/" data-de="Veranstaltungen" data-en="Events">Veranstaltungen</a>
+      <a href="https://wiki.genealogy.net/Portal:Regionale_Forschung" data-de="Regional" data-en="Regional research"
+         data-href-en="https://wiki.genealogy.net/Portal:Regional_Research">Regional</a>
+      <a href="https://wiki.genealogy.net/Portal:Datenbanken" data-de="Datenbanken" data-en="Databases"
+         data-href-en="https://wiki.genealogy.net/Portal:Databases">Datenbanken</a>
+      <a href="https://www.digibib.genealogy.net/viewer/">DigiBib</a>
+      <a href="https://des.genealogy.net">DES</a>
+      <a href="https://wiki.genealogy.net/Kategorie:Genealogiesoftware" data-de="Software" data-en="Software">Software</a>
+      <a href="https://discourse.genealogy.net" data-de="Kommunikation" data-en="Communication">Kommunikation</a>
+      <a href="https://forum.genealogy.net" data-de="Forum" data-en="Forum">Forum</a>
+      <a href="https://wiki.genealogy.net/Portal:Vereine" data-de="Vereine" data-en="Societies"
+         data-href-en="https://wiki.genealogy.net/Portal:Societies">Vereine</a>
+      <a href="https://wiki.genealogy.net/Portal:Praktische_Hilfe" data-de="Hilfen/FAQs" data-en="Help/FAQs">Hilfen/FAQs</a>
+    </div>
+    <div class="compgen-row compgen-projects">
+      <a href="https://gedbas.genealogy.net" data-href-en="https://gedbas.genealogy.net/?lang=en">GEDBAS</a>
+      <a href="https://gov.genealogy.net/?lang=de" data-href-en="https://gov.genealogy.net/?lang=en">GOV</a>
+      <a href="https://ofb.genealogy.net" data-de="OFBs" data-en="Local Heritage Books">OFBs</a>
+      <a href="https://wiki.genealogy.net/Portal:Adressbuch" data-de="Adressbücher" data-en="City directories">Adressbücher</a>
+      <a href="https://familienanzeigen.genealogy.net/" data-de="Familienanzeigen" data-en="Personal columns">Familienanzeigen</a>
+      <a href="https://grabsteine.genealogy.net/" data-de="Grabsteine" data-en="Tombstones">Grabsteine</a>
+      <a href="http://www.verlustlisten.de" data-de="Verlustlisten 1. WK" data-en="WW I Casualty Lists"
+         data-href-en="https://des.genealogy.net/eingabe-verlustlisten/search?lang=en">Verlustlisten 1. WK</a>
+      <a href="https://meta.genealogy.net" data-de="Metasuche" data-en="Meta search"
+         data-href-en="https://meta.genealogy.net/?lang=en">Metasuche</a>
+      <a href="/" aria-current="page">Domus</a>
+    </div>
+  </nav>
+
   <div class="hero">
     <div class="logo-title">
       <svg class="logo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -424,7 +523,14 @@
   </footer>
 
   <script>
-    const lang = (navigator.languages?.[0] ?? navigator.language ?? '').startsWith('en') ? 'en' : 'de';
+    // on narrow screens the project row scrolls – make sure "Domus" is in view
+    const active = document.querySelector('.compgen-projects a[aria-current]');
+    const row = active?.parentElement;
+    if (row && row.scrollWidth > row.clientWidth) {
+      row.scrollLeft = active.offsetLeft + active.offsetWidth - row.clientWidth;
+    }
+
+    const lang =(navigator.languages?.[0] ?? navigator.language ?? '').startsWith('en') ? 'en' : 'de';
     if (lang === 'en') {
       document.documentElement.lang = 'en';
       document.title = 'Domus – Building History';
@@ -432,6 +538,9 @@
         'Research and document the history of buildings – collaboratively and openly.';
       document.querySelectorAll('[data-en]').forEach(el => {
         el.textContent = el.dataset.en;
+      });
+      document.querySelectorAll('[data-href-en]').forEach(el => {
+        el.href = el.dataset.hrefEn;
       });
     }
   </script>
