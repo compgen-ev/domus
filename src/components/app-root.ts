@@ -119,9 +119,6 @@ export class AppRoot extends LitElement {
 
   private detailController: AbortController | null = null;
   private depictingController: AbortController | null = null;
-  /** An edit form is open; background refreshes must not swap data under it. */
-  private isEditing = false;
-  private pendingRefreshId: string | null = null;
 
   async connectedCallback() {
     super.connectedCallback();
@@ -267,23 +264,11 @@ export class AppRoot extends LitElement {
   }
 
   private async _refreshBuilding() {
-    if (!this.selectedBuilding) return;
-    const id = this.selectedBuilding.id;
-    if (this.isEditing) {
-      // Keep polling on schedule, but apply the result only once the form is
-      // closed — replacing the data mid-edit shifts the baseline under the user.
-      this.pendingRefreshId = id;
-      return;
+    // Safe to apply even with an edit form open: the form freezes its baseline
+    // when it opens, so fresher data underneath it changes nothing.
+    if (this.selectedBuilding) {
+      await this._loadBuildingById(this.selectedBuilding.id);
     }
-    await this._loadBuildingById(id);
-  }
-
-  private _onEditModeChange(e: CustomEvent<{ editing: boolean }>) {
-    this.isEditing = e.detail.editing;
-    if (this.isEditing) return;
-    const id = this.pendingRefreshId;
-    this.pendingRefreshId = null;
-    if (id && id === this.selectedBuilding?.id) this._loadBuildingById(id);
   }
 
   private _onBuildingSelected(e: CustomEvent<WikidataBuilding>) {
@@ -492,7 +477,6 @@ export class AppRoot extends LitElement {
         @close=${this._onPanelClose}
         @login=${this._onLogin}
         @logout=${this._onLogoutAll}
-        @edit-mode-change=${this._onEditModeChange}
         @save-success-refresh=${this._onSaveSuccessRefresh}
         @show-toast=${this._onShowToast}
         @refresh=${this._refreshBuilding}

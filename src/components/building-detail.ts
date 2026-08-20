@@ -521,7 +521,7 @@ export class BuildingDetail extends LitElement {
       // form there would throw away whatever the user is currently typing.
       const prev = changed.get('building') as WikidataBuilding | null | undefined;
       if (prev?.id !== this.building?.id) {
-        if (this.editMode) this._setEditMode(false);
+        if (this.editMode) this.editMode = false;
         if (this.expanded) {
           this.expanded = false;
           this.toggleAttribute('expanded', false);
@@ -543,23 +543,12 @@ export class BuildingDetail extends LitElement {
     this.dispatchEvent(new CustomEvent('login', { bubbles: true, composed: true }));
   }
 
-  /** Edit mode is mirrored to the host so it can hold back background refreshes
-   *  while a form is open. */
-  private _setEditMode(editing: boolean) {
-    this.editMode = editing;
-    this.dispatchEvent(new CustomEvent('edit-mode-change', {
-      bubbles: true,
-      composed: true,
-      detail: { editing },
-    }));
-  }
-
   private _edit() {
-    this._setEditMode(true);
+    this.editMode = true;
   }
 
   private _cancelEdit() {
-    this._setEditMode(false);
+    this.editMode = false;
   }
 
   private _toggleExpanded() {
@@ -568,7 +557,7 @@ export class BuildingDetail extends LitElement {
   }
 
   private _onSaveSuccess(e: CustomEvent<{ buildingId: string; savedValues: SavedBuildingValues }>) {
-    this._setEditMode(false);
+    this.editMode = false;
     this.dispatchEvent(new CustomEvent('save-success-refresh', {
       bubbles: true,
       composed: true,
@@ -823,7 +812,15 @@ export class BuildingDetail extends LitElement {
               </app-button>
             ` : ''}
             ${this.authenticated ? html`
-              <app-button variant="accent" .leadingIcon=${IconPencil} @click=${this._edit}>
+              <!-- Disabled while the detail query is in flight: the form freezes
+                   its baseline on open, so opening it against half-loaded data
+                   would edit against values that aren't there yet. -->
+              <app-button
+                variant="accent"
+                .leadingIcon=${IconPencil}
+                ?disabled=${detailLoading}
+                @click=${this._edit}
+              >
                 ${msg('Bearbeiten')}
               </app-button>
             ` : html`

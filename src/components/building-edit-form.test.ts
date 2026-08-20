@@ -303,3 +303,111 @@ describe('prefill from a just-saved edit (SPARQL still stale)', () => {
     el.remove();
   });
 });
+
+describe('the baseline is frozen for the lifetime of the form', () => {
+  async function mount(props: any = {}) {
+    const el = document.createElement('building-edit-form') as any;
+    el.building = {
+      id: 'Q1', label: 'Haus', lat: 48, lng: 11,
+      inception: { value: parseDate('1850')! },
+    };
+    el.detail = null;
+    Object.assign(el, props);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    return el;
+  }
+
+  const detailWith = (demolished?: any) => ({
+    heritages: [], images: [], architects: [], commissionedBy: [],
+    occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
+    ...(demolished ? { demolished } : {}),
+  });
+
+  // The invariant that matters: data landing mid-edit never makes the form look
+  // dirty, so Save never lights up and no source is demanded for a change the
+  // user did not make.
+  it('stays clean when a detail fetch lands with a demolition date', async () => {
+    const el = await mount();
+    expect(el._canSave).toBe(false);
+
+    el.detail = detailWith({ value: parseDate('1900')! });
+    await el.updateComplete;
+
+    expect(el._demolishedChanged).toBe(false);
+    expect(el._canSave).toBe(false);
+    expect(el.shadowRoot!.querySelector('.save-hint')).toBeNull();
+    el.remove();
+  });
+
+  it('stays clean when a same-id refresh brings a fresher inception', async () => {
+    const el = await mount();
+    el.building = {
+      id: 'Q1', label: 'Haus', lat: 48, lng: 11,
+      inception: { value: parseDate('1851')! },
+    };
+    await el.updateComplete;
+
+    expect(el.formInception.value).toBe('1850'); // frozen, not re-anchored
+    expect(el._inceptionChanged).toBe(false);
+    expect(el._canSave).toBe(false);
+    el.remove();
+  });
+
+  it('stays clean when a same-id refresh brings a different label', async () => {
+    const el = await mount();
+    el.building = { id: 'Q1', label: 'Altes Haus', lat: 48, lng: 11 };
+    await el.updateComplete;
+
+    expect(el.formLabel).toBe('Haus');
+    expect(el._canSave).toBe(false);
+    el.remove();
+  });
+
+  it('keeps user input when a same-id refresh arrives', async () => {
+    const el = await mount();
+    el.formInception = { ...el.formInception, value: '1799' };
+    el.formLabel = 'Mein Name';
+    el.sourceUrl = 'https://example.com/x';
+    await el.updateComplete;
+
+    el.building = {
+      id: 'Q1', label: 'Ganz anders', lat: 48, lng: 11,
+      inception: { value: parseDate('1851')! },
+    };
+    el.detail = detailWith({ value: parseDate('1900')! });
+    await el.updateComplete;
+
+    expect(el.formInception.value).toBe('1799');
+    expect(el.formLabel).toBe('Mein Name');
+    expect(el._inceptionChanged).toBe(true);
+    expect(el._canSave).toBe(true);
+    el.remove();
+  });
+
+  it('takes the baseline from a just-saved overlay, and stale data cannot dislodge it', async () => {
+    // The real lifecycle: the overlay is already set when the form mounts,
+    // because a save closes the form and app-root stores the values first.
+    const el = await mount({
+      savedValues: {
+        id: 'Q1',
+        label: 'Neuhaus',
+        inception: { value: parseDate('1900')! },
+        demolished: { value: parseDate('1950')! },
+      },
+    });
+    expect(el.formLabel).toBe('Neuhaus');
+    expect(el.formInception.value).toBe('1900');
+    expect(el.formDemolished.value).toBe('1950');
+    expect(el._canSave).toBe(false);
+
+    // Stale SPARQL results arriving afterwards must not override the save.
+    el.detail = detailWith({ value: parseDate('1800')! });
+    await el.updateComplete;
+
+    expect(el.formDemolished.value).toBe('1950');
+    expect(el._demolishedChanged).toBe(false);
+    expect(el._canSave).toBe(false);
+    el.remove();
+  });
+});
