@@ -54,3 +54,20 @@ export interface BuildingDetail {
   wikiTreeId?: string;
   modified?: string;
 }
+
+/**
+ * Values Wikidata has confirmed writing (the PATCH returned 2xx) but that the
+ * SPARQL endpoint has not indexed yet. Used to prefill a second edit so it
+ * starts from what the user just saved rather than from stale query results.
+ *
+ * In-memory only — deliberately never persisted. If it is lost, the UI falls
+ * back to SPARQL data, which is the pre-existing behaviour; it can never make
+ * an unsaved change look saved.
+ */
+export interface SavedBuildingValues {
+  id: string;
+  label: string;
+  type?: WikidataItem;
+  inception?: StatementDate;
+  demolished?: StatementDate;
+}
