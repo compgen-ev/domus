@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+title: Domus
+message: >-
+  If you use Domus in academic work, please cite the paper below.
+type: software
+authors:
+  - given-names: David M.
+    family-names: Straub
+repository-code: 'https://github.com/compgen-ev/domus'
+url: 'https://domus.genealogy.net/'
+abstract: >-
+  An open-data platform for house history. Search and contribute
+  the history of buildings — who lived there, who owned it, how
+  addresses changed over time. Data is stored in Wikidata;
+  building shapes come from OpenHistoricalMap.
+keywords:
+  - house history
+  - genealogy
+  - Wikidata
+  - OpenHistoricalMap
+  - open data
+  - linked data
+license: MIT
+preferred-citation:
+  type: article
+  title: 'Domus: An Open-Data Web Platform for House History Research'
+  authors:
+    - given-names: David M.
+      family-names: Straub
+  year: 2026
+  month: 8
+  journal: arXiv preprint
+  doi: 10.48550/arXiv.2608.12566
+  url: 'https://arxiv.org/abs/2608.12566'
