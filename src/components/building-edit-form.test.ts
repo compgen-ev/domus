@@ -411,3 +411,57 @@ describe('the baseline is frozen for the lifetime of the form', () => {
     el.remove();
   });
 });
+
+describe('the date inputs interpret against the same baseline the save uses', () => {
+  // _renderEcho and _save both call editToStatementDate, and `previous` changes
+  // its result (calendar model, carried-over earliest/latest). Feeding them
+  // different `previous` values lets the preview disagree with what gets sent.
+  async function mount(demolished?: any) {
+    const el = document.createElement('building-edit-form') as any;
+    el.building = {
+      id: 'Q1', label: 'Haus', lat: 48, lng: 11,
+      inception: { value: parseDate('1850')! },
+    };
+    el.detail = {
+      heritages: [], images: [], architects: [], commissionedBy: [],
+      occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
+      ...(demolished ? { demolished } : {}),
+    };
+    document.body.appendChild(el);
+    await el.updateComplete;
+    return el;
+  }
+
+  const dateInputs = (el: any) =>
+    Array.from(el.shadowRoot!.querySelectorAll('statement-date-input')) as any[];
+
+  it('pins inception `previous` to the baseline when a refresh brings a newer one', async () => {
+    const el = await mount();
+    const baseline = el._base.inception;
+    expect(dateInputs(el)[0].previous).toBe(baseline);
+
+    el.building = {
+      id: 'Q1', label: 'Haus', lat: 48, lng: 11,
+      inception: { value: parseDate('1851')! },
+    };
+    await el.updateComplete;
+
+    expect(dateInputs(el)[0].previous).toBe(baseline);
+    el.remove();
+  });
+
+  it('keeps demolished `previous` while the detail prop churns mid-edit', async () => {
+    const el = await mount({ value: parseDate('1900')! });
+    const baseline = el._base.demolished;
+    expect(baseline).toBeDefined();
+    expect(dateInputs(el)[1].previous).toBe(baseline);
+
+    // app-root nulls buildingDetail before each refetch, so the prop really does
+    // drop out from under an open form.
+    el.detail = null;
+    await el.updateComplete;
+
+    expect(dateInputs(el)[1].previous).toBe(baseline);
+    el.remove();
+  });
+});

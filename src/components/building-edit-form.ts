@@ -674,7 +674,7 @@ export class BuildingEditForm extends LitElement {
             <label>${msg('Erbaut')}</label>
             <statement-date-input
               .edit=${this.formInception}
-              .previous=${this.building.inception}
+              .previous=${this._base?.inception}
               @edit-changed=${(e: CustomEvent<StatementDateEdit>) => this.formInception = e.detail}
               ?disabled=${this.saving}
             ></statement-date-input>
@@ -683,7 +683,7 @@ export class BuildingEditForm extends LitElement {
             <label>${msg('Abgerissen')}</label>
             <statement-date-input
               .edit=${this.formDemolished}
-              .previous=${this.detail?.demolished}
+              .previous=${this._base?.demolished}
               @edit-changed=${(e: CustomEvent<StatementDateEdit>) => this.formDemolished = e.detail}
               ?disabled=${this.saving}
             ></statement-date-input>
