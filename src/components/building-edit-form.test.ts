@@ -180,3 +180,126 @@ describe('save hint', () => {
     el.remove();
   });
 });
+
+describe('background refresh while editing', () => {
+  async function mountForm(savedValues?: any) {
+    const el = document.createElement('building-edit-form') as any;
+    el.building = {
+      id: 'Q1', label: 'Haus', lat: 48, lng: 11,
+      inception: { value: parseDate('1850')! },
+    };
+    el.detail = {
+      heritages: [], images: [], architects: [], commissionedBy: [],
+      occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
+    };
+    if (savedValues) el.savedValues = savedValues;
+    document.body.appendChild(el);
+    await el.updateComplete;
+    return el;
+  }
+
+  it('keeps typed input when the same building is replaced by fresher data', async () => {
+    const el = await mountForm();
+    el.formLabel = 'Neuer Name';
+    el.sourceUrl = 'https://example.com/x';
+    await el.updateComplete;
+
+    // A scheduled refresh hands down a new object for the same building.
+    el.building = {
+      id: 'Q1', label: 'Haus', lat: 48, lng: 11,
+      inception: { value: parseDate('1850')! },
+      modified: '2026-08-20T10:00:00Z',
+    };
+    await el.updateComplete;
+
+    expect(el.formLabel).toBe('Neuer Name');
+    expect(el.sourceUrl).toBe('https://example.com/x');
+    expect(el._canSave).toBe(true);
+    el.remove();
+  });
+
+  it('still resets when a different building is shown', async () => {
+    const el = await mountForm();
+    el.formLabel = 'Neuer Name';
+    el.sourceUrl = 'https://example.com/x';
+    await el.updateComplete;
+
+    el.building = { id: 'Q2', label: 'Anderes Haus', lat: 48, lng: 11 };
+    await el.updateComplete;
+
+    expect(el.formLabel).toBe('Anderes Haus');
+    expect(el.sourceUrl).toBe('');
+    expect(el._canSave).toBe(false);
+    el.remove();
+  });
+
+  it('clears add-semantics fields when a different building is shown', async () => {
+    const el = await mountForm();
+    el.formArchitect = { id: 'Q42', label: 'Gottfried Semper' };
+    el.formAddress = 'Hauptstr. 1';
+    await el.updateComplete;
+
+    el.building = { id: 'Q2', label: 'Anderes Haus', lat: 48, lng: 11 };
+    await el.updateComplete;
+
+    expect(el.formArchitect).toBeUndefined();
+    expect(el.formAddress).toBe('');
+    expect(el._canSave).toBe(false);
+    el.remove();
+  });
+});
+
+describe('prefill from a just-saved edit (SPARQL still stale)', () => {
+  async function mountWithSaved() {
+    const el = document.createElement('building-edit-form') as any;
+    // What SPARQL still returns: the pre-edit state.
+    el.building = {
+      id: 'Q1', label: 'Haus', lat: 48, lng: 11,
+      inception: { value: parseDate('1850')! },
+    };
+    el.detail = {
+      heritages: [], images: [], architects: [], commissionedBy: [],
+      occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
+    };
+    // What we actually saved a moment ago.
+    el.savedValues = {
+      id: 'Q1',
+      label: 'Neuhaus',
+      inception: { value: parseDate('1900')! },
+    };
+    document.body.appendChild(el);
+    await el.updateComplete;
+    return el;
+  }
+
+  it('prefills from the saved values, not the stale query result', async () => {
+    const el = await mountWithSaved();
+    expect(el.formLabel).toBe('Neuhaus');
+    expect(el.formInception.value).toBe('1900');
+    el.remove();
+  });
+
+  it('starts clean, so the previous edit is not silently re-saved', async () => {
+    const el = await mountWithSaved();
+    expect(el._inceptionChanged).toBe(false);
+    expect(el._canSave).toBe(false);
+    el.remove();
+  });
+
+  it('detects changes against the saved values', async () => {
+    const el = await mountWithSaved();
+    el.formLabel = 'Neuhaus II';
+    await el.updateComplete;
+    expect(el._canSave).toBe(true);
+    el.remove();
+  });
+
+  it('ignores saved values belonging to another building', async () => {
+    const el = await mountWithSaved();
+    el.savedValues = { id: 'Q999', label: 'Falsch' };
+    el.building = { id: 'Q2', label: 'Anderes Haus', lat: 48, lng: 11 };
+    await el.updateComplete;
+    expect(el.formLabel).toBe('Anderes Haus');
+    el.remove();
+  });
+});

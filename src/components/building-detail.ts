@@ -1,7 +1,7 @@
 import { LitElement, html, css, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import type { WikidataBuilding, WikidataItem, BuildingDetail as BuildingDetailData, PersonRef, AddressEntry } from '../types/building';
+import type { WikidataBuilding, WikidataItem, BuildingDetail as BuildingDetailData, PersonRef, AddressEntry, SavedBuildingValues } from '../types/building';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
@@ -496,6 +496,7 @@ export class BuildingDetail extends LitElement {
   @property({ attribute: false }) detail: BuildingDetailData | null = null;
   @property({ attribute: false }) detailLoading = false;
   @property({ attribute: false }) dataIsStale = false;
+  @property({ attribute: false }) savedValues: SavedBuildingValues | null = null;
   @property({ attribute: false }) hasOhmFootprint = false;
   @property({ attribute: false }) ohmElementId: string | undefined;
   @property({ attribute: false }) ohmElementType: 'way' | 'relation' | undefined;
@@ -515,12 +516,18 @@ export class BuildingDetail extends LitElement {
       this.toggleAttribute('open', this.building !== null || this.newBuildingCoords !== null);
     }
     if (changed.has('building')) {
-      if (this.editMode) this.editMode = false;
-      if (this.expanded) {
-        this.expanded = false;
-        this.toggleAttribute('expanded', false);
+      // Only when a *different* building is shown. Background refreshes replace
+      // the object with fresher data for the same building; closing the edit
+      // form there would throw away whatever the user is currently typing.
+      const prev = changed.get('building') as WikidataBuilding | null | undefined;
+      if (prev?.id !== this.building?.id) {
+        if (this.editMode) this._setEditMode(false);
+        if (this.expanded) {
+          this.expanded = false;
+          this.toggleAttribute('expanded', false);
+        }
+        if (this.showAllPhotos) this.showAllPhotos = false;
       }
-      if (this.showAllPhotos) this.showAllPhotos = false;
     }
   }
 
@@ -536,12 +543,23 @@ export class BuildingDetail extends LitElement {
     this.dispatchEvent(new CustomEvent('login', { bubbles: true, composed: true }));
   }
 
+  /** Edit mode is mirrored to the host so it can hold back background refreshes
+   *  while a form is open. */
+  private _setEditMode(editing: boolean) {
+    this.editMode = editing;
+    this.dispatchEvent(new CustomEvent('edit-mode-change', {
+      bubbles: true,
+      composed: true,
+      detail: { editing },
+    }));
+  }
+
   private _edit() {
-    this.editMode = true;
+    this._setEditMode(true);
   }
 
   private _cancelEdit() {
-    this.editMode = false;
+    this._setEditMode(false);
   }
 
   private _toggleExpanded() {
@@ -549,9 +567,13 @@ export class BuildingDetail extends LitElement {
     this.toggleAttribute('expanded', this.expanded);
   }
 
-  private _onSaveSuccess() {
-    this.editMode = false;
-    this.dispatchEvent(new CustomEvent('save-success-refresh', { bubbles: true, composed: true }));
+  private _onSaveSuccess(e: CustomEvent<{ buildingId: string; savedValues: SavedBuildingValues }>) {
+    this._setEditMode(false);
+    this.dispatchEvent(new CustomEvent('save-success-refresh', {
+      bubbles: true,
+      composed: true,
+      detail: { savedValues: e.detail.savedValues },
+    }));
     this._showToast(msg('Änderungen gespeichert'));
   }
 
@@ -674,6 +696,7 @@ export class BuildingDetail extends LitElement {
             <building-edit-form
               .building=${this.building}
               .detail=${this.detail}
+              .savedValues=${this.savedValues}
               @cancel=${this._cancelEdit}
               @save-success=${this._onSaveSuccess}
             ></building-edit-form>

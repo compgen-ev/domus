@@ -3,7 +3,7 @@ import { customElement, state, query } from 'lit/decorators.js';
 import type { MapView } from './map-view';
 import { localized, msg } from '@lit/localize';
 import { designTokens, buttonStyles } from '../styles/design-tokens';
-import type { WikidataBuilding, BuildingDetail } from '../types/building';
+import type { WikidataBuilding, BuildingDetail, SavedBuildingValues } from '../types/building';
 import { fetchBuildingById, fetchBuildingDetail, fetchDepictingPhotos } from '../services/wikidata';
 import { handleOAuthCallback, isAuthenticated, logout, login, getStoredUsername, fetchAndStoreUsername, getValidAccessToken } from '../services/wikimedia-auth';
 import { handleOhmOAuthCallback, isOhmAuthenticated, ohmLogin, ohmLogout, getStoredOhmUsername } from '../services/ohm-auth';
@@ -112,9 +112,16 @@ export class AppRoot extends LitElement {
   @state() private newBuildingCoords: { lat: number; lng: number } | null = null;
   @state() private ohmPrefill: OhmBuildingPrefill | null = null;
   @state() private depictingPhotos: string[] = [];
+  /** Values confirmed written but not yet visible in SPARQL. In-memory only —
+   *  never persisted, so the worst case after a reload is the stale-banner
+   *  behaviour we had before. */
+  @state() private savedValues: SavedBuildingValues | null = null;
 
   private detailController: AbortController | null = null;
   private depictingController: AbortController | null = null;
+  /** An edit form is open; background refreshes must not swap data under it. */
+  private isEditing = false;
+  private pendingRefreshId: string | null = null;
 
   async connectedCallback() {
     super.connectedCallback();
@@ -254,13 +261,29 @@ export class AppRoot extends LitElement {
     // Clear edit timestamp if data is fresh
     if (!this.dataIsStale) {
       clearEdit(id);
+      // SPARQL has caught up, so the overlay has nothing left to add.
+      if (this.savedValues?.id === id) this.savedValues = null;
     }
   }
 
   private async _refreshBuilding() {
-    if (this.selectedBuilding) {
-      await this._loadBuildingById(this.selectedBuilding.id);
+    if (!this.selectedBuilding) return;
+    const id = this.selectedBuilding.id;
+    if (this.isEditing) {
+      // Keep polling on schedule, but apply the result only once the form is
+      // closed — replacing the data mid-edit shifts the baseline under the user.
+      this.pendingRefreshId = id;
+      return;
     }
+    await this._loadBuildingById(id);
+  }
+
+  private _onEditModeChange(e: CustomEvent<{ editing: boolean }>) {
+    this.isEditing = e.detail.editing;
+    if (this.isEditing) return;
+    const id = this.pendingRefreshId;
+    this.pendingRefreshId = null;
+    if (id && id === this.selectedBuilding?.id) this._loadBuildingById(id);
   }
 
   private _onBuildingSelected(e: CustomEvent<WikidataBuilding>) {
@@ -301,6 +324,7 @@ export class AppRoot extends LitElement {
   private _onPanelClose() {
     this.selectedBuilding = null;
     this.buildingDetail = null;
+    this.savedValues = null;
     this.depictingPhotos = [];
     this.newBuildingCoords = null;
     this.ohmPrefill = null;
@@ -351,10 +375,11 @@ export class AppRoot extends LitElement {
     this.ohmUsername = null;
   }
 
-  private _onSaveSuccessRefresh() {
+  private _onSaveSuccessRefresh(e: CustomEvent<{ savedValues: SavedBuildingValues }>) {
     // Re-fetch building data after successful edit
     if (this.selectedBuilding) {
       const id = this.selectedBuilding.id;
+      this.savedValues = e.detail.savedValues;
       this._loadBuildingById(id);
 
       // Schedule auto-refreshes with backoff (5s, 10s, 15s, 30s, 60s)
@@ -455,6 +480,7 @@ export class AppRoot extends LitElement {
         .detail=${this.buildingDetail}
         .detailLoading=${this.detailLoading}
         .dataIsStale=${this.dataIsStale}
+        .savedValues=${this.savedValues}
         .hasOhmFootprint=${this.hasOhmFootprint}
         .ohmElementId=${this.ohmElementId}
         .ohmElementType=${this.ohmElementType}
@@ -466,6 +492,7 @@ export class AppRoot extends LitElement {
         @close=${this._onPanelClose}
         @login=${this._onLogin}
         @logout=${this._onLogoutAll}
+        @edit-mode-change=${this._onEditModeChange}
         @save-success-refresh=${this._onSaveSuccessRefresh}
         @show-toast=${this._onShowToast}
         @refresh=${this._refreshBuilding}

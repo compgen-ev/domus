@@ -3,7 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
 import { BUILDING_TYPE_IDS, getBuildingTypeLabel, BUILDING_TYPE_SET } from '../services/building-type-options';
 import { keyed } from 'lit/directives/keyed.js';
-import type { WikidataBuilding, BuildingDetail, WikidataItem } from '../types/building';
+import type { WikidataBuilding, BuildingDetail, WikidataItem, SavedBuildingValues, StatementDate } from '../types/building';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData, type SourceRef } from '../services/wikidata-edit-rest';
@@ -311,6 +311,9 @@ export class BuildingEditForm extends LitElement {
 
   @property({ attribute: false }) building: WikidataBuilding | null = null;
   @property({ attribute: false }) detail: BuildingDetail | null = null;
+  /** Confirmed-but-not-yet-indexed values from a previous save in this session.
+   *  Takes precedence over the SPARQL-derived building/detail props. */
+  @property({ attribute: false }) savedValues: SavedBuildingValues | null = null;
 
   @state() private sourceType: 'url' | 'archive' | 'book' = 'url';
   @state() private sourceUrl = '';
@@ -352,12 +355,34 @@ export class BuildingEditForm extends LitElement {
     return !dateEditsEqual(this.formDemolished, this._currentDemolishedEdit);
   }
 
+  /** The values this edit starts from: what we last saved if SPARQL hasn't
+   *  caught up yet, otherwise the queried data. */
+  private get _saved(): SavedBuildingValues | null {
+    return this.savedValues?.id === this.building?.id ? this.savedValues : null;
+  }
+
+  private get _baseLabel(): string {
+    return this._saved?.label ?? this.building?.label ?? '';
+  }
+
+  private get _baseType(): WikidataItem | undefined {
+    return this._saved ? this._saved.type : this.building?.type;
+  }
+
+  private get _baseInception(): StatementDate | undefined {
+    return this._saved ? this._saved.inception : this.building?.inception;
+  }
+
+  private get _baseDemolished(): StatementDate | undefined {
+    return this._saved ? this._saved.demolished : this.detail?.demolished;
+  }
+
   private get _currentInceptionEdit(): StatementDateEdit {
-    return statementDateToEdit(this.building?.inception);
+    return statementDateToEdit(this._baseInception);
   }
 
   private get _currentDemolishedEdit(): StatementDateEdit {
-    return statementDateToEdit(this.detail?.demolished);
+    return statementDateToEdit(this._baseDemolished);
   }
 
   private get _typeSuggestions(): WikidataItem[] {
@@ -365,10 +390,14 @@ export class BuildingEditForm extends LitElement {
   }
 
   protected willUpdate(changed: PropertyValues) {
-    // Reset form state when building changes
-    if (changed.has('building') && this.building) {
-      this.formLabel = this.building.label;
-      this.formType = this.building.type;
+    // Reset form state when a *different* building is shown. A background
+    // refresh of the same building replaces the object but must never discard
+    // what the user has typed.
+    const prev = changed.get('building') as WikidataBuilding | null | undefined;
+    const switchedBuilding = changed.has('building') && prev?.id !== this.building?.id;
+    if (switchedBuilding && this.building) {
+      this.formLabel = this._baseLabel;
+      this.formType = this._baseType;
       this.formInception = this._currentInceptionEdit;
       this.formDemolished = this._currentDemolishedEdit;
       this.sourceUrl = '';
@@ -382,14 +411,26 @@ export class BuildingEditForm extends LitElement {
       this.bookAuthor = '';
       this.bookYear = '';
       this.bookPage = '';
+      this.formAliases = '';
+      this.formAddress = '';
+      this.formAddressStartDate = '';
+      this.formAddressEndDate = '';
+      this.formArchitect = undefined;
+      this.formCommissionedBy = undefined;
+      this.formOwner = undefined;
+      this.formOwnerStartDate = '';
+      this.formOwnerEndDate = '';
+      this.formOccupant = undefined;
+      this.formOccupantStartDate = '';
+      this.formOccupantEndDate = '';
       this.saveError = null;
       this.saveErrorDetails = null;
     }
   }
 
   private get _hasChanges(): boolean {
-    return (this.formLabel !== this.building?.label) ||
-      (this.formType !== undefined && this.formType !== this.building?.type) ||
+    return (this.formLabel !== this._baseLabel) ||
+      (this.formType !== undefined && this.formType.id !== this._baseType?.id) ||
       this._inceptionChanged ||
       this._demolishedChanged ||
       (this.formAddress.trim() !== '') ||
@@ -402,7 +443,7 @@ export class BuildingEditForm extends LitElement {
 
   private get _hasClaimChanges(): boolean {
     // Same as _hasChanges but excludes label/aliases, which don't need a source
-    return (this.formType !== undefined && this.formType !== this.building?.type) ||
+    return (this.formType !== undefined && this.formType.id !== this._baseType?.id) ||
       this._inceptionChanged ||
       this._demolishedChanged ||
       (this.formAddress.trim() !== '') ||
@@ -486,10 +527,10 @@ export class BuildingEditForm extends LitElement {
 
     // Parse changed dates; null means invalid input — abort with a message
     const inceptionDate = this._inceptionChanged
-      ? editToStatementDate(this.formInception, this.building.inception)
+      ? editToStatementDate(this.formInception, this._baseInception)
       : undefined;
     const demolishedDate = this._demolishedChanged
-      ? editToStatementDate(this.formDemolished, this.detail?.demolished)
+      ? editToStatementDate(this.formDemolished, this._baseDemolished)
       : undefined;
     if (inceptionDate === null || demolishedDate === null) {
       this.saveError = msg('Ungültiges Datum');
@@ -499,9 +540,9 @@ export class BuildingEditForm extends LitElement {
 
     const editData: BuildingEditData = {
       id: this.building.id,
-      label: this.formLabel !== this.building.label ? this.formLabel : undefined,
+      label: this.formLabel !== this._baseLabel ? this.formLabel : undefined,
       aliases: this.formAliases || undefined,
-      type: this.formType?.id !== this.building.type?.id ? this.formType : undefined,
+      type: this.formType?.id !== this._baseType?.id ? this.formType : undefined,
       inception: inceptionDate ?? undefined,
       demolished: demolishedDate ?? undefined,
       address: this.formAddress || undefined,
@@ -521,11 +562,22 @@ export class BuildingEditForm extends LitElement {
     try {
       await editBuilding(editData);
 
+      // The PATCH is atomic and threw above on any non-2xx, so these values are
+      // now durably in Wikidata. Hand them up so a follow-up edit starts from
+      // them instead of from SPARQL, which lags by up to a minute.
+      const savedValues: SavedBuildingValues = {
+        id: this.building.id,
+        label: this.formLabel,
+        type: this.formType ?? this._baseType,
+        inception: inceptionDate ?? this._baseInception,
+        demolished: demolishedDate ?? this._baseDemolished,
+      };
+
       // Success - dispatch event to notify parent
       this.dispatchEvent(new CustomEvent('save-success', {
         bubbles: true,
         composed: true,
-        detail: { buildingId: this.building.id },
+        detail: { buildingId: this.building.id, savedValues },
       }));
     } catch (err) {
       this.saveError = err instanceof Error ? err.message : 'Unknown error';
