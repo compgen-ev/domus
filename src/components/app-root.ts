@@ -309,7 +309,9 @@ export class AppRoot extends LitElement {
   private _onPanelClose() {
     this.selectedBuilding = null;
     this.buildingDetail = null;
-    this.savedValues = null;
+    // savedValues deliberately survives: it is id-guarded, and closing the
+    // panel must not reopen the "second edit reverts the first" hazard. It is
+    // dropped in _checkStaleness once SPARQL has caught up.
     this.depictingPhotos = [];
     this.newBuildingCoords = null;
     this.ohmPrefill = null;
