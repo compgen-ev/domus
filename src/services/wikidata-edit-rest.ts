@@ -360,7 +360,7 @@ export async function editBuilding(
     patchOps.push({
       op: hasGermanLabel ? 'replace' : 'add',
       path: '/labels/de',
-      value: { language: 'de', value: editData.label },
+      value: editData.label,
     });
   }
 
@@ -369,8 +369,7 @@ export async function editBuilding(
     const aliasArray = editData.aliases
       .split(',')
       .map(a => a.trim())
-      .filter(a => a.length > 0)
-      .map(a => ({ language: 'de', value: a }));
+      .filter(a => a.length > 0);
 
     if (aliasArray.length > 0) {
       const hasExistingAliases = item.aliases?.de && item.aliases.de.length > 0;
