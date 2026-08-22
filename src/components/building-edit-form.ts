@@ -372,7 +372,10 @@ export class BuildingEditForm extends LitElement {
     this._base = saved ?? {
       id: building.id,
       label: building.label,
-      aliases: this.detail?.aliases ?? [],
+      // `undefined` means the alias list is unknown: the detail fetch failed
+      // or has not landed. The field stays disabled until a real list arrives,
+      // since it replaces the list wholesale and would otherwise drop names.
+      aliases: this.detail?.aliases,
       type: building.type,
       inception: building.inception,
       demolished: this.detail?.demolished,
@@ -429,13 +432,22 @@ export class BuildingEditForm extends LitElement {
     }
   }
 
+  /**
+   * Whether the item's current aliases are known. The field replaces the whole
+   * list, so it may only be offered when there is a list to edit against.
+   */
+  private get _aliasesKnown(): boolean {
+    return this._base?.aliases !== undefined;
+  }
+
   /** The item's current aliases in the form's comma-separated notation. */
   private get _baseAliasText(): string {
     return (this._base?.aliases ?? []).join(', ');
   }
 
   private get _aliasesChanged(): boolean {
-    return normalizeAliases(this.formAliases).join(', ') !== this._baseAliasText;
+    return this._aliasesKnown &&
+      normalizeAliases(this.formAliases).join(', ') !== this._baseAliasText;
   }
 
   private get _hasChanges(): boolean {
@@ -578,7 +590,7 @@ export class BuildingEditForm extends LitElement {
       const savedValues: SavedBuildingValues = {
         id: this.building.id,
         label: this.formLabel,
-        aliases: normalizeAliases(this.formAliases),
+        aliases: this._aliasesKnown ? normalizeAliases(this.formAliases) : undefined,
         type: this.formType ?? this._base?.type,
         inception: inceptionDate ?? this._base?.inception,
         demolished: demolishedDate ?? this._base?.demolished,
@@ -665,7 +677,7 @@ export class BuildingEditForm extends LitElement {
               placeholder="${msg('z.B. Müllerhof, Alte Schmiede')}"
               .value=${this.formAliases}
               @input=${(e: Event) => this.formAliases = (e.target as HTMLInputElement).value}
-              ?disabled=${this.saving}>
+              ?disabled=${this.saving || !this._aliasesKnown}>
             <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--space-1);">
               ${msg('Mehrere Namen durch Komma trennen')}
             </div>
