@@ -314,69 +314,55 @@ function createReference(source: SourceRef) {
 }
 
 /**
- * Edits a Wikidata building entity using the REST API
+ * Builds the JSON Patch operations for an edit, given the item as it currently
+ * stands in Wikidata.
+ *
+ * Kept free of I/O so the patch shapes stay testable. The REST API models
+ * labels as plain strings and aliases as plain string arrays keyed by language
+ * code, not as the `{ language, value }` objects the Action API takes.
  */
-export async function editBuilding(
-  editData: BuildingEditData,
-  signal?: AbortSignal,
-): Promise<void> {
-  // Validate data first
-  const validation = validateEditData(editData);
-  if (!validation.valid) {
-    throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
-  }
-
-  const token = await getValidAccessToken();
-  if (!token) {
-    throw new Error('Not authenticated - please log in again');
-  }
-
-  console.log('Using REST API to edit building:', editData.id);
-
-  // Fetch current item to get existing statements
-  const getUrl = `${WIKIDATA_REST_API}/entities/items/${editData.id}`;
-  console.log('Fetching item:', getUrl);
-
-  const getResponse = await fetch(getUrl, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    signal,
-  });
-
-  if (!getResponse.ok) {
-    throw new Error(`Failed to fetch item: ${getResponse.status}`);
-  }
-
-  const item = await getResponse.json();
-  console.log('Current item:', item);
-
-  // Build JSON Patch operations
+export function buildEditPatchOps(editData: BuildingEditData, item: any): any[] {
   const patchOps: any[] = [];
+  const lang = getLocale();
 
   // Update label if provided
   if (editData.label !== undefined) {
-    const hasGermanLabel = item.labels?.de !== undefined;
+    const previous = item.labels?.[lang];
     patchOps.push({
-      op: hasGermanLabel ? 'replace' : 'add',
-      path: '/labels/de',
+      op: previous !== undefined ? 'replace' : 'add',
+      path: `/labels/${lang}`,
       value: editData.label,
     });
+
+    // Items created here carry the same text as a `mul` label, which is what
+    // speakers of every other language see. Keep it in step -- but only while
+    // it still matches the label being replaced: a `mul` value someone else
+    // has since customised is not ours to overwrite.
+    if (item.labels?.mul !== undefined && item.labels.mul === previous) {
+      patchOps.push({
+        op: 'replace',
+        path: '/labels/mul',
+        value: editData.label,
+      });
+    }
   }
 
-  // Update aliases if provided
+  // Add aliases if provided. The form field starts empty and never shows what
+  // the item already has, so it can only ever mean "add these": existing
+  // aliases survive, and only genuinely new names produce an operation.
   if (editData.aliases !== undefined) {
-    const aliasArray = editData.aliases
+    const existing: string[] = item.aliases?.[lang] ?? [];
+    const typed = editData.aliases
       .split(',')
       .map(a => a.trim())
       .filter(a => a.length > 0);
+    const merged = [...new Set([...existing, ...typed])];
 
-    if (aliasArray.length > 0) {
-      const hasExistingAliases = item.aliases?.de && item.aliases.de.length > 0;
+    if (merged.length > existing.length) {
       patchOps.push({
-        op: hasExistingAliases ? 'replace' : 'add',
-        path: '/aliases/de',
-        value: aliasArray,
+        op: existing.length > 0 ? 'replace' : 'add',
+        path: `/aliases/${lang}`,
+        value: merged,
       });
     }
   }
@@ -651,6 +637,50 @@ export async function editBuilding(
       });
     }
   }
+
+  return patchOps;
+}
+
+
+/**
+ * Edits a Wikidata building entity using the REST API
+ */
+export async function editBuilding(
+  editData: BuildingEditData,
+  signal?: AbortSignal,
+): Promise<void> {
+  // Validate data first
+  const validation = validateEditData(editData);
+  if (!validation.valid) {
+    throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+  }
+
+  const token = await getValidAccessToken();
+  if (!token) {
+    throw new Error('Not authenticated - please log in again');
+  }
+
+  console.log('Using REST API to edit building:', editData.id);
+
+  // Fetch current item to get existing statements
+  const getUrl = `${WIKIDATA_REST_API}/entities/items/${editData.id}`;
+  console.log('Fetching item:', getUrl);
+
+  const getResponse = await fetch(getUrl, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    signal,
+  });
+
+  if (!getResponse.ok) {
+    throw new Error(`Failed to fetch item: ${getResponse.status}`);
+  }
+
+  const item = await getResponse.json();
+  console.log('Current item:', item);
+
+  const patchOps = buildEditPatchOps(editData, item);
 
   if (patchOps.length === 0) {
     console.log('No changes to make');

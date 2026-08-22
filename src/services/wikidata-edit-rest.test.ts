@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { validateEditData, buildPersonItemPayload, buildBuildingItemPayload, createDateStatement, dateStatementMatches } from './wikidata-edit-rest';
+import { validateEditData, buildPersonItemPayload, buildBuildingItemPayload, buildEditPatchOps, createDateStatement, dateStatementMatches } from './wikidata-edit-rest';
+import { getLocale } from '../locale';
 import type { BuildingEditData } from './wikidata-edit-rest';
 import { parseDate } from '../utils/dates';
 
@@ -830,5 +831,103 @@ describe('buildBuildingItemPayload unknown-value inception', () => {
   it('attaches the source reference to a plain-value inception too', () => {
     const payload = buildBuildingItemPayload({ ...base, inception: date('1890') });
     expect(payload.statements.P571[0].references).toHaveLength(1);
+  });
+});
+
+describe('buildEditPatchOps', () => {
+  const lang = getLocale();
+  const opFor = (ops: any[], path: string) => ops.find(o => o.path === path);
+
+  describe('label', () => {
+    it('sends a plain string, not a language-tagged object', () => {
+      // The REST API takes a plain string here, not the Action API's
+      // { language, value } object.
+      const ops = buildEditPatchOps({ id: 'Q1', label: 'Müllerhof' }, { labels: {} });
+      expect(opFor(ops, `/labels/${lang}`).value).toBe('Müllerhof');
+    });
+
+    it('writes to the current locale, not a hardcoded language', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', label: 'Müllerhof' }, { labels: {} });
+      expect(ops.map(o => o.path)).toEqual([`/labels/${lang}`]);
+    });
+
+    it('adds when the item has no label in this language', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', label: 'Neu' }, { labels: {} });
+      expect(opFor(ops, `/labels/${lang}`).op).toBe('add');
+    });
+
+    it('replaces when the item already has one', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', label: 'Neu' }, { labels: { [lang]: 'Alt' } });
+      expect(opFor(ops, `/labels/${lang}`).op).toBe('replace');
+    });
+
+    it('keeps an in-step mul label in step with the rename', () => {
+      const ops = buildEditPatchOps(
+        { id: 'Q1', label: 'Neu' },
+        { labels: { [lang]: 'Alt', mul: 'Alt' } },
+      );
+      expect(opFor(ops, '/labels/mul')).toEqual({ op: 'replace', path: '/labels/mul', value: 'Neu' });
+    });
+
+    it('leaves a mul label somebody else customised alone', () => {
+      const ops = buildEditPatchOps(
+        { id: 'Q1', label: 'Neu' },
+        { labels: { [lang]: 'Alt', mul: 'Etwas anderes' } },
+      );
+      expect(opFor(ops, '/labels/mul')).toBeUndefined();
+    });
+
+    it('does not invent a mul label on items that lack one', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', label: 'Neu' }, { labels: { [lang]: 'Alt' } });
+      expect(opFor(ops, '/labels/mul')).toBeUndefined();
+    });
+  });
+
+  describe('aliases', () => {
+    it('sends plain strings, not language-tagged objects', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', aliases: 'Müllerhof, Alte Schmiede' }, {});
+      expect(opFor(ops, `/aliases/${lang}`).value).toEqual(['Müllerhof', 'Alte Schmiede']);
+    });
+
+    it('adds when the item has no aliases in this language', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', aliases: 'Neu' }, {});
+      expect(opFor(ops, `/aliases/${lang}`).op).toBe('add');
+    });
+
+    it('merges with existing aliases rather than overwriting them', () => {
+      // The form field always starts empty, so the aliases already on the
+      // item have to survive the edit.
+      const ops = buildEditPatchOps(
+        { id: 'Q1', aliases: 'Neu' },
+        { aliases: { [lang]: ['Alt'] } },
+      );
+      expect(opFor(ops, `/aliases/${lang}`)).toEqual({
+        op: 'replace',
+        path: `/aliases/${lang}`,
+        value: ['Alt', 'Neu'],
+      });
+    });
+
+    it('drops duplicates of existing and repeated aliases', () => {
+      const ops = buildEditPatchOps(
+        { id: 'Q1', aliases: 'Alt, Neu, Neu' },
+        { aliases: { [lang]: ['Alt'] } },
+      );
+      expect(opFor(ops, `/aliases/${lang}`).value).toEqual(['Alt', 'Neu']);
+    });
+
+    it('emits no operation when every alias is already present', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', aliases: 'Alt' }, { aliases: { [lang]: ['Alt'] } });
+      expect(ops).toEqual([]);
+    });
+
+    it('ignores an empty field and stray separators', () => {
+      expect(buildEditPatchOps({ id: 'Q1', aliases: '' }, {})).toEqual([]);
+      expect(buildEditPatchOps({ id: 'Q1', aliases: ' , , ' }, {})).toEqual([]);
+    });
+  });
+
+  it('returns no operations when there is nothing to change', () => {
+    expect(buildEditPatchOps({ id: 'Q1' }, {})).toEqual([]);
   });
 });
