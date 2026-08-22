@@ -15,6 +15,7 @@ import { getValidAccessToken } from './wikimedia-auth';
 import { parseDate, type StatementDate, type WikidataTime } from '../utils/dates';
 import { recordEdit } from './edit-tracker';
 import { getLocale } from '../locale';
+import { normalizeAliases } from '../utils/aliases';
 
 const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
 
@@ -347,22 +348,24 @@ export function buildEditPatchOps(editData: BuildingEditData, item: any): any[] 
     }
   }
 
-  // Add aliases if provided. The form field starts empty and never shows what
-  // the item already has, so it can only ever mean "add these": existing
-  // aliases survive, and only genuinely new names produce an operation.
+  // Update aliases if provided. The edit form is prefilled with the item's
+  // current aliases, so what it sends is the whole list for this language --
+  // names dropped from the field are meant to go.
   if (editData.aliases !== undefined) {
     const existing: string[] = item.aliases?.[lang] ?? [];
-    const typed = editData.aliases
-      .split(',')
-      .map(a => a.trim())
-      .filter(a => a.length > 0);
-    const merged = [...new Set([...existing, ...typed])];
+    const next = normalizeAliases(editData.aliases);
+    const unchanged = next.length === existing.length && next.every((a, i) => a === existing[i]);
 
-    if (merged.length > existing.length) {
+    if (!unchanged && next.length > 0) {
       patchOps.push({
         op: existing.length > 0 ? 'replace' : 'add',
         path: `/aliases/${lang}`,
-        value: merged,
+        value: next,
+      });
+    } else if (!unchanged && existing.length > 0) {
+      patchOps.push({
+        op: 'remove',
+        path: `/aliases/${lang}`,
       });
     }
   }

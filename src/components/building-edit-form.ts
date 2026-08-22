@@ -8,6 +8,8 @@ import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData, type SourceRef } from '../services/wikidata-edit-rest';
 import { statementDateToEdit, editToStatementDate, type StatementDateEdit } from '../utils/dates';
+import { normalizeAliases } from '../utils/aliases';
+import { getLocale } from '../locale';
 import './entity-search';
 import './app-button';
 import './icon';
@@ -371,6 +373,7 @@ export class BuildingEditForm extends LitElement {
     this._base = saved ?? {
       id: building.id,
       label: building.label,
+      aliases: this._detailAliases,
       type: building.type,
       inception: building.inception,
       demolished: this.detail?.demolished,
@@ -410,7 +413,7 @@ export class BuildingEditForm extends LitElement {
       this.bookAuthor = '';
       this.bookYear = '';
       this.bookPage = '';
-      this.formAliases = '';
+      this.formAliases = this._baseAliasText;
       this.formAddress = '';
       this.formAddressStartDate = '';
       this.formAddressEndDate = '';
@@ -427,13 +430,46 @@ export class BuildingEditForm extends LitElement {
     }
   }
 
+  /**
+   * The item's aliases in the language this form writes to.
+   *
+   * `undefined` means the list is unknown -- the detail fetch failed or has not
+   * landed -- and the field stays disabled, since it replaces the list wholesale
+   * and would otherwise drop names. Aliases the label service resolved from a
+   * fallback language belong to a different list than the one being written, so
+   * for this locale the item has none: the baseline is empty and the field
+   * edits a list that starts out empty.
+   */
+  private get _detailAliases(): string[] | undefined {
+    if (!this.detail) return undefined;
+    return this.detail.aliasesLang === getLocale() ? this.detail.aliases : [];
+  }
+
+  /**
+   * Whether the item's current aliases are known. The field replaces the whole
+   * list, so it may only be offered when there is a list to edit against.
+   */
+  private get _aliasesKnown(): boolean {
+    return this._base?.aliases !== undefined;
+  }
+
+  /** The item's current aliases in the form's comma-separated notation. */
+  private get _baseAliasText(): string {
+    return (this._base?.aliases ?? []).join(', ');
+  }
+
+  private get _aliasesChanged(): boolean {
+    return this._aliasesKnown &&
+      normalizeAliases(this.formAliases).join(', ') !== this._baseAliasText;
+  }
+
   private get _hasChanges(): boolean {
     return (this.formLabel !== (this._base?.label ?? '')) ||
       (this.formType !== undefined && this.formType.id !== this._base?.type?.id) ||
       this._inceptionChanged ||
       this._demolishedChanged ||
       (this.formAddress.trim() !== '') ||
-      (this.formAliases.trim() !== '') ||
+      this._aliasesChanged ||
       (this.formArchitect !== undefined) ||
       (this.formCommissionedBy !== undefined) ||
       (this.formOwner !== undefined) ||
@@ -540,7 +576,7 @@ export class BuildingEditForm extends LitElement {
     const editData: BuildingEditData = {
       id: this.building.id,
       label: this.formLabel !== (this._base?.label ?? '') ? this.formLabel : undefined,
-      aliases: this.formAliases || undefined,
+      aliases: this._aliasesChanged ? this.formAliases : undefined,
       type: this.formType?.id !== this._base?.type?.id ? this.formType : undefined,
       inception: inceptionDate ?? undefined,
       demolished: demolishedDate ?? undefined,
@@ -567,6 +603,7 @@ export class BuildingEditForm extends LitElement {
       const savedValues: SavedBuildingValues = {
         id: this.building.id,
         label: this.formLabel,
+        aliases: this._aliasesKnown ? normalizeAliases(this.formAliases) : undefined,
         type: this.formType ?? this._base?.type,
         inception: inceptionDate ?? this._base?.inception,
         demolished: demolishedDate ?? this._base?.demolished,
@@ -653,7 +690,7 @@ export class BuildingEditForm extends LitElement {
               placeholder="${msg('z.B. Müllerhof, Alte Schmiede')}"
               .value=${this.formAliases}
               @input=${(e: Event) => this.formAliases = (e.target as HTMLInputElement).value}
-              ?disabled=${this.saving}>
+              ?disabled=${this.saving || !this._aliasesKnown}>
             <div style="font-size: var(--font-size-xs); color: var(--color-text-muted); margin-top: var(--space-1);">
               ${msg('Mehrere Namen durch Komma trennen')}
             </div>

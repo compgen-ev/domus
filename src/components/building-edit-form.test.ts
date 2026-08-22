@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import './building-edit-form';
 import type { BuildingEditForm } from './building-edit-form';
 import { parseDate } from '../utils/dates';
+import { getLocale } from '../locale';
+import { normalizeAliases } from '../utils/aliases';
 
 describe('edit form dirty detection (repro)', () => {
   async function mountForm() {
@@ -11,6 +13,7 @@ describe('edit form dirty detection (repro)', () => {
       inception: { value: parseDate('1850')! },
     };
     (el as any).detail = {
+      aliases: [],
       heritages: [], images: [], architects: [], commissionedBy: [],
       occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
     };
@@ -71,6 +74,7 @@ describe('Q140374595 shape (vor 1409)', () => {
       inception: { latest: parseDate('1409')! },
     };
     el.detail = {
+      aliases: [],
       heritages: [], images: [], architects: [], commissionedBy: [],
       occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
     };
@@ -121,6 +125,7 @@ describe('save hint', () => {
       inception: { value: parseDate('1850')! },
     };
     el.detail = {
+      aliases: [],
       heritages: [], images: [], architects: [], commissionedBy: [],
       occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
     };
@@ -189,6 +194,7 @@ describe('background refresh while editing', () => {
       inception: { value: parseDate('1850')! },
     };
     el.detail = {
+      aliases: [],
       heritages: [], images: [], architects: [], commissionedBy: [],
       occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
     };
@@ -258,6 +264,7 @@ describe('prefill from a just-saved edit (SPARQL still stale)', () => {
       inception: { value: parseDate('1850')! },
     };
     el.detail = {
+      aliases: [],
       heritages: [], images: [], architects: [], commissionedBy: [],
       occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
     };
@@ -423,6 +430,7 @@ describe('the date inputs interpret against the same baseline the save uses', ()
       inception: { value: parseDate('1850')! },
     };
     el.detail = {
+      aliases: [],
       heritages: [], images: [], architects: [], commissionedBy: [],
       occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
       ...(demolished ? { demolished } : {}),
@@ -463,5 +471,118 @@ describe('the date inputs interpret against the same baseline the save uses', ()
 
     expect(dateInputs(el)[1].previous).toBe(baseline);
     el.remove();
+  });
+});
+
+describe('the alias field edits the whole list', () => {
+  async function mount(detail: unknown, savedValues?: unknown) {
+    const el = document.createElement('building-edit-form') as any;
+    el.building = { id: 'Q1', label: 'Haus', lat: 48, lng: 11 };
+    el.detail = detail;
+    if (savedValues) el.savedValues = savedValues;
+    document.body.appendChild(el);
+    await el.updateComplete;
+    return el;
+  }
+
+  const loaded = (aliases: string[], aliasesLang = getLocale()) => ({
+    aliases,
+    aliasesLang: aliases.length > 0 ? aliasesLang : undefined,
+    heritages: [], images: [], architects: [], commissionedBy: [],
+    occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
+  });
+
+  const aliasInput = (el: any) =>
+    el.shadowRoot!.querySelectorAll('input[type="text"]')[1] as HTMLInputElement;
+
+  it('prefills with the aliases the item already has', async () => {
+    const el = await mount(loaded(['Müllerhof', 'Alte Schmiede']));
+    expect(el.formAliases).toBe('Müllerhof, Alte Schmiede');
+    expect(el._canSave).toBe(false);
+    el.remove();
+  });
+
+  it('marks dirty when a name is added', async () => {
+    const el = await mount(loaded(['Müllerhof']));
+    el.formAliases = 'Müllerhof, Alte Schmiede';
+    await el.updateComplete;
+    expect(el._aliasesChanged).toBe(true);
+    expect(el._canSave).toBe(true);
+    el.remove();
+  });
+
+  it('marks dirty when the field is emptied, so aliases can be removed', async () => {
+    const el = await mount(loaded(['Müllerhof']));
+    el.formAliases = '';
+    await el.updateComplete;
+    expect(el._aliasesChanged).toBe(true);
+    expect(el._canSave).toBe(true);
+    el.remove();
+  });
+
+  it('ignores whitespace-only differences', async () => {
+    const el = await mount(loaded(['Müllerhof', 'Alte Schmiede']));
+    el.formAliases = ' Müllerhof ,Alte Schmiede ';
+    await el.updateComplete;
+    expect(el._aliasesChanged).toBe(false);
+    el.remove();
+  });
+
+  describe('when the aliases came back in another language', () => {
+    // The field writes to /aliases/<current locale>. Names the label service
+    // resolved from a fallback language live under a different code, so this
+    // locale's list is the empty one, and editing starts from empty.
+    it('does not prefill them', async () => {
+      const el = await mount(loaded(['Douglas N. Adams'], 'mul'));
+      expect(el.formAliases).toBe('');
+      expect(el._aliasesKnown).toBe(true);
+      expect(aliasInput(el).disabled).toBe(false);
+      el.remove();
+    });
+
+    it('stays clean, so they are not copied into this locale', async () => {
+      const el = await mount(loaded(['Douglas N. Adams'], 'mul'));
+      expect(el._aliasesChanged).toBe(false);
+      expect(el._canSave).toBe(false);
+      el.remove();
+    });
+
+    it('adds a name to this locale without carrying the others over', async () => {
+      const el = await mount(loaded(['Douglas N. Adams'], 'mul'));
+      el.formAliases = 'Müllerhof';
+      await el.updateComplete;
+      expect(el._aliasesChanged).toBe(true);
+      expect(normalizeAliases(el.formAliases)).toEqual(['Müllerhof']);
+      el.remove();
+    });
+  });
+
+  describe('when the detail fetch never delivered', () => {
+    // The edit button is disabled while detail loads, but a failed fetch
+    // leaves it enabled with no detail at all. Replacing the alias list
+    // against a baseline we never learned would drop the item's real aliases.
+    it('disables the field rather than editing an unknown list', async () => {
+      const el = await mount(null);
+      expect(el._aliasesKnown).toBe(false);
+      expect(aliasInput(el).disabled).toBe(true);
+      el.remove();
+    });
+
+    it('sends nothing even if the field somehow holds text', async () => {
+      const el = await mount(null);
+      el.formAliases = 'Müllerhof';
+      await el.updateComplete;
+      expect(el._aliasesChanged).toBe(false);
+      expect(el._canSave).toBe(false);
+      el.remove();
+    });
+
+    it('takes the aliases from a just-saved edit when there is one', async () => {
+      const el = await mount(null, { id: 'Q1', label: 'Haus', aliases: ['Müllerhof'] });
+      expect(el._aliasesKnown).toBe(true);
+      expect(el.formAliases).toBe('Müllerhof');
+      expect(aliasInput(el).disabled).toBe(false);
+      el.remove();
+    });
   });
 });

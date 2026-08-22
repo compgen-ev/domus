@@ -737,6 +737,10 @@ export class BuildingDetail extends LitElement {
             </div>
           ` : ''}
 
+          ${detail && detail.aliases.length > 0
+            ? this._renderSection(msg('Alternative Namen'), detail.aliases.map(a => ({ primary: a })))
+            : ''}
+
           ${inceptionText || demolishedText ? html`
             <div class="dates-section">
               <h3>${msg('Daten')}</h3>
