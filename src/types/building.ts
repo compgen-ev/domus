@@ -40,6 +40,8 @@ export interface AddressEntry {
 export interface BuildingDetail {
   /** Structured date with authoritative precision and calendar model. */
   demolished?: StatementDate;
+  /** Alternative names in the display language, in Wikidata's order. */
+  aliases: string[];
   heritages: string[];
   images: string[];
   architects: PersonRef[];
@@ -67,6 +69,7 @@ export interface BuildingDetail {
 export interface SavedBuildingValues {
   id: string;
   label: string;
+  aliases?: string[];
   type?: WikidataItem;
   inception?: StatementDate;
   demolished?: StatementDate;

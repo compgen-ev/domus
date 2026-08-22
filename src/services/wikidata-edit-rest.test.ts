@@ -894,9 +894,7 @@ describe('buildEditPatchOps', () => {
       expect(opFor(ops, `/aliases/${lang}`).op).toBe('add');
     });
 
-    it('merges with existing aliases rather than overwriting them', () => {
-      // The form field always starts empty, so the aliases already on the
-      // item have to survive the edit.
+    it('replaces the whole list, since the field carries all of it', () => {
       const ops = buildEditPatchOps(
         { id: 'Q1', aliases: 'Neu' },
         { aliases: { [lang]: ['Alt'] } },
@@ -904,24 +902,37 @@ describe('buildEditPatchOps', () => {
       expect(opFor(ops, `/aliases/${lang}`)).toEqual({
         op: 'replace',
         path: `/aliases/${lang}`,
-        value: ['Alt', 'Neu'],
+        value: ['Neu'],
       });
     });
 
-    it('drops duplicates of existing and repeated aliases', () => {
+    it('keeps the names the field still carries', () => {
       const ops = buildEditPatchOps(
-        { id: 'Q1', aliases: 'Alt, Neu, Neu' },
+        { id: 'Q1', aliases: 'Alt, Neu' },
         { aliases: { [lang]: ['Alt'] } },
       );
       expect(opFor(ops, `/aliases/${lang}`).value).toEqual(['Alt', 'Neu']);
     });
 
-    it('emits no operation when every alias is already present', () => {
-      const ops = buildEditPatchOps({ id: 'Q1', aliases: 'Alt' }, { aliases: { [lang]: ['Alt'] } });
+    it('removes the aliases when the field is emptied', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', aliases: '' }, { aliases: { [lang]: ['Alt'] } });
+      expect(ops).toEqual([{ op: 'remove', path: `/aliases/${lang}` }]);
+    });
+
+    it('drops repeated names', () => {
+      const ops = buildEditPatchOps({ id: 'Q1', aliases: 'Neu, Neu' }, {});
+      expect(opFor(ops, `/aliases/${lang}`).value).toEqual(['Neu']);
+    });
+
+    it('emits no operation when the list is unchanged', () => {
+      const ops = buildEditPatchOps(
+        { id: 'Q1', aliases: 'Alt, Neu' },
+        { aliases: { [lang]: ['Alt', 'Neu'] } },
+      );
       expect(ops).toEqual([]);
     });
 
-    it('ignores an empty field and stray separators', () => {
+    it('emits no operation for an empty field on an item with no aliases', () => {
       expect(buildEditPatchOps({ id: 'Q1', aliases: '' }, {})).toEqual([]);
       expect(buildEditPatchOps({ id: 'Q1', aliases: ' , , ' }, {})).toEqual([]);
     });

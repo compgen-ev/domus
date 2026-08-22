@@ -1,5 +1,6 @@
 import type { WikidataBuilding, WikidataItem, BuildingDetail, PersonRef, AddressEntry, WikidataTime, StatementDate } from '../types/building';
 import { statementDateFromTimeString, PROLEPTIC_GREGORIAN } from '../utils/dates';
+import { normalizeAliases } from '../utils/aliases';
 import { getLocale } from '../locale';
 import { BUILDING_TYPE_SET } from './building-types';
 
@@ -197,7 +198,7 @@ export async function fetchBuildings(
 
 function buildDetailQuery(id: string, langs: string): string {
   return `
-SELECT ${timeStatementVars('demolished')} ?heritage ?heritageLabel
+SELECT ?itemAltLabel ${timeStatementVars('demolished')} ?heritage ?heritageLabel
   ?image
   ?occupant ?occupantLabel ${timeValueVars('occupStart')} ${timeValueVars('occupEnd')}
   ?owner ?ownerLabel ${timeValueVars('ownerStart')} ${timeValueVars('ownerEnd')}
@@ -253,6 +254,7 @@ ${timeStatementPattern('P576', 'demolished')}
 }
 
 interface DetailBinding extends TimeStatementBindings {
+  itemAltLabel?: SparqlBinding;
   heritage?: SparqlBinding;
   heritageLabel?: SparqlBinding;
   image?: SparqlBinding;
@@ -359,6 +361,7 @@ export async function fetchBuildingDetail(
   let govId: string | undefined;
   let wikiTreeId: string | undefined;
   let modified: string | undefined;
+  let aliases: string[] = [];
   const heritageSet = new Set<string>();
   const imageSet = new Set<string>();
   const occupants = new Map<string, PersonRef>();
@@ -375,6 +378,9 @@ export async function fetchBuildingDetail(
     if (row.govId && !govId) govId = row.govId.value;
     if (row.wikiTreeId && !wikiTreeId) wikiTreeId = row.wikiTreeId.value;
     if (row.modified && !modified) modified = row.modified.value;
+    // The label service joins all aliases of the resolved language into one
+    // comma-separated literal, the same form the edit field takes them in.
+    if (row.itemAltLabel && aliases.length === 0) aliases = normalizeAliases(row.itemAltLabel.value);
     if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
     if (row.image) imageSet.add(row.image.value);
 
@@ -469,6 +475,7 @@ export async function fetchBuildingDetail(
 
   return {
     demolished,
+    aliases,
     ohmId,
     govId,
     wikiTreeId,

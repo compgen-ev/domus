@@ -8,6 +8,7 @@ import { baseStyles } from '../styles/shared';
 import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData, type SourceRef } from '../services/wikidata-edit-rest';
 import { statementDateToEdit, editToStatementDate, type StatementDateEdit } from '../utils/dates';
+import { normalizeAliases } from '../utils/aliases';
 import './entity-search';
 import './app-button';
 import './icon';
@@ -371,6 +372,7 @@ export class BuildingEditForm extends LitElement {
     this._base = saved ?? {
       id: building.id,
       label: building.label,
+      aliases: this.detail?.aliases ?? [],
       type: building.type,
       inception: building.inception,
       demolished: this.detail?.demolished,
@@ -410,7 +412,7 @@ export class BuildingEditForm extends LitElement {
       this.bookAuthor = '';
       this.bookYear = '';
       this.bookPage = '';
-      this.formAliases = '';
+      this.formAliases = this._baseAliasText;
       this.formAddress = '';
       this.formAddressStartDate = '';
       this.formAddressEndDate = '';
@@ -427,13 +429,22 @@ export class BuildingEditForm extends LitElement {
     }
   }
 
+  /** The item's current aliases in the form's comma-separated notation. */
+  private get _baseAliasText(): string {
+    return (this._base?.aliases ?? []).join(', ');
+  }
+
+  private get _aliasesChanged(): boolean {
+    return normalizeAliases(this.formAliases).join(', ') !== this._baseAliasText;
+  }
+
   private get _hasChanges(): boolean {
     return (this.formLabel !== (this._base?.label ?? '')) ||
       (this.formType !== undefined && this.formType.id !== this._base?.type?.id) ||
       this._inceptionChanged ||
       this._demolishedChanged ||
       (this.formAddress.trim() !== '') ||
-      (this.formAliases.trim() !== '') ||
+      this._aliasesChanged ||
       (this.formArchitect !== undefined) ||
       (this.formCommissionedBy !== undefined) ||
       (this.formOwner !== undefined) ||
@@ -540,7 +551,7 @@ export class BuildingEditForm extends LitElement {
     const editData: BuildingEditData = {
       id: this.building.id,
       label: this.formLabel !== (this._base?.label ?? '') ? this.formLabel : undefined,
-      aliases: this.formAliases || undefined,
+      aliases: this._aliasesChanged ? this.formAliases : undefined,
       type: this.formType?.id !== this._base?.type?.id ? this.formType : undefined,
       inception: inceptionDate ?? undefined,
       demolished: demolishedDate ?? undefined,
@@ -567,6 +578,7 @@ export class BuildingEditForm extends LitElement {
       const savedValues: SavedBuildingValues = {
         id: this.building.id,
         label: this.formLabel,
+        aliases: normalizeAliases(this.formAliases),
         type: this.formType ?? this._base?.type,
         inception: inceptionDate ?? this._base?.inception,
         demolished: demolishedDate ?? this._base?.demolished,
