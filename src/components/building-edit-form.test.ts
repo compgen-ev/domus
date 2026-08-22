@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import './building-edit-form';
 import type { BuildingEditForm } from './building-edit-form';
 import { parseDate } from '../utils/dates';
+import { getLocale } from '../locale';
+import { normalizeAliases } from '../utils/aliases';
 
 describe('edit form dirty detection (repro)', () => {
   async function mountForm() {
@@ -483,8 +485,9 @@ describe('the alias field edits the whole list', () => {
     return el;
   }
 
-  const loaded = (aliases: string[]) => ({
+  const loaded = (aliases: string[], aliasesLang = getLocale()) => ({
     aliases,
+    aliasesLang: aliases.length > 0 ? aliasesLang : undefined,
     heritages: [], images: [], architects: [], commissionedBy: [],
     occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
   });
@@ -523,6 +526,35 @@ describe('the alias field edits the whole list', () => {
     await el.updateComplete;
     expect(el._aliasesChanged).toBe(false);
     el.remove();
+  });
+
+  describe('when the aliases came back in another language', () => {
+    // The field writes to /aliases/<current locale>. Names the label service
+    // resolved from a fallback language live under a different code, so this
+    // locale's list is the empty one, and editing starts from empty.
+    it('does not prefill them', async () => {
+      const el = await mount(loaded(['Douglas N. Adams'], 'mul'));
+      expect(el.formAliases).toBe('');
+      expect(el._aliasesKnown).toBe(true);
+      expect(aliasInput(el).disabled).toBe(false);
+      el.remove();
+    });
+
+    it('stays clean, so they are not copied into this locale', async () => {
+      const el = await mount(loaded(['Douglas N. Adams'], 'mul'));
+      expect(el._aliasesChanged).toBe(false);
+      expect(el._canSave).toBe(false);
+      el.remove();
+    });
+
+    it('adds a name to this locale without carrying the others over', async () => {
+      const el = await mount(loaded(['Douglas N. Adams'], 'mul'));
+      el.formAliases = 'Müllerhof';
+      await el.updateComplete;
+      expect(el._aliasesChanged).toBe(true);
+      expect(normalizeAliases(el.formAliases)).toEqual(['Müllerhof']);
+      el.remove();
+    });
   });
 
   describe('when the detail fetch never delivered', () => {

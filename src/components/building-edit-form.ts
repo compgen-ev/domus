@@ -9,6 +9,7 @@ import { buttonStyles, inputStyles } from '../styles/design-tokens';
 import { editBuilding, type BuildingEditData, type SourceRef } from '../services/wikidata-edit-rest';
 import { statementDateToEdit, editToStatementDate, type StatementDateEdit } from '../utils/dates';
 import { normalizeAliases } from '../utils/aliases';
+import { getLocale } from '../locale';
 import './entity-search';
 import './app-button';
 import './icon';
@@ -372,10 +373,7 @@ export class BuildingEditForm extends LitElement {
     this._base = saved ?? {
       id: building.id,
       label: building.label,
-      // `undefined` means the alias list is unknown: the detail fetch failed
-      // or has not landed. The field stays disabled until a real list arrives,
-      // since it replaces the list wholesale and would otherwise drop names.
-      aliases: this.detail?.aliases,
+      aliases: this._detailAliases,
       type: building.type,
       inception: building.inception,
       demolished: this.detail?.demolished,
@@ -430,6 +428,21 @@ export class BuildingEditForm extends LitElement {
       this.saveError = null;
       this.saveErrorDetails = null;
     }
+  }
+
+  /**
+   * The item's aliases in the language this form writes to.
+   *
+   * `undefined` means the list is unknown -- the detail fetch failed or has not
+   * landed -- and the field stays disabled, since it replaces the list wholesale
+   * and would otherwise drop names. Aliases the label service resolved from a
+   * fallback language belong to a different list than the one being written, so
+   * for this locale the item has none: the baseline is empty and the field
+   * edits a list that starts out empty.
+   */
+  private get _detailAliases(): string[] | undefined {
+    if (!this.detail) return undefined;
+    return this.detail.aliasesLang === getLocale() ? this.detail.aliases : [];
   }
 
   /**

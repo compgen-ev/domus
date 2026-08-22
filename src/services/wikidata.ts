@@ -9,6 +9,7 @@ const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 interface SparqlBinding {
   value: string;
   type: string;
+  'xml:lang'?: string;
 }
 
 interface SparqlResult {
@@ -362,6 +363,7 @@ export async function fetchBuildingDetail(
   let wikiTreeId: string | undefined;
   let modified: string | undefined;
   let aliases: string[] = [];
+  let aliasesLang: string | undefined;
   const heritageSet = new Set<string>();
   const imageSet = new Set<string>();
   const occupants = new Map<string, PersonRef>();
@@ -378,9 +380,13 @@ export async function fetchBuildingDetail(
     if (row.govId && !govId) govId = row.govId.value;
     if (row.wikiTreeId && !wikiTreeId) wikiTreeId = row.wikiTreeId.value;
     if (row.modified && !modified) modified = row.modified.value;
-    // The label service joins all aliases of the resolved language into one
-    // comma-separated literal, the same form the edit field takes them in.
-    if (row.itemAltLabel && aliases.length === 0) aliases = normalizeAliases(row.itemAltLabel.value);
+    // The label service joins all aliases of one language into a single
+    // comma-separated literal, the same form the edit field takes them in, and
+    // tags it with the language it settled on from the fallback chain.
+    if (row.itemAltLabel && aliases.length === 0) {
+      aliases = normalizeAliases(row.itemAltLabel.value);
+      aliasesLang = row.itemAltLabel['xml:lang'];
+    }
     if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
     if (row.image) imageSet.add(row.image.value);
 
@@ -476,6 +482,7 @@ export async function fetchBuildingDetail(
   return {
     demolished,
     aliases,
+    aliasesLang,
     ohmId,
     govId,
     wikiTreeId,
