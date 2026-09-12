@@ -25,8 +25,13 @@ HEADERS = {
 }
 
 
-def sparql(query: str, retries: int = 4) -> list[str]:
-    """Run a SPARQL query via POST and return Q-IDs from the first binding variable."""
+def sparql(query: str, retries: int = 6) -> list[str]:
+    """Run a SPARQL query via POST and return Q-IDs from the first binding variable.
+
+    A full crawl is dozens of queries, enough to trip the endpoint's rate limit,
+    which then rejects requests for a minute at a time. The backoff therefore
+    has to reach past a minute before giving up.
+    """
     data = urllib.parse.urlencode({"query": query, "format": "json"}).encode()
     req = urllib.request.Request(
         SPARQL_ENDPOINT,
@@ -47,7 +52,7 @@ def sparql(query: str, retries: int = 4) -> list[str]:
         except Exception as e:
             if attempt == retries - 1:
                 raise
-            wait = 2 ** attempt * 3
+            wait = min(2**attempt * 3, 120)
             print(f"  Retrying after {wait}s ({e})...")
             time.sleep(wait)
     return []

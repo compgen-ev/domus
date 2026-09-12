@@ -1,0 +1,22 @@
+name: Build
+description: Install dependencies, run the test suite, and build the site into dist/.
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: npm
+
+    - run: npm ci
+      shell: bash
+
+    - run: npx lit-localize build
+      shell: bash
+
+    - run: npx vitest run
+      shell: bash
+
+    - run: npm run build
+      shell: bash

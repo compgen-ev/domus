@@ -19,19 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
+      - uses: ./.github/actions/build
 
-      - run: npm ci
-
-      - run: npx lit-localize build
-
-      - run: npx vitest run
-
-      - run: npm run build
-
+      # Must stay in this job: the artifact is read from its workspace.
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

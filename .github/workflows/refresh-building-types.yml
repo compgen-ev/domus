@@ -1,0 +1,105 @@
+name: Refresh building types
+
+# The building type list is a cached projection of Wikidata's P279 hierarchy, so
+# it goes stale on its own schedule rather than with changes to this repo. This
+# regenerates it monthly and opens a PR; it is never checked on pull requests,
+# where an upstream ontology edit would fail branches that did not cause it.
+on:
+  schedule:
+    - cron: '0 4 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: refresh-building-types
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Regenerate
+        run: |
+          cp src/services/building-types.ts /tmp/before.ts
+          python3 scripts/update-building-types.py
+
+      - name: Detect change
+        id: diff
+        run: |
+          if cmp -s /tmp/before.ts src/services/building-types.ts; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            cp src/services/building-types.ts /tmp/run1.ts
+          fi
+
+      # update-building-types.py retries on exceptions, but a partial SPARQL
+      # result arrives as HTTP 200 and would be written out silently. Two
+      # independent crawls agreeing byte-for-byte is the check for that; it is
+      # only worth the second crawl when there is a change to confirm.
+      - name: Confirm the crawl is reproducible
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          python3 scripts/update-building-types.py
+          if ! cmp -s /tmp/run1.ts src/services/building-types.ts; then
+            echo "::error::Two consecutive runs produced different lists; treating as an unstable endpoint."
+            exit 1
+          fi
+
+      # This PR is opened with GITHUB_TOKEN, which by design does not trigger
+      # the pull_request workflows, so the generated file is validated here
+      # instead of relying on CI running on the PR.
+      - name: Validate the generated file
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          python3 - <<'PY'
+          import re, sys, pathlib
+          src = pathlib.Path("src/services/building-types.ts").read_text()
+          ids = re.findall(r"'(Q[0-9]+)'", src)
+          errs = []
+          if "Q41176" not in ids:
+              errs.append("Q41176 (building root) is missing")
+          if len(ids) != len(set(ids)):
+              errs.append("duplicate entries")
+          if len(ids) < 1000:
+              errs.append(f"implausibly short list ({len(ids)} entries)")
+          if "BUILDING_TYPE_SET" not in src or "as const" not in src:
+              errs.append("exports are malformed")
+          for e in errs:
+              print(f"::error::{e}")
+          sys.exit(1 if errs else 0)
+          PY
+
+      # Shape checks cannot tell whether the file still compiles, and the PR
+      # this job opens gets no CI of its own, so the build runs here.
+      - uses: ./.github/actions/build
+        if: steps.diff.outputs.changed == 'true'
+
+      - name: Explain the diff
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          python3 scripts/explain-building-types-diff.py \
+            /tmp/before.ts src/services/building-types.ts \
+            -o /tmp/pr-body.md --full /tmp/building-types-diff.md
+
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.diff.outputs.changed == 'true'
+        with:
+          name: building-types-diff
+          path: /tmp/building-types-diff.md
+
+      - name: Open pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/refresh-building-types
+          title: 'Refresh building types from Wikidata'
+          body-path: /tmp/pr-body.md
+          commit-message: 'Refresh building types from Wikidata'
+          labels: building-types
+          delete-branch: true
