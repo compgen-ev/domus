@@ -208,7 +208,7 @@ SELECT ?itemAltLabel ${timeStatementVars('demolished')} ?heritage ?heritageLabel
   ?commissioned ?commissionedLabel
   ?replacedBy ?replacedByLabel
   ?replaces ?replacesLabel
-  ?ohmId ?govId ?wikiTreeId
+  ?ohmId ?govId ?wikiTreeId ?genWikiId
   ?modified
 WHERE {
   BIND(wd:${id} AS ?item)
@@ -249,6 +249,7 @@ ${timeStatementPattern('P576', 'demolished')}
   OPTIONAL { ?item wdt:P8424 ?ohmId . }
   OPTIONAL { ?item wdt:P2503 ?govId . }
   OPTIONAL { ?item wdt:P7607 ?wikiTreeId . }
+  OPTIONAL { ?item wdt:P14871 ?genWikiId . }
   OPTIONAL { ?item schema:dateModified ?modified . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }`;
@@ -275,6 +276,7 @@ interface DetailBinding extends TimeStatementBindings {
   ohmId?: SparqlBinding;
   govId?: SparqlBinding;
   wikiTreeId?: SparqlBinding;
+  genWikiId?: SparqlBinding;
   modified?: SparqlBinding;
 }
 
@@ -361,6 +363,7 @@ export async function fetchBuildingDetail(
   let ohmId: string | undefined;
   let govId: string | undefined;
   let wikiTreeId: string | undefined;
+  let genWikiId: string | undefined;
   let modified: string | undefined;
   let aliases: string[] = [];
   let aliasesLang: string | undefined;
@@ -379,6 +382,7 @@ export async function fetchBuildingDetail(
     if (row.ohmId && !ohmId) ohmId = row.ohmId.value;
     if (row.govId && !govId) govId = row.govId.value;
     if (row.wikiTreeId && !wikiTreeId) wikiTreeId = row.wikiTreeId.value;
+    if (row.genWikiId && !genWikiId) genWikiId = row.genWikiId.value;
     if (row.modified && !modified) modified = row.modified.value;
     // The label service joins all aliases of one language into a single
     // comma-separated literal, the same form the edit field takes them in, and
@@ -486,6 +490,7 @@ export async function fetchBuildingDetail(
     ohmId,
     govId,
     wikiTreeId,
+    genWikiId,
     modified,
     heritages: [...heritageSet],
     images: [...imageSet],

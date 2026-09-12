@@ -60,6 +60,7 @@ export interface BuildingDetail {
   ohmId?: string;
   govId?: string;
   wikiTreeId?: string;
+  genWikiId?: string;
   modified?: string;
 }
 

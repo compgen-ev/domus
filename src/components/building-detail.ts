@@ -839,6 +839,7 @@ export class BuildingDetail extends LitElement {
               ohmId: detail?.ohmId,
               govId: detail?.govId,
               wikiTreeId: detail?.wikiTreeId,
+              genWikiId: detail?.genWikiId,
               hasOhmFootprint: this.hasOhmFootprint,
               ohmElementId: this.ohmElementId,
               ohmElementType: this.ohmElementType,
