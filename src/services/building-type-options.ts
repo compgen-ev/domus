@@ -1,5 +1,5 @@
 import { msg } from '@lit/localize';
-export { BUILDING_TYPE_SET } from './building-types';
+export { BUILDING_TYPE_SET } from './building-type-set';
 
 export const BUILDING_TYPE_IDS = [
   'Q3947',      // house

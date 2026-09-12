@@ -2,7 +2,7 @@ import type { WikidataBuilding, WikidataItem, BuildingDetail, PersonRef, Address
 import { statementDateFromTimeString, PROLEPTIC_GREGORIAN } from '../utils/dates';
 import { normalizeAliases } from '../utils/aliases';
 import { getLocale } from '../locale';
-import { BUILDING_TYPE_SET } from './building-types';
+import { BUILDING_TYPE_SET } from './building-type-set';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 
