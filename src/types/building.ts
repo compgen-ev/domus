@@ -20,6 +20,17 @@ export interface WikidataBuilding {
 
 export type BuildingFeatureProperties = Omit<WikidataBuilding, 'lat' | 'lng'>;
 
+/**
+ * A link to an external resource about an entity. Domus lists a resource when
+ * it is reachable from Wikidata, free to read without an account, and a
+ * collaborative non-commercial genealogy project; open data comes first.
+ */
+export interface ExternalLink {
+  /** Plain name of the resource, never a logo or brand mark. */
+  label: string;
+  url: string;
+}
+
 export interface PersonRef {
   id: string;
   label: string;
@@ -27,6 +38,8 @@ export interface PersonRef {
   start?: WikidataTime;
   /** P582 "end time" qualifier. */
   end?: WikidataTime;
+  /** Resources other than Wikidata, which the label already links to. */
+  links?: ExternalLink[];
 }
 
 export interface AddressEntry {

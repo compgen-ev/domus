@@ -1,7 +1,7 @@
 import { LitElement, html, css, type PropertyValues, type TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { localized, msg } from '@lit/localize';
-import type { WikidataBuilding, WikidataItem, BuildingDetail as BuildingDetailData, PersonRef, AddressEntry, SavedBuildingValues } from '../types/building';
+import type { WikidataBuilding, WikidataItem, BuildingDetail as BuildingDetailData, PersonRef, AddressEntry, ExternalLink, SavedBuildingValues } from '../types/building';
 import type { OhmBuildingPrefill } from '../services/ohm';
 import { baseStyles } from '../styles/shared';
 import { buttonStyles, badgeStyles } from '../styles/design-tokens';
@@ -11,6 +11,7 @@ import './building-edit-form';
 import './building-create-form';
 import './app-button';
 import './icon';
+import './link-menu';
 import './stale-banner';
 import IconClose from '~icons/mdi/close';
 import IconPencil from '~icons/mdi/pencil';
@@ -383,6 +384,10 @@ export class BuildingDetail extends LitElement {
         flex-shrink: 0;
       }
 
+      .entry-links {
+        margin-left: var(--space-2);
+      }
+
       .entry-label a {
         color: inherit;
         text-decoration: underline;
@@ -590,12 +595,12 @@ export class BuildingDetail extends LitElement {
 
   private _renderSection(
     title: string,
-    items: Array<{ primary: string; href?: string; onClick?: () => void; range?: string }>,
+    items: Array<{ primary: string; href?: string; onClick?: () => void; range?: string; links?: ExternalLink[] }>,
   ): TemplateResult {
     return html`
       <div class="section">
         <h3>${title}</h3>
-        ${items.map(({ primary, href, onClick, range }) => html`
+        ${items.map(({ primary, href, onClick, range, links }) => html`
           <div class="entry">
             <span class="entry-label">
               ${onClick
@@ -603,6 +608,9 @@ export class BuildingDetail extends LitElement {
                 : href
                 ? html`<a href=${href} target="_blank" rel="noopener">${primary}</a>`
                 : primary}
+              ${links?.length
+                ? html`<domus-link-menu class="entry-links" .links=${links}></domus-link-menu>`
+                : ''}
             </span>
             ${range ? html`<span class="entry-dates">${range}</span>` : ''}
           </div>
@@ -616,6 +624,7 @@ export class BuildingDetail extends LitElement {
       primary: p.label,
       href: `https://www.wikidata.org/wiki/${p.id}`,
       range: yearRange(p.start, p.end),
+      links: p.links,
     }));
   }
 
@@ -623,6 +632,7 @@ export class BuildingDetail extends LitElement {
     return entities.map((e) => ({
       primary: e.label,
       href: `https://www.wikidata.org/wiki/${e.id}`,
+      links: e.links,
     }));
   }
 
