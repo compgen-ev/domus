@@ -84,6 +84,8 @@ export class LinkMenu extends LitElement {
 
   @state() private open = false;
 
+  private _registerTimer?: ReturnType<typeof setTimeout>;
+
   connectedCallback() {
     super.connectedCallback();
     this._onOutsideClick = this._onOutsideClick.bind(this);
@@ -95,7 +97,13 @@ export class LinkMenu extends LitElement {
     this._removeListeners();
   }
 
+  /**
+   * Also drops a registration that is still pending, so closing or
+   * disconnecting within the same tick as opening leaves nothing behind.
+   */
   private _removeListeners() {
+    clearTimeout(this._registerTimer);
+    this._registerTimer = undefined;
     document.removeEventListener('click', this._onOutsideClick);
     document.removeEventListener('keydown', this._onKeyDown);
   }
@@ -108,7 +116,9 @@ export class LinkMenu extends LitElement {
   private _toggle() {
     this.open = !this.open;
     if (this.open) {
-      setTimeout(() => {
+      // Deferred so the click that opened the menu does not close it again.
+      this._registerTimer = setTimeout(() => {
+        this._registerTimer = undefined;
         document.addEventListener('click', this._onOutsideClick);
         document.addEventListener('keydown', this._onKeyDown);
       }, 0);
