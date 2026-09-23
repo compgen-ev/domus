@@ -650,6 +650,10 @@
   <source>Weniger anzeigen</source>
   <target>Show less</target>
 </trans-unit>
+<trans-unit id="sca02f90d4b4dbd69">
+  <source>Weitere Links: <x id="0" equiv-text="${names}"/></source>
+  <target>More links: <x id="0" equiv-text="${names}"/></target>
+</trans-unit>
 </body>
 </file>
 </xliff>

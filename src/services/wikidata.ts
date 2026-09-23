@@ -1,4 +1,4 @@
-import type { WikidataBuilding, WikidataItem, BuildingDetail, PersonRef, AddressEntry, WikidataTime, StatementDate } from '../types/building';
+import type { WikidataBuilding, WikidataItem, BuildingDetail, PersonRef, AddressEntry, ExternalLink, WikidataTime, StatementDate } from '../types/building';
 import { statementDateFromTimeString, PROLEPTIC_GREGORIAN } from '../utils/dates';
 import { normalizeAliases } from '../utils/aliases';
 import { getLocale } from '../locale';
@@ -101,22 +101,29 @@ function timeValueVars(v: string): string {
 }
 
 /**
- * SPARQL fragment binding a time property's statement value plus its
- * P1319 (earliest) / P1326 (latest) qualifiers.
+ * SPARQL triples binding a time property's statement value plus its
+ * P1319 (earliest) / P1326 (latest) qualifiers. Matches only items that
+ * have such a statement; see {@link timeStatementPattern} for the
+ * optional form.
  *
  * Goes through p:/psv: (not wdt:) so unknown-value statements — where
  * only the qualifiers exist — are still matched. Restricted to best-rank
  * statements to mirror wdt: truthy semantics.
  */
-function timeStatementPattern(prop: string, v: string): string {
+function timeStatementClauses(prop: string, v: string): string {
   const stmt = `?${v}Stmt`;
   return `
-  OPTIONAL {
     ?item p:${prop} ${stmt} .
     ${stmt} a wikibase:BestRank .
     ${timeValueClause(stmt, `psv:${prop}`, v)}
     ${timeValueClause(stmt, 'pqv:P1319', `${v}Earliest`)}
-    ${timeValueClause(stmt, 'pqv:P1326', `${v}Latest`)}
+    ${timeValueClause(stmt, 'pqv:P1326', `${v}Latest`)}`;
+}
+
+/** {@link timeStatementClauses} wrapped in OPTIONAL. */
+function timeStatementPattern(prop: string, v: string): string {
+  return `
+  OPTIONAL {${timeStatementClauses(prop, v)}
   }`;
 }
 
@@ -127,6 +134,36 @@ function timeStatementVars(v: string): string {
 
 interface TimeStatementBindings {
   [key: string]: SparqlBinding | undefined;
+}
+
+/**
+ * External resources listed for a person, in display order: the identifier
+ * property, the label shown in the UI and the URL its value expands to.
+ * Wikidata itself is not in here — the person's name already links there.
+ */
+const PERSON_LINK_SOURCES = [
+  { suffix: 'GenWiki', prop: 'P14871', label: 'GenWiki', url: (id: string) => `https://wiki.genealogy.net/?curid=${id}` },
+  { suffix: 'WikiTree', prop: 'P2949', label: 'WikiTree', url: (id: string) => `https://www.wikitree.com/wiki/${id}` },
+] as const;
+
+/** OPTIONAL clauses binding every {@link PERSON_LINK_SOURCES} id of `v`. */
+function personLinkClauses(v: string): string {
+  return PERSON_LINK_SOURCES
+    .map(({ suffix, prop }) => `OPTIONAL { ?${v} wdt:${prop} ?${v}${suffix} . }`)
+    .join('\n    ');
+}
+
+/** The SELECT variables produced by {@link personLinkClauses}. */
+function personLinkVars(v: string): string {
+  return PERSON_LINK_SOURCES.map(({ suffix }) => `?${v}${suffix}`).join(' ');
+}
+
+function parsePersonLinks(row: TimeStatementBindings, v: string): ExternalLink[] | undefined {
+  const links = PERSON_LINK_SOURCES.flatMap(({ suffix, label, url }) => {
+    const value = row[`${v}${suffix}`]?.value;
+    return value ? [{ label, url: url(value) }] : [];
+  });
+  return links.length > 0 ? links : undefined;
 }
 
 function parseTimeValue(row: TimeStatementBindings, v: string): WikidataTime | undefined {
@@ -197,60 +234,78 @@ export async function fetchBuildings(
   return buildings;
 }
 
+/**
+ * Every property sits in its own UNION branch, so each result row binds the
+ * variables of exactly one property and the row count is the sum of the
+ * value counts rather than their product. The empty branch yields the one
+ * row that carries ?itemAltLabel even when no branch matches.
+ */
 function buildDetailQuery(id: string, langs: string): string {
   return `
 SELECT ?itemAltLabel ${timeStatementVars('demolished')} ?heritage ?heritageLabel
   ?image
   ?occupant ?occupantLabel ${timeValueVars('occupStart')} ${timeValueVars('occupEnd')}
+  ${personLinkVars('occupant')}
   ?owner ?ownerLabel ${timeValueVars('ownerStart')} ${timeValueVars('ownerEnd')}
+  ${personLinkVars('owner')}
   ?address ${timeValueVars('addrStart')} ${timeValueVars('addrEnd')}
   ?architect ?architectLabel
+  ${personLinkVars('architect')}
   ?commissioned ?commissionedLabel
+  ${personLinkVars('commissioned')}
   ?replacedBy ?replacedByLabel
   ?replaces ?replacesLabel
   ?ohmId ?govId ?wikiTreeId ?genWikiId
   ?modified
 WHERE {
-  BIND(wd:${id} AS ?item)
-${timeStatementPattern('P576', 'demolished')}
-  OPTIONAL { ?item wdt:P18 ?image . }
-  OPTIONAL {
+  VALUES ?item { wd:${id} }
+  {
+  } UNION {${timeStatementClauses('P576', 'demolished')}
+  } UNION {
+    ?item wdt:P18 ?image .
+  } UNION {
     ?item p:P1435 ?hStmt .
     ?hStmt ps:P1435 ?heritage .
-  }
-  OPTIONAL {
+  } UNION {
     ?item p:P466 ?occStmt .
     ?occStmt ps:P466 ?occupant .
     ${timeValueClause('?occStmt', 'pqv:P580', 'occupStart')}
     ${timeValueClause('?occStmt', 'pqv:P582', 'occupEnd')}
-  }
-  OPTIONAL {
+    ${personLinkClauses('occupant')}
+  } UNION {
     ?item p:P127 ?ownStmt .
     ?ownStmt ps:P127 ?owner .
     ${timeValueClause('?ownStmt', 'pqv:P580', 'ownerStart')}
     ${timeValueClause('?ownStmt', 'pqv:P582', 'ownerEnd')}
-  }
-  OPTIONAL {
+    ${personLinkClauses('owner')}
+  } UNION {
     ?item p:P6375 ?addrStmt .
     ?addrStmt ps:P6375 ?address .
     ${timeValueClause('?addrStmt', 'pqv:P580', 'addrStart')}
     ${timeValueClause('?addrStmt', 'pqv:P582', 'addrEnd')}
-  }
-  OPTIONAL {
+  } UNION {
     ?item p:P84 ?archStmt .
     ?archStmt ps:P84 ?architect .
-  }
-  OPTIONAL {
+    ${personLinkClauses('architect')}
+  } UNION {
     ?item p:P88 ?commStmt .
     ?commStmt ps:P88 ?commissioned .
+    ${personLinkClauses('commissioned')}
+  } UNION {
+    ?item wdt:P167 ?replacedBy .
+  } UNION {
+    ?item wdt:P1398 ?replaces .
+  } UNION {
+    ?item wdt:P8424 ?ohmId .
+  } UNION {
+    ?item wdt:P2503 ?govId .
+  } UNION {
+    ?item wdt:P7607 ?wikiTreeId .
+  } UNION {
+    ?item wdt:P14871 ?genWikiId .
+  } UNION {
+    ?item schema:dateModified ?modified .
   }
-  OPTIONAL { ?item wdt:P167 ?replacedBy . }
-  OPTIONAL { ?item wdt:P1398 ?replaces . }
-  OPTIONAL { ?item wdt:P8424 ?ohmId . }
-  OPTIONAL { ?item wdt:P2503 ?govId . }
-  OPTIONAL { ?item wdt:P7607 ?wikiTreeId . }
-  OPTIONAL { ?item wdt:P14871 ?genWikiId . }
-  OPTIONAL { ?item schema:dateModified ?modified . }
   SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }`;
 }
@@ -404,6 +459,7 @@ export async function fetchBuildingDetail(
           label: row.occupantLabel?.value ?? extractQid(row.occupant.value),
           start,
           end,
+          links: parsePersonLinks(row, 'occupant'),
         });
       }
     }
@@ -418,6 +474,7 @@ export async function fetchBuildingDetail(
           label: row.ownerLabel?.value ?? extractQid(row.owner.value),
           start,
           end,
+          links: parsePersonLinks(row, 'owner'),
         });
       }
     }
@@ -441,6 +498,7 @@ export async function fetchBuildingDetail(
         architects.set(key, {
           id: extractQid(row.architect.value),
           label: row.architectLabel?.value ?? extractQid(row.architect.value),
+          links: parsePersonLinks(row, 'architect'),
         });
       }
     }
@@ -451,6 +509,7 @@ export async function fetchBuildingDetail(
         commissionedBy.set(key, {
           id: extractQid(row.commissioned.value),
           label: row.commissionedLabel?.value ?? extractQid(row.commissioned.value),
+          links: parsePersonLinks(row, 'commissioned'),
         });
       }
     }
