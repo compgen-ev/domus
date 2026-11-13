@@ -16,6 +16,8 @@ import './icon';
 import './date-input';
 import './statement-date-input';
 import { defaultTextLanguage } from './language-select';
+import './commons-image-picker';
+import { commonsFilenameFromInput, type CommonsFile } from '../services/commons';
 import IconCheck from '~icons/mdi/check';
 import IconClose from '~icons/mdi/close';
 import IconUnfoldMore from '~icons/mdi/unfold-more-horizontal';
@@ -319,6 +321,44 @@ export class BuildingEditForm extends LitElement {
         margin-top: var(--space-2);
       }
 
+      .image-choice {
+        display: flex;
+        gap: var(--space-3);
+        align-items: flex-start;
+        margin-bottom: var(--space-3);
+      }
+
+      .image-choice img {
+        width: 96px;
+        height: 96px;
+        object-fit: cover;
+        border-radius: var(--radius-md);
+        flex-shrink: 0;
+        background: var(--color-bg-secondary);
+      }
+
+      .image-choice > div {
+        min-width: 0;
+        font-size: var(--font-size-sm);
+      }
+
+      .image-choice-label {
+        font-size: var(--font-size-xs);
+        color: var(--color-text-muted);
+      }
+
+      .image-choice-name {
+        color: var(--color-text-primary);
+        overflow-wrap: anywhere;
+        margin-bottom: var(--space-1);
+      }
+
+      .image-choice-note {
+        font-size: var(--font-size-xs);
+        color: var(--color-text-secondary);
+        margin-bottom: var(--space-1);
+      }
+
       .btn-link {
         background: none;
         border: none;
@@ -358,6 +398,8 @@ export class BuildingEditForm extends LitElement {
   @state() private citeType = false;
   @state() private citeInception = false;
   @state() private citeDemolished = false;
+  /** Image chosen on Commons in this session; undefined keeps the current one. */
+  @state() private formImage: CommonsFile | undefined;
   @state() private formAliases = '';
   @state() private formType: WikidataItem | undefined;
   @state() private formInception: StatementDateEdit = statementDateToEdit(undefined);
@@ -407,6 +449,7 @@ export class BuildingEditForm extends LitElement {
       type: building.type,
       inception: building.inception,
       demolished: this.detail?.demolished,
+      image: building.image ? commonsFilenameFromInput(building.image) ?? undefined : undefined,
     };
   }
 
@@ -449,6 +492,7 @@ export class BuildingEditForm extends LitElement {
       this.citeType = false;
       this.citeInception = false;
       this.citeDemolished = false;
+      this.formImage = undefined;
       this.formAliases = this._baseAliasText;
       this.formAddress = '';
       this.formAddressLanguage = null;
@@ -524,10 +568,16 @@ export class BuildingEditForm extends LitElement {
       ?? 'de';
   }
 
+  private get _imageChanged(): boolean {
+    return this.formImage !== undefined && this.formImage.name !== this._base?.image;
+  }
+
   private get _hasChanges(): boolean {
+    // The image needs no source, so it isn't a claim change
     return (this.formLabel !== (this._base?.label ?? '')) ||
       this._hasClaimChanges ||
-      this._aliasesChanged;
+      this._aliasesChanged ||
+      this._imageChanged;
   }
 
   private get _hasClaimChanges(): boolean {
@@ -641,6 +691,7 @@ export class BuildingEditForm extends LitElement {
       citeType: this._citingType || undefined,
       citeInception: this._citingInception || undefined,
       citeDemolished: this._citingDemolished || undefined,
+      image: this._imageChanged ? this.formImage!.name : undefined,
       address: this.formAddress || undefined,
       addressLanguage: this.formAddress ? this._addressLanguage : undefined,
       addressStartDate: this.formAddressStartDate || undefined,
@@ -669,6 +720,7 @@ export class BuildingEditForm extends LitElement {
         type: this.formType ?? this._base?.type,
         inception: inceptionDate ?? this._base?.inception,
         demolished: demolishedDate ?? this._base?.demolished,
+        image: this._imageChanged ? this.formImage!.name : this._base?.image,
       };
 
       // Success - dispatch event to notify parent
@@ -703,6 +755,37 @@ export class BuildingEditForm extends LitElement {
     } finally {
       this.saving = false;
     }
+  }
+
+  /** The chosen image, or else the current one, above the picker. */
+  private _renderImageChoice() {
+    const current = this._base?.image;
+    if (this._imageChanged) {
+      const chosen = this.formImage!;
+      return html`
+        <div class="image-choice">
+          <img src=${chosen.thumbUrl} alt="">
+          <div>
+            <div class="image-choice-label">${msg('Ausgewählt:')}</div>
+            <div class="image-choice-name">${chosen.name}</div>
+            ${current ? html`<div class="image-choice-note">${msg('Ersetzt das bisherige Bild.')}</div>` : ''}
+            <button class="btn-link" @click=${() => this.formImage = undefined} ?disabled=${this.saving}>
+              ${msg('Auswahl aufheben')}
+            </button>
+          </div>
+        </div>
+      `;
+    }
+    if (!current) return '';
+    return html`
+      <div class="image-choice">
+        <img src=${`https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(current)}?width=240`} alt="">
+        <div>
+          <div class="image-choice-label">${msg('Aktuelles Bild:')}</div>
+          <div class="image-choice-name">${current}</div>
+        </div>
+      </div>
+    `;
   }
 
   /** Checkbox offering to add the source to a value the user left unchanged. */
@@ -810,6 +893,20 @@ export class BuildingEditForm extends LitElement {
               ? this._renderCiteOption(this.citeDemolished, v => this.citeDemolished = v)
               : ''}
           </div>
+        </div>
+
+        <!-- Image (P18) from Wikimedia Commons -->
+        <div class="section">
+          <div class="section-header">
+            <h3>${msg('Bild')}</h3>
+          </div>
+          ${this._renderImageChoice()}
+          <commons-image-picker
+            .lat=${this.building.lat}
+            .lng=${this.building.lng}
+            @select=${(e: CustomEvent<CommonsFile>) => this.formImage = e.detail}
+            ?disabled=${this.saving}
+          ></commons-image-picker>
         </div>
 
         <!-- Section 2: Address -->
