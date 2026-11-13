@@ -417,7 +417,8 @@ export function buildEditPatchOps(editData: BuildingEditData, item: any): any[] 
   if (editData.address) {
     addOrCompleteStatement(patchOps, item, 'P6375',
       { type: 'value', content: { text: editData.address, language: editData.addressLanguage } },
-      (stmt) => stmt.value?.content?.text === editData.address,
+      (stmt) => stmt.value?.content?.text === editData.address
+        && stmt.value?.content?.language === editData.addressLanguage,
       periodQualifiers(editData.addressStartDate, editData.addressEndDate),
       editData.source);
   }
@@ -464,10 +465,12 @@ function appendToList(patchOps: any[], path: string, current: any[] | undefined,
 }
 
 /**
- * Records a single-valued fact (type, inception, demolition): a statement that
- * already holds the value gets the source as a further reference; a different
- * value replaces the property's statements. With `citeOnly` the value is
- * known to exist already, so a missing match is an error, never a replacement.
+ * Records a single-valued fact (type, inception, demolition). If any of the
+ * property's statements already holds the value, the source is added to it as
+ * a further reference and the other statements stay as they are. Only a value
+ * the item doesn't have yet replaces the property's statements. With
+ * `citeOnly` the value is known to exist already, so a missing match is an
+ * error, never a replacement.
  */
 function addCitableStatement(
   patchOps: any[],
@@ -498,6 +501,27 @@ function addCitableStatement(
   });
 }
 
+/**
+ * Orders two time contents (`{ time, precision }`) at the coarser of their
+ * precisions: negative if `a` is earlier, positive if later, 0 if they can't
+ * be told apart. Below month precision only the years are compared.
+ */
+function compareTimes(a: { time: string; precision: number }, b: { time: string; precision: number }): number {
+  const parts = (time: string) => {
+    const m = /^([+-])(\d+)-(\d\d)-(\d\d)/.exec(time);
+    if (!m) return [0, 0, 0];
+    return [(m[1] === '-' ? -1 : 1) * Number(m[2]), Number(m[3]), Number(m[4])];
+  };
+  const precision = Math.min(a.precision, b.precision);
+  const depth = precision >= 11 ? 3 : precision === 10 ? 2 : 1;
+  const pa = parts(a.time);
+  const pb = parts(b.time);
+  for (let i = 0; i < depth; i++) {
+    if (pa[i] !== pb[i]) return pa[i] - pb[i];
+  }
+  return 0;
+}
+
 function sameTimeValue(a: any, b: any): boolean {
   return a?.type === 'value' && b?.type === 'value'
     && a.content?.time === b.content?.time
@@ -523,10 +547,22 @@ function addOrCompleteStatement(
   const existing: any[] = item.statements?.[prop] ?? [];
   const qualifiersOf = (stmt: any, pid: string) =>
     (stmt.qualifiers ?? []).filter((q: any) => q.property?.id === pid);
+  const knownTime = (stmt: any, pid: string) =>
+    qualifiersOf(stmt, pid).find((q: any) => q.value?.type === 'value')?.value.content;
+  const requested = (pid: string) => qualifiers.find((q) => q.property.id === pid)?.value.content;
+
+  // The completed statement must still describe a period: its start, given
+  // or existing, may not lie after its end.
+  const periodStaysValid = (stmt: any) => {
+    const start = requested('P580') ?? knownTime(stmt, 'P580');
+    const end = requested('P582') ?? knownTime(stmt, 'P582');
+    return !start || !end || compareTimes(start, end) <= 0;
+  };
+
   const idx = existing.findIndex((stmt) => matchesValue(stmt) && qualifiers.every((q) => {
     const current = qualifiersOf(stmt, q.property.id);
     return current.length === 0 || current.some((c: any) => sameTimeValue(c.value, q.value));
-  }));
+  }) && periodStaysValid(stmt));
 
   if (idx < 0) {
     const statement = {

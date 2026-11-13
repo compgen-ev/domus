@@ -576,6 +576,60 @@ describe('buildEditPatchOps: multi-valued statements', () => {
     expect(ops[0]).toEqual({ op: 'add', path: '/statements/P466/1/qualifiers/-', value: qual('P582', '1750') });
   });
 
+  it('treats the same address text in another language as a new value', () => {
+    const existing = { value: { type: 'value', content: { text: 'Via Giusti 24', language: 'de' } }, references: [] };
+    const ops = buildEditPatchOps(
+      { id: 'Q1', address: 'Via Giusti 24', addressLanguage: 'it', source: urlSource },
+      { statements: { P6375: [existing] } },
+    );
+    expect(ops).toHaveLength(1);
+    expect(ops[0].path).toBe('/statements/P6375/-');
+    expect(ops[0].value.value.content.language).toBe('it');
+  });
+
+  it('completes an address with the same text and language', () => {
+    const existing = { value: { type: 'value', content: { text: 'Via Giusti 24', language: 'it' } }, references: [] };
+    const ops = buildEditPatchOps(
+      { id: 'Q1', address: 'Via Giusti 24', addressLanguage: 'it', source: urlSource },
+      { statements: { P6375: [existing] } },
+    );
+    expect(ops.map(o => o.path)).toEqual(['/statements/P6375/0/references']);
+  });
+
+  it('does not give a statement a start after its existing end', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1700', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P582', '1600')])] } },
+    );
+    expect(ops).toHaveLength(1);
+    expect(ops[0].path).toBe('/statements/P466/-');
+  });
+
+  it('does not give a statement an end before its existing start', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantEndDate: '1600', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P580', '1700')])] } },
+    );
+    expect(ops).toHaveLength(1);
+    expect(ops[0].path).toBe('/statements/P466/-');
+  });
+
+  it('adds a start that fits before the existing end', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1560', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P582', '1600')])] } },
+    );
+    expect(ops[0]).toEqual({ op: 'add', path: '/statements/P466/0/qualifiers/-', value: qual('P580', '1560') });
+  });
+
+  it('accepts a start and end in the same year at different precisions', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1600-05-01', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P582', '1600')])] } },
+    );
+    expect(ops[0].path).toBe('/statements/P466/0/qualifiers/-');
+  });
+
   it('puts the page of an online source into the reference', () => {
     const ops = buildEditPatchOps(
       { id: 'Q1', architect: { id: 'Q456', label: 'A' }, source: { ...urlSource, page: '12' } }, {},
