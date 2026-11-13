@@ -16,15 +16,22 @@ import { parseDate, type StatementDate, type WikidataTime } from '../utils/dates
 import { recordEdit } from './edit-tracker';
 import { getLocale } from '../locale';
 import { normalizeAliases } from '../utils/aliases';
+import { msg, str } from '@lit/localize';
 
 const WIKIDATA_REST_API = 'https://www.wikidata.org/w/rest.php/wikibase/v1';
 
-/** Reference to an online source (P854/P4656 reference URL + optional P1476 title). */
+/**
+ * Reference to an online source.
+ * - P854 reference URL, or P4656 Wikimedia import URL for Wikimedia projects
+ * - P1476 title (monolingual text), optional
+ * - P304 page(s), optional
+ */
 export interface UrlSource {
   type: 'url';
   url: string;
   title?: string;      // P1476
   titleLanguage?: string;
+  page?: string;       // P304
 }
 
 /**
@@ -80,7 +87,17 @@ export interface BuildingEditData {
   type?: WikidataItem;
   inception?: StatementDate;
   demolished?: StatementDate;
+  /**
+   * Set when `type`, `inception` or `demolished` repeats the item's current
+   * value so the source can be added to it. The statement must then already
+   * exist; the edit fails rather than replacing anything.
+   */
+  citeType?: boolean;
+  citeInception?: boolean;
+  citeDemolished?: boolean;
   address?: string;
+  /** Language code of the address text (P6375 is monolingual text). */
+  addressLanguage?: string;
   addressStartDate?: string;
   addressEndDate?: string;
   architect?: WikidataItem;
@@ -120,6 +137,14 @@ export function validateEditData(data: BuildingEditData): { valid: boolean; erro
 
   if (data.demolished && !data.demolished.value && !data.demolished.earliest && !data.demolished.latest) {
     errors.push('Demolished date is empty');
+  }
+
+  if (data.address && !data.addressLanguage) {
+    errors.push('Address language is required');
+  }
+
+  if ((data.citeType && !data.type) || (data.citeInception && !data.inception) || (data.citeDemolished && !data.demolished)) {
+    errors.push('A value to cite is missing');
   }
 
   // Check if there are any non-empty changes to claims
@@ -274,6 +299,9 @@ function createReference(source: SourceRef) {
     if (source.title) {
       parts.push({ property: { id: 'P1476' }, value: { type: 'value', content: { text: source.title, language: source.titleLanguage } } });
     }
+    if (source.page) {
+      parts.push({ property: { id: 'P304' }, value: { type: 'value', content: source.page } });
+    }
     return { parts };
   } else if (source.type === 'archive') {
     const parts: ReferencePart[] = [
@@ -371,277 +399,156 @@ export function buildEditPatchOps(editData: BuildingEditData, item: any): any[] 
   }
 
   // Update statements
-  if (editData.type) {
-    const existingStatements = item.statements?.P31 || [];
-    const matchingIdx = existingStatements.findIndex((stmt: any) =>
-      stmt.value?.content === editData.type!.id
-    );
+  addCitableStatement(patchOps, item, 'P31', editData.citeType,
+    (stmt) => stmt.value?.content === editData.type?.id,
+    () => ({ property: { id: 'P31' }, value: createStatementValue(editData.type!, 'wikibase-item') }),
+    editData.type !== undefined, editData.source);
 
-    if (matchingIdx >= 0 && editData.source) {
-      // Add reference to existing statement
-      const existingRefs = existingStatements[matchingIdx].references || [];
-      const refPath = existingRefs.length > 0
-        ? `/statements/P31/${matchingIdx}/references/-`
-        : `/statements/P31/${matchingIdx}/references`;
-      patchOps.push({
-        op: 'add',
-        path: refPath,
-        value: existingRefs.length > 0 ? createReference(editData.source) : [createReference(editData.source)],
-      });
-    } else {
-      // Add or replace P31 statements
-      const newStatement = {
-        property: { id: 'P31' },
-        value: createStatementValue(editData.type, 'wikibase-item'),
-        ...(editData.source && {
-          references: [createReference(editData.source)],
-        }),
-      };
+  addCitableStatement(patchOps, item, 'P571', editData.citeInception,
+    (stmt) => dateStatementMatches(stmt, editData.inception!),
+    () => createDateStatement('P571', editData.inception!),
+    editData.inception !== undefined, editData.source);
 
-      patchOps.push({
-        op: existingStatements.length > 0 ? 'replace' : 'add',
-        path: '/statements/P31',
-        value: [newStatement],
-      });
-    }
-  }
+  addCitableStatement(patchOps, item, 'P576', editData.citeDemolished,
+    (stmt) => dateStatementMatches(stmt, editData.demolished!),
+    () => createDateStatement('P576', editData.demolished!),
+    editData.demolished !== undefined, editData.source);
 
-  if (editData.inception) {
-    const existingStatements = item.statements?.P571 || [];
-    const matchingIdx = existingStatements.findIndex((stmt: any) =>
-      dateStatementMatches(stmt, editData.inception!)
-    );
-
-    if (matchingIdx >= 0 && editData.source) {
-      const existingRefs = existingStatements[matchingIdx].references || [];
-      const refPath = existingRefs.length > 0
-        ? `/statements/P571/${matchingIdx}/references/-`
-        : `/statements/P571/${matchingIdx}/references`;
-      patchOps.push({
-        op: 'add',
-        path: refPath,
-        value: existingRefs.length > 0 ? createReference(editData.source) : [createReference(editData.source)],
-      });
-    } else {
-      const newStatement = createDateStatement('P571', editData.inception, editData.source);
-
-      patchOps.push({
-        op: existingStatements.length > 0 ? 'replace' : 'add',
-        path: '/statements/P571',
-        value: [newStatement],
-      });
-    }
-  }
-
-  if (editData.demolished) {
-    const existingStatements = item.statements?.P576 || [];
-    const matchingIdx = existingStatements.findIndex((stmt: any) =>
-      dateStatementMatches(stmt, editData.demolished!)
-    );
-
-    if (matchingIdx >= 0 && editData.source) {
-      const existingRefs = existingStatements[matchingIdx].references || [];
-      const refPath = existingRefs.length > 0
-        ? `/statements/P576/${matchingIdx}/references/-`
-        : `/statements/P576/${matchingIdx}/references`;
-      patchOps.push({
-        op: 'add',
-        path: refPath,
-        value: existingRefs.length > 0 ? createReference(editData.source) : [createReference(editData.source)],
-      });
-    } else {
-      const newStatement = createDateStatement('P576', editData.demolished, editData.source);
-
-      patchOps.push({
-        op: existingStatements.length > 0 ? 'replace' : 'add',
-        path: '/statements/P576',
-        value: [newStatement],
-      });
-    }
-  }
-
-  // Handle address (P6375 - monolingual text)
   if (editData.address) {
-    const existingStatements = item.statements?.P6375 || [];
-    // Check for duplicate (compare text content)
-    const isDuplicate = existingStatements.some((stmt: any) =>
-      stmt.value?.content?.text === editData.address
-    );
-
-    if (!isDuplicate) {
-      const qualifiers: any[] = [];
-
-      // Add start time qualifier (P580) if provided
-      if (editData.addressStartDate) {
-        qualifiers.push({
-          property: { id: 'P580' },
-          value: createStatementValue(editData.addressStartDate, 'time'),
-        });
-      }
-
-      // Add end time qualifier (P582) if provided
-      if (editData.addressEndDate) {
-        qualifiers.push({
-          property: { id: 'P582' },
-          value: createStatementValue(editData.addressEndDate, 'time'),
-        });
-      }
-
-      const newStatement = {
-        property: { id: 'P6375' },
-        value: {
-          type: 'value',
-          content: {
-            text: editData.address,
-            language: 'de',  // German language code
-          },
-        },
-        ...(qualifiers.length > 0 && { qualifiers }),
-        ...(editData.source && {
-          references: [createReference(editData.source)],
-        }),
-      };
-
-      patchOps.push({
-        op: existingStatements.length > 0 ? 'add' : 'add',
-        path: existingStatements.length > 0 ? '/statements/P6375/-' : '/statements/P6375',
-        value: existingStatements.length > 0 ? newStatement : [newStatement],
-      });
-    }
+    addOrCompleteStatement(patchOps, item, 'P6375',
+      { type: 'value', content: { text: editData.address, language: editData.addressLanguage } },
+      (stmt) => stmt.value?.content?.text === editData.address,
+      periodQualifiers(editData.addressStartDate, editData.addressEndDate),
+      editData.source);
   }
 
-  // Handle architect (P84 - wikibase-item)
-  if (editData.architect) {
-    const existingStatements = item.statements?.P84 || [];
-    // Check for duplicate
-    const isDuplicate = existingStatements.some((stmt: any) =>
-      stmt.value?.content === editData.architect!.id
-    );
-
-    if (!isDuplicate) {
-      const newStatement = {
-        property: { id: 'P84' },
-        value: createStatementValue(editData.architect, 'wikibase-item'),
-        ...(editData.source && {
-          references: [createReference(editData.source)],
-        }),
-      };
-
-      patchOps.push({
-        op: 'add',
-        path: existingStatements.length > 0 ? '/statements/P84/-' : '/statements/P84',
-        value: existingStatements.length > 0 ? newStatement : [newStatement],
-      });
-    }
-  }
-
-  // Handle commissioned by (P88 - wikibase-item)
-  if (editData.commissionedBy) {
-    const existingStatements = item.statements?.P88 || [];
-    const isDuplicate = existingStatements.some((stmt: any) =>
-      stmt.value?.content === editData.commissionedBy!.id
-    );
-
-    if (!isDuplicate) {
-      const newStatement = {
-        property: { id: 'P88' },
-        value: createStatementValue(editData.commissionedBy, 'wikibase-item'),
-        ...(editData.source && {
-          references: [createReference(editData.source)],
-        }),
-      };
-
-      patchOps.push({
-        op: 'add',
-        path: existingStatements.length > 0 ? '/statements/P88/-' : '/statements/P88',
-        value: existingStatements.length > 0 ? newStatement : [newStatement],
-      });
-    }
-  }
-
-  // Handle owner (P127 - wikibase-item)
-  if (editData.owner) {
-    const existingStatements = item.statements?.P127 || [];
-    const isDuplicate = existingStatements.some((stmt: any) =>
-      stmt.value?.content === editData.owner!.id
-    );
-
-    if (!isDuplicate) {
-      const qualifiers: any[] = [];
-
-      if (editData.ownerStartDate) {
-        qualifiers.push({
-          property: { id: 'P580' },
-          value: createStatementValue(editData.ownerStartDate, 'time'),
-        });
-      }
-
-      if (editData.ownerEndDate) {
-        qualifiers.push({
-          property: { id: 'P582' },
-          value: createStatementValue(editData.ownerEndDate, 'time'),
-        });
-      }
-
-      const newStatement = {
-        property: { id: 'P127' },
-        value: createStatementValue(editData.owner, 'wikibase-item'),
-        ...(qualifiers.length > 0 && { qualifiers }),
-        ...(editData.source && {
-          references: [createReference(editData.source)],
-        }),
-      };
-
-      patchOps.push({
-        op: 'add',
-        path: existingStatements.length > 0 ? '/statements/P127/-' : '/statements/P127',
-        value: existingStatements.length > 0 ? newStatement : [newStatement],
-      });
-    }
-  }
-
-  // Handle occupant (P466 - wikibase-item)
-  if (editData.occupant) {
-    const existingStatements = item.statements?.P466 || [];
-    const isDuplicate = existingStatements.some((stmt: any) =>
-      stmt.value?.content === editData.occupant!.id
-    );
-
-    if (!isDuplicate) {
-      const qualifiers: any[] = [];
-
-      if (editData.occupantStartDate) {
-        qualifiers.push({
-          property: { id: 'P580' },
-          value: createStatementValue(editData.occupantStartDate, 'time'),
-        });
-      }
-
-      if (editData.occupantEndDate) {
-        qualifiers.push({
-          property: { id: 'P582' },
-          value: createStatementValue(editData.occupantEndDate, 'time'),
-        });
-      }
-
-      const newStatement = {
-        property: { id: 'P466' },
-        value: createStatementValue(editData.occupant, 'wikibase-item'),
-        ...(qualifiers.length > 0 && { qualifiers }),
-        ...(editData.source && {
-          references: [createReference(editData.source)],
-        }),
-      };
-
-      patchOps.push({
-        op: 'add',
-        path: existingStatements.length > 0 ? '/statements/P466/-' : '/statements/P466',
-        value: existingStatements.length > 0 ? newStatement : [newStatement],
-      });
-    }
+  const people: Array<[string, WikidataItem | undefined, string?, string?]> = [
+    ['P84', editData.architect],
+    ['P88', editData.commissionedBy],
+    ['P127', editData.owner, editData.ownerStartDate, editData.ownerEndDate],
+    ['P466', editData.occupant, editData.occupantStartDate, editData.occupantEndDate],
+  ];
+  for (const [prop, person, start, end] of people) {
+    if (!person) continue;
+    addOrCompleteStatement(patchOps, item, prop,
+      createStatementValue(person, 'wikibase-item'),
+      (stmt) => stmt.value?.content === person.id,
+      periodQualifiers(start, end),
+      editData.source);
   }
 
   return patchOps;
+}
+
+type Qualifier = { property: { id: string }; value: any };
+
+/** P580 start time / P582 end time qualifiers from form date strings. */
+function periodQualifiers(start?: string, end?: string): Qualifier[] {
+  const qualifiers: Qualifier[] = [];
+  if (start) qualifiers.push({ property: { id: 'P580' }, value: createStatementValue(start, 'time') });
+  if (end) qualifiers.push({ property: { id: 'P582' }, value: createStatementValue(end, 'time') });
+  return qualifiers;
+}
+
+/**
+ * Patch ops that append `additions` to a statement's qualifier or reference
+ * list at `path`, creating the list when it is missing or empty.
+ */
+function appendToList(patchOps: any[], path: string, current: any[] | undefined, additions: any[]) {
+  if (additions.length === 0) return;
+  if (current && current.length > 0) {
+    for (const value of additions) patchOps.push({ op: 'add', path: `${path}/-`, value });
+  } else {
+    patchOps.push({ op: 'add', path, value: additions });
+  }
+}
+
+/**
+ * Records a single-valued fact (type, inception, demolition): a statement that
+ * already holds the value gets the source as a further reference; a different
+ * value replaces the property's statements. With `citeOnly` the value is
+ * known to exist already, so a missing match is an error, never a replacement.
+ */
+function addCitableStatement(
+  patchOps: any[],
+  item: any,
+  prop: string,
+  citeOnly: boolean | undefined,
+  matches: (stmt: any) => boolean,
+  build: () => any,
+  present: boolean,
+  source: SourceRef | undefined,
+) {
+  if (!present) return;
+  const existing: any[] = item.statements?.[prop] ?? [];
+  const idx = existing.findIndex(matches);
+
+  if (idx >= 0 && source) {
+    appendToList(patchOps, `/statements/${prop}/${idx}/references`, existing[idx].references, [createReference(source)]);
+    return;
+  }
+  if (citeOnly) {
+    throw new Error(msg(str`Der vorhandene Wert von ${prop} wurde in Wikidata nicht gefunden. Bitte die Seite neu laden.`));
+  }
+  const statement = build();
+  patchOps.push({
+    op: existing.length > 0 ? 'replace' : 'add',
+    path: `/statements/${prop}`,
+    value: [source ? { ...statement, references: [createReference(source)] } : statement],
+  });
+}
+
+function sameTimeValue(a: any, b: any): boolean {
+  return a?.type === 'value' && b?.type === 'value'
+    && a.content?.time === b.content?.time
+    && a.content?.precision === b.content?.precision;
+}
+
+/**
+ * Records a value of a multi-valued property (address, people). A statement
+ * with that value whose start/end qualifiers don't contradict the given ones
+ * is completed: the missing qualifiers and the source are added to it.
+ * Otherwise -- no such value, or one recorded for a different period -- a new
+ * statement is appended.
+ */
+function addOrCompleteStatement(
+  patchOps: any[],
+  item: any,
+  prop: string,
+  value: any,
+  matchesValue: (stmt: any) => boolean,
+  qualifiers: Qualifier[],
+  source: SourceRef | undefined,
+) {
+  const existing: any[] = item.statements?.[prop] ?? [];
+  const qualifiersOf = (stmt: any, pid: string) =>
+    (stmt.qualifiers ?? []).filter((q: any) => q.property?.id === pid);
+  const idx = existing.findIndex((stmt) => matchesValue(stmt) && qualifiers.every((q) => {
+    const current = qualifiersOf(stmt, q.property.id);
+    return current.length === 0 || current.some((c: any) => sameTimeValue(c.value, q.value));
+  }));
+
+  if (idx < 0) {
+    const statement = {
+      property: { id: prop },
+      value,
+      ...(qualifiers.length > 0 && { qualifiers }),
+      ...(source && { references: [createReference(source)] }),
+    };
+    patchOps.push({
+      op: 'add',
+      path: existing.length > 0 ? `/statements/${prop}/-` : `/statements/${prop}`,
+      value: existing.length > 0 ? statement : [statement],
+    });
+    return;
+  }
+
+  const stmt = existing[idx];
+  const missing = qualifiers.filter((q) => qualifiersOf(stmt, q.property.id).length === 0);
+  appendToList(patchOps, `/statements/${prop}/${idx}/qualifiers`, stmt.qualifiers, missing);
+  if (source) {
+    appendToList(patchOps, `/statements/${prop}/${idx}/references`, stmt.references, [createReference(source)]);
+  }
 }
 
 

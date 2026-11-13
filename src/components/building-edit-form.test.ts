@@ -586,3 +586,52 @@ describe('the alias field edits the whole list', () => {
     });
   });
 });
+
+describe('citing an unchanged value', () => {
+  async function mountForm() {
+    const el = document.createElement('building-edit-form') as BuildingEditForm;
+    (el as any).building = {
+      id: 'Q1', label: 'Haus', lat: 48, lng: 11,
+      inception: { latest: parseDate('1564')! },
+    };
+    (el as any).detail = {
+      aliases: [],
+      heritages: [], images: [], architects: [], commissionedBy: [],
+      occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
+    };
+    document.body.appendChild(el);
+    await (el as any).updateComplete;
+    return el as any;
+  }
+
+  const citeBox = (el: any) =>
+    el.shadowRoot!.querySelector('.cite-option input') as HTMLInputElement | null;
+
+  it('offers the checkbox for the existing date', async () => {
+    const el = await mountForm();
+    expect(citeBox(el)).toBeTruthy();
+    el.remove();
+  });
+
+  it('makes the form savable once ticked and a source is given', async () => {
+    const el = await mountForm();
+    citeBox(el)!.click();
+    await el.updateComplete;
+    expect(el._citingInception).toBe(true);
+    expect(el._canSave).toBe(false); // source still missing
+    el.sourceUrl = 'https://example.com/x';
+    await el.updateComplete;
+    expect(el._canSave).toBe(true);
+    el.remove();
+  });
+
+  it('stops citing once the date itself is changed', async () => {
+    const el = await mountForm();
+    el.citeInception = true;
+    el.formInception = { mode: 'value', value: '1600', earliest: '', latest: '' };
+    await el.updateComplete;
+    expect(el._citingInception).toBe(false);
+    expect(el._inceptionChanged).toBe(true);
+    el.remove();
+  });
+});

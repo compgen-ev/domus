@@ -44,6 +44,8 @@ export interface PersonRef {
 
 export interface AddressEntry {
   text: string;
+  /** Language code of the monolingual text. */
+  language?: string;
   /** P580 "start time" qualifier. */
   start?: WikidataTime;
   /** P582 "end time" qualifier. */

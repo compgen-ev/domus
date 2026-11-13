@@ -11,6 +11,7 @@ import { buildingTagToWikidataType, addWikidataTag } from '../services/ohm';
 import { getValidOhmAccessToken } from '../services/ohm-auth';
 import './entity-search';
 import './statement-date-input';
+import { defaultTextLanguage } from './language-select';
 import './app-button';
 import './icon';
 import IconCheck from '~icons/mdi/check';
@@ -147,6 +148,10 @@ export class BuildingCreateForm extends LitElement {
         color: var(--color-primary);
       }
 
+      .language-row {
+        margin-top: var(--space-2);
+      }
+
       .btn-link {
         background: none;
         border: none;
@@ -215,12 +220,15 @@ export class BuildingCreateForm extends LitElement {
   @state() private sourceType: 'url' | 'archive' | 'book' = 'url';
   @state() private sourceUrl = '';
   @state() private sourceTitle = '';
+  @state() private sourceTitleLanguage = defaultTextLanguage();
+  @state() private sourcePage = '';
   @state() private archiveItem: WikidataItem | undefined;
   @state() private archiveCallNumber = '';
   @state() private archivePage = '';
   @state() private bookMode: 'item' | 'freetext' = 'item';
   @state() private bookItem: WikidataItem | undefined;
   @state() private bookTitle = '';
+  @state() private bookTitleLanguage = defaultTextLanguage();
   @state() private bookAuthor = '';
   @state() private bookYear = '';
   @state() private bookPage = '';
@@ -268,7 +276,8 @@ export class BuildingCreateForm extends LitElement {
         type: 'url',
         url: this.sourceUrl.trim(),
         title: this.sourceTitle.trim() || undefined,
-        titleLanguage: this.sourceTitle.trim() ? (navigator.language.split('-')[0] || 'de') : undefined,
+        titleLanguage: this.sourceTitle.trim() ? this.sourceTitleLanguage : undefined,
+        page: this.sourcePage.trim() || undefined,
       };
     } else if (this.sourceType === 'archive') {
       source = {
@@ -284,7 +293,7 @@ export class BuildingCreateForm extends LitElement {
         type: 'book',
         mode: 'freetext',
         title: this.bookTitle.trim(),
-        titleLanguage: navigator.language.split('-')[0] || 'de',
+        titleLanguage: this.bookTitleLanguage,
         author: this.bookAuthor.trim() || undefined,
         year: this.bookYear.trim() || undefined,
         page: this.bookPage.trim() || undefined,
@@ -442,6 +451,24 @@ export class BuildingCreateForm extends LitElement {
                 .value=${this.sourceTitle}
                 @input=${(e: Event) => this.sourceTitle = (e.target as HTMLInputElement).value}
                 ?disabled=${this.saving}>
+              ${this.sourceTitle.trim() ? html`
+                <div class="language-row">
+                  <label>${msg('Sprache des Titels')}</label>
+                  <language-select
+                    .value=${this.sourceTitleLanguage}
+                    @value-changed=${(e: CustomEvent<string>) => this.sourceTitleLanguage = e.detail}
+                    ?disabled=${this.saving}
+                  ></language-select>
+                </div>
+              ` : ''}
+            </div>
+            <div class="field-group">
+              <label>${msg('Seite')} (${msg('optional')})</label>
+              <input
+                type="text"
+                .value=${this.sourcePage}
+                @input=${(e: Event) => this.sourcePage = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
             </div>
           ` : this.sourceType === 'archive' ? html`
             <div class="field-group">
@@ -510,6 +537,14 @@ export class BuildingCreateForm extends LitElement {
                   .value=${this.bookTitle}
                   @input=${(e: Event) => this.bookTitle = (e.target as HTMLInputElement).value}
                   ?disabled=${this.saving}>
+                <div class="language-row">
+                  <label>${msg('Sprache des Titels')}</label>
+                  <language-select
+                    .value=${this.bookTitleLanguage}
+                    @value-changed=${(e: CustomEvent<string>) => this.bookTitleLanguage = e.detail}
+                    ?disabled=${this.saving}
+                  ></language-select>
+                </div>
               </div>
               <div class="field-group">
                 <label>${msg('Autor')} (${msg('optional')})</label>
