@@ -635,3 +635,42 @@ describe('citing an unchanged value', () => {
     el.remove();
   });
 });
+
+describe('choosing an image', () => {
+  async function mountForm(image?: string) {
+    const el = document.createElement('building-edit-form') as BuildingEditForm;
+    (el as any).building = { id: 'Q1', label: 'Haus', lat: 48, lng: 11, image };
+    (el as any).detail = {
+      aliases: [],
+      heritages: [], images: [], architects: [], commissionedBy: [],
+      occupants: [], owners: [], addresses: [], replacedBy: [], replaces: [],
+    };
+    document.body.appendChild(el);
+    await (el as any).updateComplete;
+    return el as any;
+  }
+
+  it('reads the current image from its FilePath URL', async () => {
+    const el = await mountForm('http://commons.wikimedia.org/wiki/Special:FilePath/Altes%20Haus.jpg');
+    expect(el._base.image).toBe('Altes Haus.jpg');
+    el.remove();
+  });
+
+  it('can be saved without a source', async () => {
+    const el = await mountForm();
+    el.formImage = { name: 'Haus.jpg', thumbUrl: 'https://thumb/Haus.jpg' };
+    await el.updateComplete;
+    expect(el._imageChanged).toBe(true);
+    expect(el._canSave).toBe(true);
+    el.remove();
+  });
+
+  it('counts picking the current image as no change', async () => {
+    const el = await mountForm('http://commons.wikimedia.org/wiki/Special:FilePath/Haus.jpg');
+    el.formImage = { name: 'Haus.jpg', thumbUrl: 'https://thumb/Haus.jpg' };
+    await el.updateComplete;
+    expect(el._imageChanged).toBe(false);
+    expect(el._canSave).toBe(false);
+    el.remove();
+  });
+});

@@ -640,6 +640,32 @@ describe('buildEditPatchOps: multi-valued statements', () => {
   });
 });
 
+describe('buildEditPatchOps: image', () => {
+  const p18 = (name: string) => ({ property: { id: 'P18' }, value: { type: 'value', content: name } });
+
+  it('adds the image without a source', () => {
+    expect(validateEditData({ id: 'Q1', image: 'Haus.jpg' }).valid).toBe(true);
+    expect(buildEditPatchOps({ id: 'Q1', image: 'Haus.jpg' }, {})).toEqual([
+      { op: 'add', path: '/statements/P18', value: [p18('Haus.jpg')] },
+    ]);
+  });
+
+  it('replaces a different current image', () => {
+    const ops = buildEditPatchOps({ id: 'Q1', image: 'Neu.jpg' }, { statements: { P18: [p18('Alt.jpg')] } });
+    expect(ops).toEqual([{ op: 'replace', path: '/statements/P18', value: [p18('Neu.jpg')] }]);
+  });
+
+  it('leaves the same image alone', () => {
+    expect(buildEditPatchOps({ id: 'Q1', image: 'Alt.jpg' }, { statements: { P18: [p18('Alt.jpg')] } })).toEqual([]);
+  });
+
+  it('rejects a name with the File: prefix or wiki markup', () => {
+    expect(validateEditData({ id: 'Q1', image: 'File:Haus.jpg' }).valid).toBe(false);
+    expect(validateEditData({ id: 'Q1', image: '[[Haus.jpg]]' }).valid).toBe(false);
+    expect(validateEditData({ id: 'Q1', image: ' ' }).valid).toBe(false);
+  });
+});
+
 describe('buildEditPatchOps: citing existing values', () => {
   const before1564 = { latest: parseDate('1564')! };
   const somevalueInception = {
