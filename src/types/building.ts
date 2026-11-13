@@ -95,4 +95,6 @@ export interface SavedBuildingValues {
   type?: WikidataItem;
   inception?: StatementDate;
   demolished?: StatementDate;
+  /** Commons filename of the image (P18), without `File:`. */
+  image?: string;
 }

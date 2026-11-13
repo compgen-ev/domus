@@ -95,6 +95,12 @@ export interface BuildingEditData {
   citeType?: boolean;
   citeInception?: boolean;
   citeDemolished?: boolean;
+  /**
+   * Commons filename (without `File:`) for the building's image (P18). It
+   * replaces any current image and needs no source: the file page on
+   * Commons documents it.
+   */
+  image?: string;
   address?: string;
   /** Language code of the address text (P6375 is monolingual text). */
   addressLanguage?: string;
@@ -137,6 +143,10 @@ export function validateEditData(data: BuildingEditData): { valid: boolean; erro
 
   if (data.demolished && !data.demolished.value && !data.demolished.earliest && !data.demolished.latest) {
     errors.push('Demolished date is empty');
+  }
+
+  if (data.image !== undefined && (!data.image.trim() || /[#<>[\]|{}]|^file:/i.test(data.image))) {
+    errors.push('Image must be a Commons filename without the File: prefix');
   }
 
   if (data.address && !data.addressLanguage) {
@@ -413,6 +423,17 @@ export function buildEditPatchOps(editData: BuildingEditData, item: any): any[] 
     (stmt) => dateStatementMatches(stmt, editData.demolished!),
     () => createDateStatement('P576', editData.demolished!),
     editData.demolished !== undefined, editData.source);
+
+  if (editData.image) {
+    const existing: any[] = item.statements?.P18 ?? [];
+    if (!existing.some((stmt) => stmt.value?.content === editData.image)) {
+      patchOps.push({
+        op: existing.length > 0 ? 'replace' : 'add',
+        path: '/statements/P18',
+        value: [{ property: { id: 'P18' }, value: { type: 'value', content: editData.image } }],
+      });
+    }
+  }
 
   if (editData.address) {
     addOrCompleteStatement(patchOps, item, 'P6375',

@@ -674,6 +674,46 @@
   <source>Der vorhandene Wert von <x id="0" equiv-text="${prop}"/> wurde in Wikidata nicht gefunden. Bitte die Seite neu laden.</source>
   <target>The current value of <x id="0" equiv-text="${prop}"/> was not found in Wikidata. Please reload the page.</target>
 </trans-unit>
+<trans-unit id="s40c1ea92612ceecd">
+  <source>Ersetzt das bisherige Bild.</source>
+  <target>Replaces the current image.</target>
+</trans-unit>
+<trans-unit id="s43d87671a50bf094">
+  <source>Auswahl aufheben</source>
+  <target>Clear selection</target>
+</trans-unit>
+<trans-unit id="s1d01fa477022123c">
+  <source>Aktuelles Bild:</source>
+  <target>Current image:</target>
+</trans-unit>
+<trans-unit id="s094a49a7d2212154">
+  <source>Bild</source>
+  <target>Image</target>
+</trans-unit>
+<trans-unit id="s2a6209a59f127f8a">
+  <source>Bilder in der Nähe</source>
+  <target>Images nearby</target>
+</trans-unit>
+<trans-unit id="scf13ddcfb9e7fdf2">
+  <source>Suche läuft …</source>
+  <target>Searching …</target>
+</trans-unit>
+<trans-unit id="sfb726ea827492689">
+  <source>Suche auf Commons fehlgeschlagen</source>
+  <target>Search on Commons failed</target>
+</trans-unit>
+<trans-unit id="s214f29a3c81e808f">
+  <source>Keine Bilder gefunden</source>
+  <target>No images found</target>
+</trans-unit>
+<trans-unit id="sef3a118c4dde2646">
+  <source>Dateiname, Suchbegriff oder Commons-Link</source>
+  <target>File name, search term or Commons link</target>
+</trans-unit>
+<trans-unit id="s73b31fd6fc2e120e">
+  <source>Bild auf Wikimedia Commons suchen</source>
+  <target>Search for an image on Wikimedia Commons</target>
+</trans-unit>
 </body>
 </file>
 </xliff>
