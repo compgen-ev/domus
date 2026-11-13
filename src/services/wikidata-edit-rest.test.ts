@@ -269,6 +269,7 @@ describe('validateEditData', () => {
       inception: date('1950'),
       demolished: date('2020'),
       address: 'Hauptstraße 1',
+      addressLanguage: 'de',
       architect: { id: 'Q456', label: 'Test Architect' },
       commissionedBy: { id: 'Q789', label: 'Test Commissioner' },
       owner: { id: 'Q999', label: 'Test Owner' },
@@ -296,6 +297,7 @@ describe('validateEditData', () => {
     const data: BuildingEditData = {
       id: 'Q123',
       address: 'Hauptstraße 1',
+      addressLanguage: 'de',
       addressStartDate: '1850',
       addressEndDate: '1920',
       source: urlSource,
@@ -419,22 +421,6 @@ describe('validateEditData', () => {
 });
 
 describe('patch operations', () => {
-  it('should use correct structure for monolingual text (address)', () => {
-    // This is a structural test - the actual value should be:
-    // { type: 'value', content: { text: 'Hauptstraße 1', language: 'de' } }
-    const addressValue = {
-      type: 'value',
-      content: {
-        text: 'Hauptstraße 1',
-        language: 'de',
-      },
-    };
-
-    expect(addressValue.content).toHaveProperty('text');
-    expect(addressValue.content).toHaveProperty('language');
-    expect(addressValue.content.language).toBe('de');
-  });
-
   it('should use correct structure for wikibase-item (architect)', () => {
     // The actual value should be: { type: 'value', content: 'Q456' }
     const architectValue = {
@@ -523,79 +509,171 @@ describe('patch operations', () => {
   });
 });
 
-describe('deduplication logic', () => {
-  it('should detect duplicate addresses by text content', () => {
-    const existingStatements = [
-      {
-        value: {
-          content: {
-            text: 'Hauptstraße 1',
-            language: 'de',
-          },
-        },
-      },
-    ];
+describe('buildEditPatchOps: multi-valued statements', () => {
+  const time = (input: string) => {
+    const t = parseDate(input)!;
+    return { type: 'value', content: { time: t.time, precision: t.precision, calendarmodel: t.calendarmodel } };
+  };
+  const qual = (pid: string, input: string) => ({ property: { id: pid }, value: time(input) });
+  const occupantStmt = (qualifiers: any[] = [], references: any[] = []) => ({
+    property: { id: 'P466' }, value: { type: 'value', content: 'Q111' }, qualifiers, references,
+  });
+  const occupant = { id: 'Q111', label: 'Giulia' };
 
-    const newAddress = 'Hauptstraße 1';
-    const isDuplicate = existingStatements.some(
-      (stmt: any) => stmt.value?.content?.text === newAddress
+  it('adds the address in the given language', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', address: 'Via Giusti 24', addressLanguage: 'it', source: urlSource }, {},
     );
-
-    expect(isDuplicate).toBe(true);
+    expect(ops).toHaveLength(1);
+    expect(ops[0].path).toBe('/statements/P6375');
+    expect(ops[0].value[0].value.content).toEqual({ text: 'Via Giusti 24', language: 'it' });
   });
 
-  it('should detect duplicate architects by ID', () => {
-    const existingStatements = [
-      {
-        value: {
-          content: 'Q456', // architect ID
-        },
-      },
-    ];
-
-    const newArchitect = { id: 'Q456', label: 'Test Architect' };
-    const isDuplicate = existingStatements.some(
-      (stmt: any) => stmt.value?.content === newArchitect.id
+  it('adds the source to an existing value instead of dropping the edit', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', architect: { id: 'Q456', label: 'A' }, source: urlSource },
+      { statements: { P84: [{ value: { type: 'value', content: 'Q456' }, references: [{ parts: [] }] }] } },
     );
-
-    expect(isDuplicate).toBe(true);
+    expect(ops).toEqual([
+      { op: 'add', path: '/statements/P84/0/references/-', value: { parts: [expect.anything()] } },
+    ]);
   });
 
-  it('should not detect duplicate when address is different', () => {
-    const existingStatements = [
-      {
-        value: {
-          content: {
-            text: 'Hauptstraße 1',
-            language: 'de',
-          },
-        },
-      },
-    ];
-
-    const newAddress = 'Bahnhofstraße 5';
-    const isDuplicate = existingStatements.some(
-      (stmt: any) => stmt.value?.content?.text === newAddress
+  it('adds a missing end date and the source to an existing occupant', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantEndDate: '1600', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P580', '1560')])] } },
     );
-
-    expect(isDuplicate).toBe(false);
+    expect(ops).toEqual([
+      { op: 'add', path: '/statements/P466/0/qualifiers/-', value: qual('P582', '1600') },
+      { op: 'add', path: '/statements/P466/0/references', value: [expect.objectContaining({ parts: expect.any(Array) })] },
+    ]);
   });
 
-  it('should not detect duplicate when architect ID is different', () => {
-    const existingStatements = [
-      {
-        value: {
-          content: 'Q456',
-        },
-      },
-    ];
-
-    const newArchitect = { id: 'Q789', label: 'Different Architect' };
-    const isDuplicate = existingStatements.some(
-      (stmt: any) => stmt.value?.content === newArchitect.id
+  it('keeps qualifiers that already match', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1560', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P580', '1560')])] } },
     );
+    expect(ops.map(o => o.path)).toEqual(['/statements/P466/0/references']);
+  });
 
-    expect(isDuplicate).toBe(false);
+  it('records a different period as a new statement', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1700', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P580', '1560')])] } },
+    );
+    expect(ops).toHaveLength(1);
+    expect(ops[0].path).toBe('/statements/P466/-');
+    expect(ops[0].value.qualifiers).toEqual([qual('P580', '1700')]);
+  });
+
+  it('completes the statement whose period fits, not the first one', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1700', occupantEndDate: '1750', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P580', '1560')]), occupantStmt([qual('P580', '1700')])] } },
+    );
+    expect(ops[0]).toEqual({ op: 'add', path: '/statements/P466/1/qualifiers/-', value: qual('P582', '1750') });
+  });
+
+  it('treats the same address text in another language as a new value', () => {
+    const existing = { value: { type: 'value', content: { text: 'Via Giusti 24', language: 'de' } }, references: [] };
+    const ops = buildEditPatchOps(
+      { id: 'Q1', address: 'Via Giusti 24', addressLanguage: 'it', source: urlSource },
+      { statements: { P6375: [existing] } },
+    );
+    expect(ops).toHaveLength(1);
+    expect(ops[0].path).toBe('/statements/P6375/-');
+    expect(ops[0].value.value.content.language).toBe('it');
+  });
+
+  it('completes an address with the same text and language', () => {
+    const existing = { value: { type: 'value', content: { text: 'Via Giusti 24', language: 'it' } }, references: [] };
+    const ops = buildEditPatchOps(
+      { id: 'Q1', address: 'Via Giusti 24', addressLanguage: 'it', source: urlSource },
+      { statements: { P6375: [existing] } },
+    );
+    expect(ops.map(o => o.path)).toEqual(['/statements/P6375/0/references']);
+  });
+
+  it('does not give a statement a start after its existing end', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1700', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P582', '1600')])] } },
+    );
+    expect(ops).toHaveLength(1);
+    expect(ops[0].path).toBe('/statements/P466/-');
+  });
+
+  it('does not give a statement an end before its existing start', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantEndDate: '1600', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P580', '1700')])] } },
+    );
+    expect(ops).toHaveLength(1);
+    expect(ops[0].path).toBe('/statements/P466/-');
+  });
+
+  it('adds a start that fits before the existing end', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1560', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P582', '1600')])] } },
+    );
+    expect(ops[0]).toEqual({ op: 'add', path: '/statements/P466/0/qualifiers/-', value: qual('P580', '1560') });
+  });
+
+  it('accepts a start and end in the same year at different precisions', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', occupant, occupantStartDate: '1600-05-01', source: urlSource },
+      { statements: { P466: [occupantStmt([qual('P582', '1600')])] } },
+    );
+    expect(ops[0].path).toBe('/statements/P466/0/qualifiers/-');
+  });
+
+  it('puts the page of an online source into the reference', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', architect: { id: 'Q456', label: 'A' }, source: { ...urlSource, page: '12' } }, {},
+    );
+    expect(ops[0].value[0].references[0].parts).toContainEqual(
+      { property: { id: 'P304' }, value: { type: 'value', content: '12' } },
+    );
+  });
+});
+
+describe('buildEditPatchOps: citing existing values', () => {
+  const before1564 = { latest: parseDate('1564')! };
+  const somevalueInception = {
+    property: { id: 'P571' },
+    value: { type: 'somevalue' },
+    qualifiers: [{ property: { id: 'P1326' }, value: createDateStatement('P571', { value: before1564.latest }).value }],
+    references: [{ parts: [] }],
+  };
+
+  it('adds the reference to the matching unknown-value date', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', inception: before1564, citeInception: true, source: urlSource },
+      { statements: { P571: [somevalueInception] } },
+    );
+    expect(ops).toEqual([
+      { op: 'add', path: '/statements/P571/0/references/-', value: expect.objectContaining({ parts: expect.any(Array) }) },
+    ]);
+  });
+
+  it('refuses to replace when the cited value is gone', () => {
+    expect(() => buildEditPatchOps(
+      { id: 'Q1', inception: date('1600'), citeInception: true, source: urlSource },
+      { statements: { P571: [somevalueInception] } },
+    )).toThrow();
+  });
+
+  it('adds the reference to the matching type', () => {
+    const ops = buildEditPatchOps(
+      { id: 'Q1', type: { id: 'Q3947', label: 'Haus' }, citeType: true, source: urlSource },
+      { statements: { P31: [{ value: { type: 'value', content: 'Q5' } }, { value: { type: 'value', content: 'Q3947' } }] } },
+    );
+    expect(ops).toEqual([
+      { op: 'add', path: '/statements/P31/1/references', value: [expect.objectContaining({ parts: expect.any(Array) })] },
+    ]);
   });
 });
 

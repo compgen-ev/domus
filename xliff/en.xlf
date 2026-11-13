@@ -654,6 +654,26 @@
   <source>Weitere Links: <x id="0" equiv-text="${names}"/></source>
   <target>More links: <x id="0" equiv-text="${names}"/></target>
 </trans-unit>
+<trans-unit id="s40f0210e5cd4d048">
+  <source>Durch die Quelle belegt</source>
+  <target>Supported by the source</target>
+</trans-unit>
+<trans-unit id="s961eb04ed87215dd">
+  <source>Sprache der Adresse</source>
+  <target>Address language</target>
+</trans-unit>
+<trans-unit id="s8fee34e4efea5eec">
+  <source>Sprache des Titels</source>
+  <target>Title language</target>
+</trans-unit>
+<trans-unit id="sb3803e9cc79575bb">
+  <source>Sprache</source>
+  <target>Language</target>
+</trans-unit>
+<trans-unit id="s44fa8052b34aa8c7">
+  <source>Der vorhandene Wert von <x id="0" equiv-text="${prop}"/> wurde in Wikidata nicht gefunden. Bitte die Seite neu laden.</source>
+  <target>The current value of <x id="0" equiv-text="${prop}"/> was not found in Wikidata. Please reload the page.</target>
+</trans-unit>
 </body>
 </file>
 </xliff>

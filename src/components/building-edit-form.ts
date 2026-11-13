@@ -15,6 +15,7 @@ import './app-button';
 import './icon';
 import './date-input';
 import './statement-date-input';
+import { defaultTextLanguage } from './language-select';
 import IconCheck from '~icons/mdi/check';
 import IconClose from '~icons/mdi/close';
 import IconUnfoldMore from '~icons/mdi/unfold-more-horizontal';
@@ -298,6 +299,26 @@ export class BuildingEditForm extends LitElement {
         border-color: var(--color-text-muted);
       }
 
+      .cite-option {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        margin-top: var(--space-2);
+        font-size: var(--font-size-sm);
+        font-weight: normal;
+        color: var(--color-text-secondary);
+        cursor: pointer;
+      }
+
+      .cite-option input {
+        width: auto;
+        margin: 0;
+      }
+
+      .language-row {
+        margin-top: var(--space-2);
+      }
+
       .btn-link {
         background: none;
         border: none;
@@ -320,21 +341,30 @@ export class BuildingEditForm extends LitElement {
   @state() private sourceType: 'url' | 'archive' | 'book' = 'url';
   @state() private sourceUrl = '';
   @state() private sourceTitle = '';
+  @state() private sourceTitleLanguage = defaultTextLanguage();
+  @state() private sourcePage = '';
   @state() private archiveItem: WikidataItem | undefined;
   @state() private archiveCallNumber = '';
   @state() private archivePage = '';
   @state() private bookMode: 'item' | 'freetext' = 'item';
   @state() private bookItem: WikidataItem | undefined;
   @state() private bookTitle = '';
+  @state() private bookTitleLanguage = defaultTextLanguage();
   @state() private bookAuthor = '';
   @state() private bookYear = '';
   @state() private bookPage = '';
   @state() private formLabel = '';
+  /** Whether the source also supports the unchanged current type / dates. */
+  @state() private citeType = false;
+  @state() private citeInception = false;
+  @state() private citeDemolished = false;
   @state() private formAliases = '';
   @state() private formType: WikidataItem | undefined;
   @state() private formInception: StatementDateEdit = statementDateToEdit(undefined);
   @state() private formDemolished: StatementDateEdit = statementDateToEdit(undefined);
   @state() private formAddress = '';
+  /** Chosen address language; null until the user picks one. */
+  @state() private formAddressLanguage: string | null = null;
   @state() private formAddressStartDate = '';
   @state() private formAddressEndDate = '';
   @state() private formArchitect: WikidataItem | undefined;
@@ -404,17 +434,24 @@ export class BuildingEditForm extends LitElement {
       this.formDemolished = this._currentDemolishedEdit;
       this.sourceUrl = '';
       this.sourceTitle = '';
+      this.sourceTitleLanguage = defaultTextLanguage();
+      this.sourcePage = '';
       this.archiveItem = undefined;
       this.archiveCallNumber = '';
       this.archivePage = '';
       this.bookMode = 'item';
       this.bookItem = undefined;
       this.bookTitle = '';
+      this.bookTitleLanguage = defaultTextLanguage();
       this.bookAuthor = '';
       this.bookYear = '';
       this.bookPage = '';
+      this.citeType = false;
+      this.citeInception = false;
+      this.citeDemolished = false;
       this.formAliases = this._baseAliasText;
       this.formAddress = '';
+      this.formAddressLanguage = null;
       this.formAddressStartDate = '';
       this.formAddressEndDate = '';
       this.formArchitect = undefined;
@@ -463,24 +500,44 @@ export class BuildingEditForm extends LitElement {
       normalizeAliases(this.formAliases).join(', ') !== this._baseAliasText;
   }
 
+  private get _typeChanged(): boolean {
+    return this.formType !== undefined && this.formType.id !== this._base?.type?.id;
+  }
+
+  /** The current type is kept and the user says the source supports it. */
+  private get _citingType(): boolean {
+    return this.citeType && !!this._base?.type && !this._typeChanged && this.formType !== undefined;
+  }
+
+  private get _citingInception(): boolean {
+    return this.citeInception && !!this._base?.inception && !this._inceptionChanged;
+  }
+
+  private get _citingDemolished(): boolean {
+    return this.citeDemolished && !!this._base?.demolished && !this._demolishedChanged;
+  }
+
+  /** Language for a new address: what the user picked, else that of an existing address. */
+  private get _addressLanguage(): string {
+    return this.formAddressLanguage
+      ?? this.detail?.addresses?.find(a => a.language)?.language
+      ?? 'de';
+  }
+
   private get _hasChanges(): boolean {
     return (this.formLabel !== (this._base?.label ?? '')) ||
-      (this.formType !== undefined && this.formType.id !== this._base?.type?.id) ||
-      this._inceptionChanged ||
-      this._demolishedChanged ||
-      (this.formAddress.trim() !== '') ||
-      this._aliasesChanged ||
-      (this.formArchitect !== undefined) ||
-      (this.formCommissionedBy !== undefined) ||
-      (this.formOwner !== undefined) ||
-      (this.formOccupant !== undefined);
+      this._hasClaimChanges ||
+      this._aliasesChanged;
   }
 
   private get _hasClaimChanges(): boolean {
-    // Same as _hasChanges but excludes label/aliases, which don't need a source
-    return (this.formType !== undefined && this.formType.id !== this._base?.type?.id) ||
+    // Label/aliases are left out: they don't need a source
+    return this._typeChanged ||
+      this._citingType ||
       this._inceptionChanged ||
+      this._citingInception ||
       this._demolishedChanged ||
+      this._citingDemolished ||
       (this.formAddress.trim() !== '') ||
       (this.formArchitect !== undefined) ||
       (this.formCommissionedBy !== undefined) ||
@@ -535,7 +592,8 @@ export class BuildingEditForm extends LitElement {
         type: 'url',
         url: this.sourceUrl,
         title: this.sourceTitle.trim() || undefined,
-        titleLanguage: this.sourceTitle.trim() ? (navigator.language.split('-')[0] || 'de') : undefined,
+        titleLanguage: this.sourceTitle.trim() ? this.sourceTitleLanguage : undefined,
+        page: this.sourcePage.trim() || undefined,
       };
     } else if (this.sourceType === 'archive' && this.archiveItem) {
       source = {
@@ -552,7 +610,7 @@ export class BuildingEditForm extends LitElement {
           type: 'book',
           mode: 'freetext',
           title: this.bookTitle.trim(),
-          titleLanguage: navigator.language.split('-')[0] || 'de',
+          titleLanguage: this.bookTitleLanguage,
           author: this.bookAuthor.trim() || undefined,
           year: this.bookYear.trim() || undefined,
           page: this.bookPage.trim() || undefined,
@@ -577,10 +635,14 @@ export class BuildingEditForm extends LitElement {
       id: this.building.id,
       label: this.formLabel !== (this._base?.label ?? '') ? this.formLabel : undefined,
       aliases: this._aliasesChanged ? this.formAliases : undefined,
-      type: this.formType?.id !== this._base?.type?.id ? this.formType : undefined,
-      inception: inceptionDate ?? undefined,
-      demolished: demolishedDate ?? undefined,
+      type: this._typeChanged ? this.formType : this._citingType ? this._base!.type : undefined,
+      inception: inceptionDate ?? (this._citingInception ? this._base!.inception : undefined),
+      demolished: demolishedDate ?? (this._citingDemolished ? this._base!.demolished : undefined),
+      citeType: this._citingType || undefined,
+      citeInception: this._citingInception || undefined,
+      citeDemolished: this._citingDemolished || undefined,
       address: this.formAddress || undefined,
+      addressLanguage: this.formAddress ? this._addressLanguage : undefined,
       addressStartDate: this.formAddressStartDate || undefined,
       addressEndDate: this.formAddressEndDate || undefined,
       architect: this.formArchitect || undefined,
@@ -641,6 +703,20 @@ export class BuildingEditForm extends LitElement {
     } finally {
       this.saving = false;
     }
+  }
+
+  /** Checkbox offering to add the source to a value the user left unchanged. */
+  private _renderCiteOption(checked: boolean, set: (value: boolean) => void) {
+    return html`
+      <label class="cite-option">
+        <input
+          type="checkbox"
+          .checked=${checked}
+          @change=${(e: Event) => set((e.target as HTMLInputElement).checked)}
+          ?disabled=${this.saving}>
+        ${msg('Durch die Quelle belegt')}
+      </label>
+    `;
   }
 
   render() {
@@ -706,6 +782,9 @@ export class BuildingEditForm extends LitElement {
               @clear=${() => this.formType = undefined}
               ?disabled=${this.saving}
             ></entity-search>
+            ${this._base?.type && !this._typeChanged && this.formType
+              ? this._renderCiteOption(this.citeType, v => this.citeType = v)
+              : ''}
           </div>
           <div class="field-group">
             <label>${msg('Erbaut')}</label>
@@ -715,6 +794,9 @@ export class BuildingEditForm extends LitElement {
               @edit-changed=${(e: CustomEvent<StatementDateEdit>) => this.formInception = e.detail}
               ?disabled=${this.saving}
             ></statement-date-input>
+            ${this._base?.inception && !this._inceptionChanged
+              ? this._renderCiteOption(this.citeInception, v => this.citeInception = v)
+              : ''}
           </div>
           <div class="field-group">
             <label>${msg('Abgerissen')}</label>
@@ -724,6 +806,9 @@ export class BuildingEditForm extends LitElement {
               @edit-changed=${(e: CustomEvent<StatementDateEdit>) => this.formDemolished = e.detail}
               ?disabled=${this.saving}
             ></statement-date-input>
+            ${this._base?.demolished && !this._demolishedChanged
+              ? this._renderCiteOption(this.citeDemolished, v => this.citeDemolished = v)
+              : ''}
           </div>
         </div>
 
@@ -745,6 +830,16 @@ export class BuildingEditForm extends LitElement {
               .value=${this.formAddress}
               @input=${(e: Event) => this.formAddress = (e.target as HTMLInputElement).value}
               ?disabled=${this.saving}>
+            ${this.formAddress.trim() ? html`
+              <div class="language-row">
+                <label>${msg('Sprache der Adresse')}</label>
+                <language-select
+                  .value=${this._addressLanguage}
+                  @value-changed=${(e: CustomEvent<string>) => this.formAddressLanguage = e.detail}
+                  ?disabled=${this.saving}
+                ></language-select>
+              </div>
+            ` : ''}
             <date-range-input
               .start=${this.formAddressStartDate}
               .end=${this.formAddressEndDate}
@@ -908,6 +1003,24 @@ export class BuildingEditForm extends LitElement {
                 .value=${this.sourceTitle}
                 @input=${(e: Event) => this.sourceTitle = (e.target as HTMLInputElement).value}
                 ?disabled=${this.saving}>
+              ${this.sourceTitle.trim() ? html`
+                <div class="language-row">
+                  <label>${msg('Sprache des Titels')}</label>
+                  <language-select
+                    .value=${this.sourceTitleLanguage}
+                    @value-changed=${(e: CustomEvent<string>) => this.sourceTitleLanguage = e.detail}
+                    ?disabled=${this.saving}
+                  ></language-select>
+                </div>
+              ` : ''}
+            </div>
+            <div class="field-group">
+              <label>${msg('Seite')} (${msg('optional')})</label>
+              <input
+                type="text"
+                .value=${this.sourcePage}
+                @input=${(e: Event) => this.sourcePage = (e.target as HTMLInputElement).value}
+                ?disabled=${this.saving}>
             </div>
           ` : this.sourceType === 'archive' ? html`
             <div class="field-group">
@@ -976,6 +1089,14 @@ export class BuildingEditForm extends LitElement {
                   .value=${this.bookTitle}
                   @input=${(e: Event) => this.bookTitle = (e.target as HTMLInputElement).value}
                   ?disabled=${this.saving}>
+                <div class="language-row">
+                  <label>${msg('Sprache des Titels')}</label>
+                  <language-select
+                    .value=${this.bookTitleLanguage}
+                    @value-changed=${(e: CustomEvent<string>) => this.bookTitleLanguage = e.detail}
+                    ?disabled=${this.saving}
+                  ></language-select>
+                </div>
               </div>
               <div class="field-group">
                 <label>${msg('Autor')} (${msg('optional')})</label>

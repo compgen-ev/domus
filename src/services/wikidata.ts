@@ -3,6 +3,7 @@ import { statementDateFromTimeString, PROLEPTIC_GREGORIAN } from '../utils/dates
 import { normalizeAliases } from '../utils/aliases';
 import { getLocale } from '../locale';
 import { BUILDING_TYPE_SET } from './building-type-set';
+import { getLastEdit } from './edit-tracker';
 
 const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
 
@@ -10,6 +11,16 @@ interface SparqlBinding {
   value: string;
   type: string;
   'xml:lang'?: string;
+}
+
+/**
+ * Query URL for a single item. After this browser edited the item, each
+ * request gets a unique parameter so neither the browser nor the query
+ * service's HTTP cache (`max-age=300`) can answer it with a pre-edit result.
+ */
+function itemQueryUrl(id: string, query: string): string {
+  const url = `${SPARQL_ENDPOINT}?query=${encodeURIComponent(query)}&format=json`;
+  return getLastEdit(id) ? `${url}&nocache=${Date.now()}` : url;
 }
 
 interface SparqlResult {
@@ -355,7 +366,7 @@ ${timeStatementPattern('P571', 'inception')}
 }
 LIMIT 1`;
 
-  const url = `${SPARQL_ENDPOINT}?query=${encodeURIComponent(query)}&format=json`;
+  const url = itemQueryUrl(id, query);
   const response = await fetch(url, {
     headers: { Accept: 'application/sparql-results+json' },
     signal,
@@ -402,7 +413,7 @@ export async function fetchBuildingDetail(
   const langs = `${locale},${fallback},mul`;
 
   const query = buildDetailQuery(id, langs);
-  const url = `${SPARQL_ENDPOINT}?query=${encodeURIComponent(query)}&format=json`;
+  const url = itemQueryUrl(id, query);
 
   const response = await fetch(url, {
     headers: { Accept: 'application/sparql-results+json' },
@@ -486,6 +497,7 @@ export async function fetchBuildingDetail(
       if (!addresses.has(key)) {
         addresses.set(key, {
           text: row.address.value,
+          language: row.address['xml:lang'],
           start,
           end,
         });
