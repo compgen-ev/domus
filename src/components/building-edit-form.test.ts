@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import './building-edit-form';
+import { fetchBuildingDetail } from '../services/wikidata';
 import type { BuildingEditForm } from './building-edit-form';
 import { parseDate } from '../utils/dates';
 import { getLocale } from '../locale';
@@ -520,6 +521,25 @@ describe('the alias field edits the whole list', () => {
     el.remove();
   });
 
+  it('leaves aliases containing a comma alone when only the label changes', async () => {
+    // Wikidata stores 'Liebfrauendom,München' as one alias; the detail query
+    // hands it over split, so the untouched field matches its baseline.
+    vi.stubGlobal('fetch', async () => ({
+      ok: true,
+      json: async () => ({ results: { bindings: [
+        { alias: { type: 'literal', 'xml:lang': getLocale(), value: 'Liebfrauendom,München' } },
+      ] } }),
+    }));
+    const detail = await fetchBuildingDetail('Q1');
+    vi.unstubAllGlobals();
+    const el = await mount(detail);
+    el.formLabel = 'Neuer Name';
+    await el.updateComplete;
+    expect(el._canSave).toBe(true);
+    expect(el._aliasesChanged).toBe(false);
+    el.remove();
+  });
+
   it('ignores whitespace-only differences', async () => {
     const el = await mount(loaded(['Müllerhof', 'Alte Schmiede']));
     el.formAliases = ' Müllerhof ,Alte Schmiede ';
@@ -529,8 +549,8 @@ describe('the alias field edits the whole list', () => {
   });
 
   describe('when the aliases came back in another language', () => {
-    // The field writes to /aliases/<current locale>. Names the label service
-    // resolved from a fallback language live under a different code, so this
+    // The field writes to /aliases/<current locale>. Names from a fallback
+    // language live under a different code, so this
     // locale's list is the empty one, and editing starts from empty.
     it('does not prefill them', async () => {
       const el = await mount(loaded(['Douglas N. Adams'], 'mul'));

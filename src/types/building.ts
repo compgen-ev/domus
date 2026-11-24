@@ -56,9 +56,9 @@ export interface BuildingDetail {
   /** Structured date with authoritative precision and calendar model. */
   demolished?: StatementDate;
   /**
-   * Alternative names as the label service resolved them. The label service
-   * falls back through the language chain, so these may be in a different
-   * language than the display locale -- `aliasesLang` says which.
+   * Alternative names in the first language of the fallback chain that has
+   * any, so these may be in a different language than the display locale --
+   * `aliasesLang` says which.
    */
   aliases: string[];
   /** Language tag the aliases came back in, e.g. 'de' or 'mul'. */

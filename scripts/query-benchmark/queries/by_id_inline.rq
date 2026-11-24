@@ -1,0 +1,46 @@
+SELECT ?itemLabel ?type ?typeLabel ?coord ?image ?inceptionTime ?inceptionPrec ?inceptionCal ?inceptionEarliestTime ?inceptionEarliestPrec ?inceptionEarliestCal ?inceptionLatestTime ?inceptionLatestPrec ?inceptionLatestCal ?modified WHERE {
+  OPTIONAL { wd:${id} wdt:P625 ?coord . }
+  OPTIONAL {
+    wd:${id} wdt:P31 ?type .
+    OPTIONAL { ?type rdfs:label ?typeLabel0 . FILTER(LANG(?typeLabel0) = "de") }
+    OPTIONAL { ?type rdfs:label ?typeLabel1 . FILTER(LANG(?typeLabel1) = "en") }
+    OPTIONAL { ?type rdfs:label ?typeLabel2 . FILTER(LANG(?typeLabel2) = "mul") }
+    BIND(COALESCE(?typeLabel0, ?typeLabel1, ?typeLabel2) AS ?typeLabel)
+  }
+  OPTIONAL { wd:${id} wdt:P18 ?image . }
+
+  OPTIONAL {
+    wd:${id} p:P571 ?inceptionStmt .
+    ?inceptionStmt a wikibase:BestRank .
+    OPTIONAL {
+      wd:${id} p:P571 ?inceptionStmt .
+      ?inceptionStmt psv:P571 [
+        wikibase:timeValue ?inceptionTime ;
+        wikibase:timePrecision ?inceptionPrec ;
+        wikibase:timeCalendarModel ?inceptionCal
+      ] .
+    }
+    OPTIONAL {
+      wd:${id} p:P571 ?inceptionStmt .
+      ?inceptionStmt pqv:P1319 [
+        wikibase:timeValue ?inceptionEarliestTime ;
+        wikibase:timePrecision ?inceptionEarliestPrec ;
+        wikibase:timeCalendarModel ?inceptionEarliestCal
+      ] .
+    }
+    OPTIONAL {
+      wd:${id} p:P571 ?inceptionStmt .
+      ?inceptionStmt pqv:P1326 [
+        wikibase:timeValue ?inceptionLatestTime ;
+        wikibase:timePrecision ?inceptionLatestPrec ;
+        wikibase:timeCalendarModel ?inceptionLatestCal
+      ] .
+    }
+  }
+  OPTIONAL { wd:${id} schema:dateModified ?modified . }
+  OPTIONAL { wd:${id} rdfs:label ?itemLabel0 . FILTER(LANG(?itemLabel0) = "de") }
+    OPTIONAL { wd:${id} rdfs:label ?itemLabel1 . FILTER(LANG(?itemLabel1) = "en") }
+    OPTIONAL { wd:${id} rdfs:label ?itemLabel2 . FILTER(LANG(?itemLabel2) = "mul") }
+    BIND(COALESCE(?itemLabel0, ?itemLabel1, ?itemLabel2) AS ?itemLabel)
+}
+LIMIT 1

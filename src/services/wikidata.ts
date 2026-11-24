@@ -3,9 +3,9 @@ import { statementDateFromTimeString, PROLEPTIC_GREGORIAN } from '../utils/dates
 import { normalizeAliases } from '../utils/aliases';
 import { getLocale } from '../locale';
 import { BUILDING_TYPE_SET } from './building-type-set';
-import { getLastEdit } from './edit-tracker';
 
-const SPARQL_ENDPOINT = 'https://query.wikidata.org/sparql';
+/** The QLever-backed query service, which replaces Blazegraph at query.wikidata.org. */
+const SPARQL_ENDPOINT = 'https://query-next.wikidata.org/sparql';
 
 interface SparqlBinding {
   value: string;
@@ -14,41 +14,48 @@ interface SparqlBinding {
 }
 
 /**
- * Query URL for a single item. After this browser edited the item, each
- * request gets a unique parameter so neither the browser nor the query
- * service's HTTP cache (`max-age=300`) can answer it with a pre-edit result.
+ * Runs a query and returns its result rows. Sent as a form-encoded POST: the
+ * detail query is longer than the endpoint accepts in a GET URL (HTTP 414),
+ * POST responses are never served from an HTTP cache, so a query right after
+ * an edit sees the current data, and a form body keeps this a CORS simple
+ * request without a preflight.
  */
-function itemQueryUrl(id: string, query: string): string {
-  const url = `${SPARQL_ENDPOINT}?query=${encodeURIComponent(query)}&format=json`;
-  return getLastEdit(id) ? `${url}&nocache=${Date.now()}` : url;
+async function runQuery<T>(query: string, signal?: AbortSignal): Promise<T[]> {
+  const response = await fetch(SPARQL_ENDPOINT, {
+    method: 'POST',
+    headers: { Accept: 'application/sparql-results+json' },
+    body: new URLSearchParams({ query }),
+    signal,
+  });
+  if (!response.ok) throw new Error(`Wikidata SPARQL error: ${response.status}`);
+  const data: { results: { bindings: T[] } } = await response.json();
+  return data.results.bindings;
 }
 
-interface SparqlResult {
-  results: {
-    bindings: Array<{
-      item?: SparqlBinding;
-      itemLabel?: SparqlBinding;
-      type?: SparqlBinding;
-      typeLabel?: SparqlBinding;
-      coord?: SparqlBinding;
-      image?: SparqlBinding;
-      inception?: SparqlBinding;
-      modified?: SparqlBinding;
-    }>;
-  };
+interface BuildingBinding {
+  item?: SparqlBinding;
+  itemLabel?: SparqlBinding;
+  type?: SparqlBinding;
+  typeLabel?: SparqlBinding;
+  coord?: SparqlBinding;
+  image?: SparqlBinding;
+  inception?: SparqlBinding;
+  modified?: SparqlBinding;
 }
 
 function buildQuery(west: number, south: number, east: number, north: number): string {
-  const locale = getLocale();
-  const fallback = locale === 'en' ? 'de' : 'en';
-  const langs = `${locale},${fallback},mul`;
+  const langs = labelLanguages().join(',');
+  // geof:sfWithin against a constant polygon is answered from QLever's
+  // spatial index; a FILTER on geof:latitude/geof:longitude scans every
+  // coordinate and runs into the 60 s timeout. Points exactly on the box
+  // edge are not "within" and drop out, which a map viewport can afford.
+  const box = `POLYGON((${west} ${south}, ${east} ${south}, ${east} ${north}, ${west} ${north}, ${west} ${south}))`;
   return `
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
 SELECT ?item ?itemLabel ?type ?typeLabel ?coord ?image ?inception ?modified WHERE {
-  SERVICE wikibase:box {
-    ?item wdt:P625 ?coord .
-    bd:serviceParam wikibase:cornerSouthWest "Point(${west} ${south})"^^geo:wktLiteral .
-    bd:serviceParam wikibase:cornerNorthEast "Point(${east} ${north})"^^geo:wktLiteral .
-  }
+  ?item wdt:P625 ?coord .
+  FILTER geof:sfWithin(?coord, "${box}"^^geo:wktLiteral)
   ?item wdt:P31 ?type .
   OPTIONAL { ?item wdt:P18 ?image . }
   OPTIONAL { ?item wdt:P571 ?inception . }
@@ -59,8 +66,8 @@ LIMIT 5000`;
 }
 
 function parseCoord(wkt: string): { lat: number; lng: number } | null {
-  // WKT format: "Point(lng lat)"
-  const match = wkt.match(/Point\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/);
+  // WKT format: "POINT(lng lat)"; the keyword is case-insensitive.
+  const match = wkt.match(/point\s*\(([+-]?\d+\.?\d*)\s+([+-]?\d+\.?\d*)\)/i);
   if (!match) return null;
   return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
 }
@@ -91,13 +98,41 @@ function toStatementDate(
   return { value, earliest, latest };
 }
 
+/** Label languages in order of preference: the UI locale, the other UI language, then mul. */
+function labelLanguages(): string[] {
+  const locale = getLocale();
+  return [locale, locale === 'en' ? 'de' : 'en', 'mul'];
+}
+
+/**
+ * Binds ?<v>Label to the label of `term` in the first of `langs` that has
+ * one, leaving it unbound if none does. Placed next to the pattern that
+ * binds `term`: the label service would instead look labels up for every
+ * projected ?…Label variable across all rows, which costs seconds on the
+ * QLever query service.
+ */
+function labelClauses(term: string, v: string, langs: string[]): string {
+  const candidates = langs.map((_, i) => `?${v}Label${i}`);
+  return [
+    ...langs.map((lang, i) =>
+      `OPTIONAL { ${term} rdfs:label ${candidates[i]} . FILTER(LANG(${candidates[i]}) = "${lang}") }`),
+    `BIND(COALESCE(${candidates.join(', ')}) AS ?${v}Label)`,
+  ].join('\n    ');
+}
+
 /**
  * SPARQL OPTIONAL binding a full time value node (via psv:/pqv:, which
  * carry authoritative precision and calendar model) into ?<v>Time,
  * ?<v>Prec and ?<v>Cal.
+ *
+ * `anchor` is the triple that binds `subject`, repeated inside the OPTIONAL.
+ * QLever evaluates an OPTIONAL's inside on its own before joining it, so
+ * without the anchor it would collect the time values of every statement in
+ * Wikidata first.
  */
-function timeValueClause(subject: string, path: string, v: string): string {
+function timeValueClause(anchor: string, subject: string, path: string, v: string): string {
   return `OPTIONAL {
+      ${anchor}
       ${subject} ${path} [
         wikibase:timeValue ?${v}Time ;
         wikibase:timePrecision ?${v}Prec ;
@@ -121,20 +156,21 @@ function timeValueVars(v: string): string {
  * only the qualifiers exist — are still matched. Restricted to best-rank
  * statements to mirror wdt: truthy semantics.
  */
-function timeStatementClauses(prop: string, v: string): string {
+function timeStatementClauses(item: string, prop: string, v: string): string {
   const stmt = `?${v}Stmt`;
+  const anchor = `${item} p:${prop} ${stmt} .`;
   return `
-    ?item p:${prop} ${stmt} .
+    ${anchor}
     ${stmt} a wikibase:BestRank .
-    ${timeValueClause(stmt, `psv:${prop}`, v)}
-    ${timeValueClause(stmt, 'pqv:P1319', `${v}Earliest`)}
-    ${timeValueClause(stmt, 'pqv:P1326', `${v}Latest`)}`;
+    ${timeValueClause(anchor, stmt, `psv:${prop}`, v)}
+    ${timeValueClause(anchor, stmt, 'pqv:P1319', `${v}Earliest`)}
+    ${timeValueClause(anchor, stmt, 'pqv:P1326', `${v}Latest`)}`;
 }
 
 /** {@link timeStatementClauses} wrapped in OPTIONAL. */
-function timeStatementPattern(prop: string, v: string): string {
+function timeStatementPattern(item: string, prop: string, v: string): string {
   return `
-  OPTIONAL {${timeStatementClauses(prop, v)}
+  OPTIONAL {${timeStatementClauses(item, prop, v)}
   }`;
 }
 
@@ -196,23 +232,11 @@ export async function fetchBuildings(
   north: number,
   signal?: AbortSignal,
 ): Promise<WikidataBuilding[]> {
-  const query = buildQuery(west, south, east, north);
-  const url = `${SPARQL_ENDPOINT}?query=${encodeURIComponent(query)}&format=json`;
-
-  const response = await fetch(url, {
-    headers: { Accept: 'application/sparql-results+json' },
-    signal,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Wikidata SPARQL error: ${response.status}`);
-  }
-
-  const data: SparqlResult = await response.json();
+  const rows = await runQuery<BuildingBinding>(buildQuery(west, south, east, north), signal);
   const seen = new Set<string>();
   const buildings: WikidataBuilding[] = [];
 
-  for (const row of data.results.bindings) {
+  for (const row of rows) {
     if (!row.item || !row.coord) continue;
 
     const id = extractQid(row.item.value);
@@ -248,12 +272,20 @@ export async function fetchBuildings(
 /**
  * Every property sits in its own UNION branch, so each result row binds the
  * variables of exactly one property and the row count is the sum of the
- * value counts rather than their product. The empty branch yields the one
- * row that carries ?itemAltLabel even when no branch matches.
+ * value counts rather than their product. Aliases come one per row, in every
+ * language of the fallback chain; the caller picks the language.
+ *
+ * The item IRI is written into each pattern rather than bound to ?item once:
+ * QLever plans a bound variable like an unknown one and works through the
+ * matching statements of all items, which takes about 20 s instead of 1 s.
  */
-function buildDetailQuery(id: string, langs: string): string {
+function buildDetailQuery(id: string, langs: string[]): string {
+  const item = `wd:${id}`;
+  const occ = `${item} p:P466 ?occStmt .`;
+  const own = `${item} p:P127 ?ownStmt .`;
+  const addr = `${item} p:P6375 ?addrStmt .`;
   return `
-SELECT ?itemAltLabel ${timeStatementVars('demolished')} ?heritage ?heritageLabel
+SELECT ?alias ${timeStatementVars('demolished')} ?heritage ?heritageLabel
   ?image
   ?occupant ?occupantLabel ${timeValueVars('occupStart')} ${timeValueVars('occupEnd')}
   ${personLinkVars('occupant')}
@@ -269,60 +301,67 @@ SELECT ?itemAltLabel ${timeStatementVars('demolished')} ?heritage ?heritageLabel
   ?ohmId ?govId ?wikiTreeId ?genWikiId
   ?modified
 WHERE {
-  VALUES ?item { wd:${id} }
   {
-  } UNION {${timeStatementClauses('P576', 'demolished')}
+    ${item} skos:altLabel ?alias .
+    FILTER(LANG(?alias) IN (${langs.map((l) => `"${l}"`).join(', ')}))
+  } UNION {${timeStatementClauses(item, 'P576', 'demolished')}
   } UNION {
-    ?item wdt:P18 ?image .
+    ${item} wdt:P18 ?image .
   } UNION {
-    ?item p:P1435 ?hStmt .
+    ${item} p:P1435 ?hStmt .
     ?hStmt ps:P1435 ?heritage .
+    ${labelClauses('?heritage', 'heritage', langs)}
   } UNION {
-    ?item p:P466 ?occStmt .
+    ${occ}
     ?occStmt ps:P466 ?occupant .
-    ${timeValueClause('?occStmt', 'pqv:P580', 'occupStart')}
-    ${timeValueClause('?occStmt', 'pqv:P582', 'occupEnd')}
+    ${timeValueClause(occ, '?occStmt', 'pqv:P580', 'occupStart')}
+    ${timeValueClause(occ, '?occStmt', 'pqv:P582', 'occupEnd')}
     ${personLinkClauses('occupant')}
+    ${labelClauses('?occupant', 'occupant', langs)}
   } UNION {
-    ?item p:P127 ?ownStmt .
+    ${own}
     ?ownStmt ps:P127 ?owner .
-    ${timeValueClause('?ownStmt', 'pqv:P580', 'ownerStart')}
-    ${timeValueClause('?ownStmt', 'pqv:P582', 'ownerEnd')}
+    ${timeValueClause(own, '?ownStmt', 'pqv:P580', 'ownerStart')}
+    ${timeValueClause(own, '?ownStmt', 'pqv:P582', 'ownerEnd')}
     ${personLinkClauses('owner')}
+    ${labelClauses('?owner', 'owner', langs)}
   } UNION {
-    ?item p:P6375 ?addrStmt .
+    ${addr}
     ?addrStmt ps:P6375 ?address .
-    ${timeValueClause('?addrStmt', 'pqv:P580', 'addrStart')}
-    ${timeValueClause('?addrStmt', 'pqv:P582', 'addrEnd')}
+    ${timeValueClause(addr, '?addrStmt', 'pqv:P580', 'addrStart')}
+    ${timeValueClause(addr, '?addrStmt', 'pqv:P582', 'addrEnd')}
   } UNION {
-    ?item p:P84 ?archStmt .
+    ${item} p:P84 ?archStmt .
     ?archStmt ps:P84 ?architect .
     ${personLinkClauses('architect')}
+    ${labelClauses('?architect', 'architect', langs)}
   } UNION {
-    ?item p:P88 ?commStmt .
+    ${item} p:P88 ?commStmt .
     ?commStmt ps:P88 ?commissioned .
     ${personLinkClauses('commissioned')}
+    ${labelClauses('?commissioned', 'commissioned', langs)}
   } UNION {
-    ?item wdt:P167 ?replacedBy .
+    ${item} wdt:P167 ?replacedBy .
+    ${labelClauses('?replacedBy', 'replacedBy', langs)}
   } UNION {
-    ?item wdt:P1398 ?replaces .
+    ${item} wdt:P1398 ?replaces .
+    ${labelClauses('?replaces', 'replaces', langs)}
   } UNION {
-    ?item wdt:P8424 ?ohmId .
+    ${item} wdt:P8424 ?ohmId .
   } UNION {
-    ?item wdt:P2503 ?govId .
+    ${item} wdt:P2503 ?govId .
   } UNION {
-    ?item wdt:P7607 ?wikiTreeId .
+    ${item} wdt:P7607 ?wikiTreeId .
   } UNION {
-    ?item wdt:P14871 ?genWikiId .
+    ${item} wdt:P14871 ?genWikiId .
   } UNION {
-    ?item schema:dateModified ?modified .
+    ${item} schema:dateModified ?modified .
   }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
 }`;
 }
 
 interface DetailBinding extends TimeStatementBindings {
-  itemAltLabel?: SparqlBinding;
+  alias?: SparqlBinding;
   heritage?: SparqlBinding;
   heritageLabel?: SparqlBinding;
   image?: SparqlBinding;
@@ -350,28 +389,23 @@ export async function fetchBuildingById(
   id: string,
   signal?: AbortSignal,
 ): Promise<WikidataBuilding | null> {
-  const locale = getLocale();
-  const fallback = locale === 'en' ? 'de' : 'en';
-  const langs = `${locale},${fallback},mul`;
-
+  const langs = labelLanguages();
+  // The item IRI is written into each pattern for the reason given at
+  // buildDetailQuery; here it saves about 2.5 s.
+  const item = `wd:${id}`;
   const query = `
 SELECT ?itemLabel ?type ?typeLabel ?coord ?image ${timeStatementVars('inception')} ?modified WHERE {
-  BIND(wd:${id} AS ?item)
-  OPTIONAL { ?item wdt:P625 ?coord . }
-  OPTIONAL { ?item wdt:P31 ?type . }
-  OPTIONAL { ?item wdt:P18 ?image . }
-${timeStatementPattern('P571', 'inception')}
-  OPTIONAL { ?item schema:dateModified ?modified . }
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "${langs}" . }
+  OPTIONAL { ${item} wdt:P625 ?coord . }
+  OPTIONAL {
+    ${item} wdt:P31 ?type .
+    ${labelClauses('?type', 'type', langs)}
+  }
+  OPTIONAL { ${item} wdt:P18 ?image . }
+${timeStatementPattern(item, 'P571', 'inception')}
+  OPTIONAL { ${item} schema:dateModified ?modified . }
+  ${labelClauses(item, 'item', langs)}
 }
 LIMIT 1`;
-
-  const url = itemQueryUrl(id, query);
-  const response = await fetch(url, {
-    headers: { Accept: 'application/sparql-results+json' },
-    signal,
-  });
-  if (!response.ok) throw new Error(`SPARQL error: ${response.status}`);
 
   interface SingleBuildingBinding extends TimeStatementBindings {
     itemLabel?: SparqlBinding;
@@ -381,8 +415,7 @@ LIMIT 1`;
     image?: SparqlBinding;
     modified?: SparqlBinding;
   }
-  const data: { results: { bindings: SingleBuildingBinding[] } } = await response.json();
-  const row = data.results.bindings[0];
+  const [row] = await runQuery<SingleBuildingBinding>(query, signal);
   if (!row) return null;
 
   const coords = row.coord ? parseCoord(row.coord.value) : null;
@@ -393,8 +426,8 @@ LIMIT 1`;
   return {
     id,
     label: row.itemLabel?.value ?? id,
-    type: row.type?.value && row.typeLabel?.value
-      ? { id: extractQid(row.type.value), label: row.typeLabel.value }
+    type: row.type?.value
+      ? { id: extractQid(row.type.value), label: row.typeLabel?.value ?? extractQid(row.type.value) }
       : undefined,
     lat: coords.lat,
     lng: coords.lng,
@@ -408,22 +441,8 @@ export async function fetchBuildingDetail(
   id: string,
   signal?: AbortSignal,
 ): Promise<BuildingDetail> {
-  const locale = getLocale();
-  const fallback = locale === 'en' ? 'de' : 'en';
-  const langs = `${locale},${fallback},mul`;
-
-  const query = buildDetailQuery(id, langs);
-  const url = itemQueryUrl(id, query);
-
-  const response = await fetch(url, {
-    headers: { Accept: 'application/sparql-results+json' },
-    signal,
-  });
-
-  if (!response.ok) throw new Error(`Wikidata SPARQL error: ${response.status}`);
-
-  const data: { results: { bindings: DetailBinding[] } } = await response.json();
-  const rows = data.results.bindings;
+  const langs = labelLanguages();
+  const rows = await runQuery<DetailBinding>(buildDetailQuery(id, langs), signal);
 
   let demolished: StatementDate | undefined;
   let ohmId: string | undefined;
@@ -431,8 +450,7 @@ export async function fetchBuildingDetail(
   let wikiTreeId: string | undefined;
   let genWikiId: string | undefined;
   let modified: string | undefined;
-  let aliases: string[] = [];
-  let aliasesLang: string | undefined;
+  const aliasesByLang = new Map<string, string[]>();
   const heritageSet = new Set<string>();
   const imageSet = new Set<string>();
   const occupants = new Map<string, PersonRef>();
@@ -450,14 +468,13 @@ export async function fetchBuildingDetail(
     if (row.wikiTreeId && !wikiTreeId) wikiTreeId = row.wikiTreeId.value;
     if (row.genWikiId && !genWikiId) genWikiId = row.genWikiId.value;
     if (row.modified && !modified) modified = row.modified.value;
-    // The label service joins all aliases of one language into a single
-    // comma-separated literal, the same form the edit field takes them in, and
-    // tags it with the language it settled on from the fallback chain.
-    if (row.itemAltLabel && aliases.length === 0) {
-      aliases = normalizeAliases(row.itemAltLabel.value);
-      aliasesLang = row.itemAltLabel['xml:lang'];
+    if (row.alias) {
+      const lang = row.alias['xml:lang'] ?? '';
+      const list = aliasesByLang.get(lang) ?? [];
+      if (!list.includes(row.alias.value)) list.push(row.alias.value);
+      aliasesByLang.set(lang, list);
     }
-    if (row.heritage && row.heritageLabel) heritageSet.add(row.heritageLabel.value);
+    if (row.heritage) heritageSet.add(row.heritageLabel?.value ?? extractQid(row.heritage.value));
     if (row.image) imageSet.add(row.image.value);
 
     if (row.occupant) {
@@ -546,6 +563,14 @@ export async function fetchBuildingDetail(
       }
     }
   }
+
+  // Like the item's label, its aliases come from the first language of the
+  // fallback chain that has any, and that language is reported alongside.
+  // They are split at commas, the edit field's separator: the form takes
+  // this list as its baseline, and an untouched field must compare equal to
+  // it so a save without alias changes leaves the item's aliases alone.
+  const aliasesLang = langs.find((lang) => aliasesByLang.has(lang));
+  const aliases = aliasesLang ? normalizeAliases(aliasesByLang.get(aliasesLang)!.join(',')) : [];
 
   const byStart = (a: { start?: WikidataTime }, b: { start?: WikidataTime }) => {
     if (!a.start && !b.start) return 0;

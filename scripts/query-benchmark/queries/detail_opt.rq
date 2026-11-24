@@ -1,0 +1,166 @@
+SELECT ?alias ?demolishedTime ?demolishedPrec ?demolishedCal ?demolishedEarliestTime ?demolishedEarliestPrec ?demolishedEarliestCal ?demolishedLatestTime ?demolishedLatestPrec ?demolishedLatestCal ?heritage ?heritageLabel
+  ?image
+  ?occupant ?occupantLabel ?occupStartTime ?occupStartPrec ?occupStartCal ?occupEndTime ?occupEndPrec ?occupEndCal
+  ?occupantGenWiki ?occupantWikiTree
+  ?owner ?ownerLabel ?ownerStartTime ?ownerStartPrec ?ownerStartCal ?ownerEndTime ?ownerEndPrec ?ownerEndCal
+  ?ownerGenWiki ?ownerWikiTree
+  ?address ?addrStartTime ?addrStartPrec ?addrStartCal ?addrEndTime ?addrEndPrec ?addrEndCal
+  ?architect ?architectLabel
+  ?architectGenWiki ?architectWikiTree
+  ?commissioned ?commissionedLabel
+  ?commissionedGenWiki ?commissionedWikiTree
+  ?replacedBy ?replacedByLabel
+  ?replaces ?replacesLabel
+  ?ohmId ?govId ?wikiTreeId ?genWikiId
+  ?modified
+WHERE {
+  {
+    wd:${id} skos:altLabel ?alias .
+    FILTER(LANG(?alias) IN ("de", "en", "mul"))
+  } UNION {
+    wd:${id} p:P576 ?demolishedStmt .
+    ?demolishedStmt a wikibase:BestRank .
+    OPTIONAL {
+      wd:${id} p:P576 ?demolishedStmt .
+      ?demolishedStmt psv:P576 [
+        wikibase:timeValue ?demolishedTime ;
+        wikibase:timePrecision ?demolishedPrec ;
+        wikibase:timeCalendarModel ?demolishedCal
+      ] .
+    }
+    OPTIONAL {
+      wd:${id} p:P576 ?demolishedStmt .
+      ?demolishedStmt pqv:P1319 [
+        wikibase:timeValue ?demolishedEarliestTime ;
+        wikibase:timePrecision ?demolishedEarliestPrec ;
+        wikibase:timeCalendarModel ?demolishedEarliestCal
+      ] .
+    }
+    OPTIONAL {
+      wd:${id} p:P576 ?demolishedStmt .
+      ?demolishedStmt pqv:P1326 [
+        wikibase:timeValue ?demolishedLatestTime ;
+        wikibase:timePrecision ?demolishedLatestPrec ;
+        wikibase:timeCalendarModel ?demolishedLatestCal
+      ] .
+    }
+  } UNION {
+    wd:${id} wdt:P18 ?image .
+  } UNION {
+    wd:${id} p:P1435 ?hStmt .
+    ?hStmt ps:P1435 ?heritage .
+    OPTIONAL { ?heritage rdfs:label ?heritageLabel0 . FILTER(LANG(?heritageLabel0) = "de") }
+    OPTIONAL { ?heritage rdfs:label ?heritageLabel1 . FILTER(LANG(?heritageLabel1) = "en") }
+    OPTIONAL { ?heritage rdfs:label ?heritageLabel2 . FILTER(LANG(?heritageLabel2) = "mul") }
+    BIND(COALESCE(?heritageLabel0, ?heritageLabel1, ?heritageLabel2) AS ?heritageLabel)
+  } UNION {
+    wd:${id} p:P466 ?occStmt .
+    ?occStmt ps:P466 ?occupant .
+    OPTIONAL {
+      wd:${id} p:P466 ?occStmt .
+      ?occStmt pqv:P580 [
+        wikibase:timeValue ?occupStartTime ;
+        wikibase:timePrecision ?occupStartPrec ;
+        wikibase:timeCalendarModel ?occupStartCal
+      ] .
+    }
+    OPTIONAL {
+      wd:${id} p:P466 ?occStmt .
+      ?occStmt pqv:P582 [
+        wikibase:timeValue ?occupEndTime ;
+        wikibase:timePrecision ?occupEndPrec ;
+        wikibase:timeCalendarModel ?occupEndCal
+      ] .
+    }
+    OPTIONAL { ?occupant wdt:P14871 ?occupantGenWiki . }
+    OPTIONAL { ?occupant wdt:P2949 ?occupantWikiTree . }
+    OPTIONAL { ?occupant rdfs:label ?occupantLabel0 . FILTER(LANG(?occupantLabel0) = "de") }
+    OPTIONAL { ?occupant rdfs:label ?occupantLabel1 . FILTER(LANG(?occupantLabel1) = "en") }
+    OPTIONAL { ?occupant rdfs:label ?occupantLabel2 . FILTER(LANG(?occupantLabel2) = "mul") }
+    BIND(COALESCE(?occupantLabel0, ?occupantLabel1, ?occupantLabel2) AS ?occupantLabel)
+  } UNION {
+    wd:${id} p:P127 ?ownStmt .
+    ?ownStmt ps:P127 ?owner .
+    OPTIONAL {
+      wd:${id} p:P127 ?ownStmt .
+      ?ownStmt pqv:P580 [
+        wikibase:timeValue ?ownerStartTime ;
+        wikibase:timePrecision ?ownerStartPrec ;
+        wikibase:timeCalendarModel ?ownerStartCal
+      ] .
+    }
+    OPTIONAL {
+      wd:${id} p:P127 ?ownStmt .
+      ?ownStmt pqv:P582 [
+        wikibase:timeValue ?ownerEndTime ;
+        wikibase:timePrecision ?ownerEndPrec ;
+        wikibase:timeCalendarModel ?ownerEndCal
+      ] .
+    }
+    OPTIONAL { ?owner wdt:P14871 ?ownerGenWiki . }
+    OPTIONAL { ?owner wdt:P2949 ?ownerWikiTree . }
+    OPTIONAL { ?owner rdfs:label ?ownerLabel0 . FILTER(LANG(?ownerLabel0) = "de") }
+    OPTIONAL { ?owner rdfs:label ?ownerLabel1 . FILTER(LANG(?ownerLabel1) = "en") }
+    OPTIONAL { ?owner rdfs:label ?ownerLabel2 . FILTER(LANG(?ownerLabel2) = "mul") }
+    BIND(COALESCE(?ownerLabel0, ?ownerLabel1, ?ownerLabel2) AS ?ownerLabel)
+  } UNION {
+    wd:${id} p:P6375 ?addrStmt .
+    ?addrStmt ps:P6375 ?address .
+    OPTIONAL {
+      wd:${id} p:P6375 ?addrStmt .
+      ?addrStmt pqv:P580 [
+        wikibase:timeValue ?addrStartTime ;
+        wikibase:timePrecision ?addrStartPrec ;
+        wikibase:timeCalendarModel ?addrStartCal
+      ] .
+    }
+    OPTIONAL {
+      wd:${id} p:P6375 ?addrStmt .
+      ?addrStmt pqv:P582 [
+        wikibase:timeValue ?addrEndTime ;
+        wikibase:timePrecision ?addrEndPrec ;
+        wikibase:timeCalendarModel ?addrEndCal
+      ] .
+    }
+  } UNION {
+    wd:${id} p:P84 ?archStmt .
+    ?archStmt ps:P84 ?architect .
+    OPTIONAL { ?architect wdt:P14871 ?architectGenWiki . }
+    OPTIONAL { ?architect wdt:P2949 ?architectWikiTree . }
+    OPTIONAL { ?architect rdfs:label ?architectLabel0 . FILTER(LANG(?architectLabel0) = "de") }
+    OPTIONAL { ?architect rdfs:label ?architectLabel1 . FILTER(LANG(?architectLabel1) = "en") }
+    OPTIONAL { ?architect rdfs:label ?architectLabel2 . FILTER(LANG(?architectLabel2) = "mul") }
+    BIND(COALESCE(?architectLabel0, ?architectLabel1, ?architectLabel2) AS ?architectLabel)
+  } UNION {
+    wd:${id} p:P88 ?commStmt .
+    ?commStmt ps:P88 ?commissioned .
+    OPTIONAL { ?commissioned wdt:P14871 ?commissionedGenWiki . }
+    OPTIONAL { ?commissioned wdt:P2949 ?commissionedWikiTree . }
+    OPTIONAL { ?commissioned rdfs:label ?commissionedLabel0 . FILTER(LANG(?commissionedLabel0) = "de") }
+    OPTIONAL { ?commissioned rdfs:label ?commissionedLabel1 . FILTER(LANG(?commissionedLabel1) = "en") }
+    OPTIONAL { ?commissioned rdfs:label ?commissionedLabel2 . FILTER(LANG(?commissionedLabel2) = "mul") }
+    BIND(COALESCE(?commissionedLabel0, ?commissionedLabel1, ?commissionedLabel2) AS ?commissionedLabel)
+  } UNION {
+    wd:${id} wdt:P167 ?replacedBy .
+    OPTIONAL { ?replacedBy rdfs:label ?replacedByLabel0 . FILTER(LANG(?replacedByLabel0) = "de") }
+    OPTIONAL { ?replacedBy rdfs:label ?replacedByLabel1 . FILTER(LANG(?replacedByLabel1) = "en") }
+    OPTIONAL { ?replacedBy rdfs:label ?replacedByLabel2 . FILTER(LANG(?replacedByLabel2) = "mul") }
+    BIND(COALESCE(?replacedByLabel0, ?replacedByLabel1, ?replacedByLabel2) AS ?replacedByLabel)
+  } UNION {
+    wd:${id} wdt:P1398 ?replaces .
+    OPTIONAL { ?replaces rdfs:label ?replacesLabel0 . FILTER(LANG(?replacesLabel0) = "de") }
+    OPTIONAL { ?replaces rdfs:label ?replacesLabel1 . FILTER(LANG(?replacesLabel1) = "en") }
+    OPTIONAL { ?replaces rdfs:label ?replacesLabel2 . FILTER(LANG(?replacesLabel2) = "mul") }
+    BIND(COALESCE(?replacesLabel0, ?replacesLabel1, ?replacesLabel2) AS ?replacesLabel)
+  } UNION {
+    wd:${id} wdt:P8424 ?ohmId .
+  } UNION {
+    wd:${id} wdt:P2503 ?govId .
+  } UNION {
+    wd:${id} wdt:P7607 ?wikiTreeId .
+  } UNION {
+    wd:${id} wdt:P14871 ?genWikiId .
+  } UNION {
+    wd:${id} schema:dateModified ?modified .
+  }
+}

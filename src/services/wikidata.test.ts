@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { fetchBuildingDetail } from './wikidata';
+import { fetchBuildings, fetchBuildingById, fetchBuildingDetail } from './wikidata';
 import { getLocale } from '../locale';
 
 /** Stubs the SPARQL endpoint with the given result rows. */
@@ -23,7 +23,7 @@ afterEach(() => vi.unstubAllGlobals());
 describe('fetchBuildingDetail rows', () => {
   it('merges rows that each bind a single property', async () => {
     respondWithRows([
-      { itemAltLabel: { ...literal('Müllerhof'), 'xml:lang': 'de' } },
+      { alias: { ...literal('Müllerhof'), 'xml:lang': getLocale() } },
       {
         demolishedTime: literal('1944-01-01T00:00:00Z'),
         demolishedPrec: literal('9'),
@@ -97,23 +97,36 @@ describe('fetchBuildingDetail person links', () => {
 });
 
 describe('fetchBuildingDetail aliases', () => {
-  it('splits the label service literal into single names', async () => {
-    respondWith({
-      itemAltLabel: { type: 'literal', 'xml:lang': getLocale(), value: 'Müllerhof, Alte Schmiede' },
-    });
+  const alias = (value: string, lang: string) => ({ alias: { type: 'literal', 'xml:lang': lang, value } });
+  const other = getLocale() === 'en' ? 'de' : 'en';
+
+  it('takes the aliases of the first language in the fallback chain that has any', async () => {
+    respondWithRows([
+      alias('Old Smithy', other),
+      alias('Müllerhof', getLocale()),
+      alias('Alte Schmiede', getLocale()),
+      alias('Douglas N. Adams', 'mul'),
+    ]);
     const detail = await fetchBuildingDetail('Q1');
     expect(detail.aliases).toEqual(['Müllerhof', 'Alte Schmiede']);
     expect(detail.aliasesLang).toBe(getLocale());
   });
 
   it('reports the language the fallback chain settled on', async () => {
-    // Asking for de can still yield mul or en, whichever the item has first.
-    respondWith({
-      itemAltLabel: { type: 'literal', 'xml:lang': 'mul', value: 'Douglas N. Adams' },
-    });
+    respondWithRows([alias('Douglas N. Adams', 'mul')]);
     const detail = await fetchBuildingDetail('Q1');
     expect(detail.aliases).toEqual(['Douglas N. Adams']);
     expect(detail.aliasesLang).toBe('mul');
+  });
+
+  it('splits aliases at commas, like the edit field, and drops repeats', async () => {
+    respondWithRows([
+      alias('Liebfrauendom,München', getLocale()),
+      alias('Münchner Dom', getLocale()),
+      alias('Münchner Dom', getLocale()),
+    ]);
+    const detail = await fetchBuildingDetail('Q1');
+    expect(detail.aliases).toEqual(['Liebfrauendom', 'München', 'Münchner Dom']);
   });
 
   it('reports no aliases and no language when the item has none', async () => {
@@ -121,5 +134,74 @@ describe('fetchBuildingDetail aliases', () => {
     const detail = await fetchBuildingDetail('Q1');
     expect(detail.aliases).toEqual([]);
     expect(detail.aliasesLang).toBeUndefined();
+  });
+});
+
+describe('labels missing in every fallback language', () => {
+  it('shows a heritage designation by its QID', async () => {
+    respondWith({ heritage: uri('Q17297633') });
+    const detail = await fetchBuildingDetail('Q1');
+    expect(detail.heritages).toEqual(['Q17297633']);
+  });
+
+  it('keeps the type, labelled by its QID', async () => {
+    respondWith({ coord: literal('POINT(11.5 48.1)'), type: uri('Q41176') });
+    const building = await fetchBuildingById('Q1');
+    expect(building?.type).toEqual({ id: 'Q41176', label: 'Q41176' });
+    expect(building?.label).toBe('Q1');
+  });
+});
+
+describe('item queries', () => {
+  /** The query text each call sends. */
+  async function sentQueries(call: () => Promise<unknown>): Promise<string> {
+    let query = '';
+    vi.stubGlobal('fetch', async (_url: string, init: RequestInit) => {
+      query = (init.body as URLSearchParams).get('query')!;
+      return { ok: true, json: async () => ({ results: { bindings: [] } }) };
+    });
+    await call();
+    return query;
+  }
+
+  // Binding the item to ?item, or using the label service, makes the QLever
+  // query service take seconds instead of fractions of one.
+  it.each([
+    ['fetchBuildingById', () => fetchBuildingById('Q42')],
+    ['fetchBuildingDetail', () => fetchBuildingDetail('Q42')],
+  ])('%s writes the item IRI into its patterns', async (_name, call) => {
+    const query = await sentQueries(call);
+    expect(query).toContain('wd:Q42 ');
+    expect(query).not.toMatch(/\?item\b(?!Label)/);
+    expect(query).not.toContain('SERVICE wikibase:label');
+  });
+
+  it('repeats the statement inside the OPTIONALs that hang off it', async () => {
+    const query = await sentQueries(() => fetchBuildingDetail('Q42'));
+    // Once to bind the statement, once in each of the two date OPTIONALs.
+    expect(query.split('wd:Q42 p:P466 ?occStmt .').length - 1).toBe(3);
+  });
+});
+
+describe('fetchBuildings', () => {
+  it('reads upper-case WKT points', async () => {
+    respondWith({
+      item: uri('Q1'),
+      itemLabel: literal('Haus'),
+      type: uri('Q41176'),
+      typeLabel: literal('Gebäude'),
+      coord: { type: 'literal', value: 'POINT(11.572222 48.146944)' },
+    });
+    const [building] = await fetchBuildings(11, 48, 12, 49);
+    expect(building).toMatchObject({ id: 'Q1', lat: 48.146944, lng: 11.572222 });
+  });
+
+  it('posts the query form-encoded', async () => {
+    const fetchMock = vi.fn(async () => ({ ok: true, json: async () => ({ results: { bindings: [] } }) }));
+    vi.stubGlobal('fetch', fetchMock);
+    await fetchBuildings(11, 48, 12, 49);
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.method).toBe('POST');
+    expect((init.body as URLSearchParams).get('query')).toContain('geof:sfWithin');
   });
 });

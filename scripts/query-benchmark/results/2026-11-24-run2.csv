@@ -1,0 +1,433 @@
+time_utc,round,task,label,query,service,status,seconds,rows,bytes,error,retried_after_429,fingerprint
+2026-11-24T16:26:10+00:00,1,open,Q106539974 Baudenkmal D-1-62-000-8162,detail_opt,new,200,1.153,3,1358,,0,3 rows/80c22430
+2026-11-24T16:26:12+00:00,1,open,Q106539974 Baudenkmal D-1-62-000-8162,detail_opt,old,200,0.753,3,1586,,0,3 rows/80c22430
+2026-11-24T16:26:15+00:00,1,open,Q131617 Deutsches Museum,detail_opt,old,200,1.270,7,2082,,0,3 rows/1354f92b
+2026-11-24T16:26:17+00:00,1,open,Q131617 Deutsches Museum,detail_opt,new,200,1.152,7,1683,,0,3 rows/1354f92b
+2026-11-24T16:26:20+00:00,1,open,Q530930,detail_opt,new,200,1.142,19,7422,,0,18 rows/02ef543f
+2026-11-24T16:26:23+00:00,1,open,Q530930,detail_opt,old,200,1.792,19,10705,,0,18 rows/02ef543f
+2026-11-24T16:26:29+00:00,1,open,Q4152 Schloss Neuschwanstein,by_id_inline,old,200,4.038,1,1634,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T16:26:31+00:00,1,open,Q4152 Schloss Neuschwanstein,by_id_inline,new,200,0.536,1,1227,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T16:26:35+00:00,1,map,Köln Dom z14,box_new,new,200,2.519,3240,2133591,,0,2525 items
+2026-11-24T16:26:51+00:00,1,map,Köln Dom z14,box_old,old,200,14.748,3240,3148367,,0,2525 items
+2026-11-24T16:26:54+00:00,1,open,Q4176 Kölner Dom,by_id,old,200,0.304,1,1639,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T16:26:58+00:00,1,open,Q4176 Kölner Dom,by_id,new,200,2.598,1,1233,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T16:27:02+00:00,1,map,Berlin Mitte z14,box_new,new,200,2.296,5000,3559830,,0,3581 items
+2026-11-24T16:27:32+00:00,1,map,Berlin Mitte z14,box_old,old,200,28.918,5000,5167953,,0,3988 items
+2026-11-24T16:27:46+00:00,1,open,Q118145368 Burgstall,by_id,old,200,12.551,1,1022,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T16:27:51+00:00,1,open,Q118145368 Burgstall,by_id,new,200,3.509,1,800,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T16:27:54+00:00,1,map,Wildpoldsried (rural) z14,box_new,new,200,1.122,184,110584,,0,111 items
+2026-11-24T16:28:01+00:00,1,map,Wildpoldsried (rural) z14,box_old,old,200,5.576,184,165002,,0,111 items
+2026-11-24T16:28:03+00:00,1,open,Q1902835,by_id_inline,old,200,0.370,1,1185,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T16:28:05+00:00,1,open,Q1902835,by_id_inline,new,200,0.650,1,927,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T16:28:36+00:00,1,open,Q118145368 Burgstall,detail,new,200,20.863,2,1295,,0,1 rows/78e4146d
+2026-11-24T16:28:41+00:00,1,open,Q118145368 Burgstall,detail,old,200,3.015,2,1477,,0,1 rows/78e4146d
+2026-11-24T16:28:44+00:00,1,open,Q167193 Frauenkirche München,by_id,old,200,1.759,1,1683,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T16:28:48+00:00,1,open,Q167193 Frauenkirche München,by_id,new,200,2.178,1,1277,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T16:28:53+00:00,1,open,Q82425 Brandenburger Tor,detail_opt,new,200,3.549,10,2401,,0,8 rows/abc41661
+2026-11-24T16:28:55+00:00,1,open,Q82425 Brandenburger Tor,detail_opt,old,200,0.802,10,3229,,0,8 rows/84253f2b
+2026-11-24T16:29:16+00:00,1,open,Q4176 Kölner Dom,detail_opt,old,200,19.773,27,7458,,0,25 rows/78918353
+2026-11-24T16:29:19+00:00,1,open,Q4176 Kölner Dom,detail_opt,new,200,1.213,27,5086,,0,25 rows/78918353
+2026-11-24T16:29:21+00:00,1,open,Q118145368 Burgstall,by_id_inline,new,200,0.564,1,799,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T16:29:23+00:00,1,open,Q118145368 Burgstall,by_id_inline,old,200,0.656,1,1022,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T16:29:27+00:00,1,open,Q4176 Kölner Dom,detail,old,200,1.941,26,10759,,0,25 rows/78918353
+2026-11-24T16:29:49+00:00,1,open,Q4176 Kölner Dom,detail,new,200,20.923,26,7219,,0,25 rows/78918353
+2026-11-24T16:30:12+00:00,1,open,Q82425 Brandenburger Tor,detail,new,200,20.924,9,3038,,0,8 rows/abc41661
+2026-11-24T16:30:14+00:00,1,open,Q82425 Brandenburger Tor,detail,old,200,0.689,9,4203,,0,8 rows/84253f2b
+2026-11-24T16:30:24+00:00,1,map,Köln Dom z16,box_old,old,200,8.504,1416,1349683,,0,1128 items
+2026-11-24T16:30:28+00:00,1,map,Köln Dom z16,box_new,new,200,2.108,1416,914145,,0,1128 items
+2026-11-24T16:30:31+00:00,1,map,Berlin Mitte z16,box_new,new,200,1.962,2010,1405105,,0,1422 items
+2026-11-24T16:31:00+00:00,1,map,Berlin Mitte z16,box_old,old,200,26.744,2013,2059694,,0,1423 items
+2026-11-24T16:31:03+00:00,1,open,Q151897 Reichstagsgebäude,detail,old,200,1.513,14,9758,,0,13 rows/81e1bb69
+2026-11-24T16:31:25+00:00,1,open,Q151897 Reichstagsgebäude,detail,new,200,20.830,14,6802,,0,13 rows/81e1bb69
+2026-11-24T16:31:54+00:00,1,open,Q28121567,detail,new,200,20.467,16,5123,,0,15 rows/6d7f3985
+2026-11-24T16:31:56+00:00,1,open,Q28121567,detail,old,200,0.454,16,7205,,0,15 rows/6d7f3985
+2026-11-24T16:31:57+00:00,1,open,Q551837,detail_opt,old,502,0.226,,157,"<html> <head><title>502 Bad Gateway</title></head> <body> <center><h1>502 Bad Gateway</h1></center> <hr><center>nginx/1.22.1</center> </body> </html> ",0,
+2026-11-24T16:32:00+00:00,1,open,Q551837,detail_opt,new,200,1.203,46,8213,,0,44 rows/c96a66d7
+2026-11-24T16:32:03+00:00,1,map,Rothenburg o.d.T. z16,box_new,new,200,1.568,1011,680402,,0,877 items
+2026-11-24T16:32:10+00:00,1,map,Rothenburg o.d.T. z16,box_old,old,200,5.383,1011,993400,,0,877 items
+2026-11-24T16:32:13+00:00,1,open,Q1585963,by_id,old,200,1.186,1,1229,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T16:32:17+00:00,1,open,Q1585963,by_id,new,200,3.185,1,973,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T16:32:20+00:00,1,open,Q28121567,detail_opt,new,200,1.106,17,3631,,0,15 rows/6d7f3985
+2026-11-24T16:32:22+00:00,1,open,Q28121567,detail_opt,old,200,0.930,17,5035,,0,15 rows/6d7f3985
+2026-11-24T16:32:25+00:00,1,open,Q551837,by_id,old,200,0.320,1,1622,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T16:32:29+00:00,1,open,Q551837,by_id,new,200,3.022,1,1228,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T16:32:31+00:00,1,open,Q82425 Brandenburger Tor,by_id_inline,new,200,0.447,1,1550,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-10-21T11:39:30Z""]"
+2026-11-24T16:32:33+00:00,1,open,Q82425 Brandenburger Tor,by_id_inline,old,200,0.647,1,2094,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-09-25T16:05:43Z""]"
+2026-11-24T16:32:35+00:00,1,open,Q151897 Reichstagsgebäude,by_id_inline,old,200,0.547,1,1649,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T16:32:38+00:00,1,open,Q151897 Reichstagsgebäude,by_id_inline,new,200,0.549,1,1242,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T16:32:40+00:00,1,map,Wildpoldsried (rural) z16,box_new,new,200,0.949,21,13587,,0,15 items
+2026-11-24T16:32:42+00:00,1,map,Wildpoldsried (rural) z16,box_old,old,200,0.544,21,19824,,0,15 items
+2026-11-24T16:32:48+00:00,1,map,Regensburg Altstadt z16,box_old,old,200,4.469,2212,2125792,,0,1895 items
+2026-11-24T16:32:51+00:00,1,map,Regensburg Altstadt z16,box_new,new,200,1.716,2212,1440395,,0,1895 items
+2026-11-24T16:33:14+00:00,1,open,Q1025619 Café Jasmin,detail,new,200,20.837,5,1875,,0,4 rows/a3e372b9
+2026-11-24T16:33:27+00:00,1,open,Q1025619 Café Jasmin,detail,old,200,11.375,5,2396,,0,4 rows/a3e372b9
+2026-11-24T16:33:29+00:00,1,open,Q103185917 München (Samian Ware Discovery Site),by_id_inline,old,200,0.675,1,1066,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T16:33:31+00:00,1,open,Q103185917 München (Samian Ware Discovery Site),by_id_inline,new,200,0.589,1,847,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T16:33:54+00:00,1,open,Q530930,detail,new,200,20.719,19,8914,,0,18 rows/02ef543f
+2026-11-24T16:34:01+00:00,1,open,Q530930,detail,old,200,5.739,19,13077,,0,18 rows/02ef543f
+2026-11-24T16:34:04+00:00,1,open,Q1902835,detail_opt,old,200,1.713,23,6261,,0,22 rows/c21e0d6c
+2026-11-24T16:34:07+00:00,1,open,Q1902835,detail_opt,new,200,1.106,23,4261,,0,22 rows/c21e0d6c
+2026-11-24T16:34:09+00:00,1,open,Q131617 Deutsches Museum,by_id_inline,new,200,0.587,1,1237,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T16:34:11+00:00,1,open,Q131617 Deutsches Museum,by_id_inline,old,200,0.806,1,1637,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T16:34:57+00:00,1,open,Q1585963,by_id_inline,old,200,0.969,1,1229,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T16:34:59+00:00,1,open,Q1585963,by_id_inline,new,200,0.579,1,972,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T16:35:04+00:00,1,open,Q1025619 Café Jasmin,by_id,new,200,3.246,1,939,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T16:35:06+00:00,1,open,Q1025619 Café Jasmin,by_id,old,200,0.805,1,1198,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T16:35:08+00:00,1,open,Q167193 Frauenkirche München,by_id_inline,old,200,0.861,1,1682,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T16:35:11+00:00,1,open,Q167193 Frauenkirche München,by_id_inline,new,200,0.519,1,1276,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T16:35:13+00:00,1,open,Q1025619 Café Jasmin,detail_opt,new,200,1.381,5,1571,,0,4 rows/a3e372b9
+2026-11-24T16:35:21+00:00,1,open,Q1025619 Café Jasmin,detail_opt,old,200,5.773,5,1898,,0,4 rows/a3e372b9
+2026-11-24T16:35:41+00:00,1,open,Q28121567,by_id,old,200,18.875,1,1190,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T16:35:46+00:00,1,open,Q28121567,by_id,new,200,3.419,1,924,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T16:36:09+00:00,1,open,Q131617 Deutsches Museum,detail,new,200,20.406,4,2053,,0,3 rows/1354f92b
+2026-11-24T16:36:11+00:00,1,open,Q131617 Deutsches Museum,detail,old,200,0.518,4,2432,,0,3 rows/1354f92b
+2026-11-24T16:36:56+00:00,1,open,Q1585963,detail,old,200,43.599,26,11210,,0,25 rows/db2172a0
+2026-11-24T16:37:19+00:00,1,open,Q1585963,detail,new,200,20.689,26,7828,,0,25 rows/db2172a0
+2026-11-24T16:37:21+00:00,1,open,Q1585963,detail_opt,new,200,1.232,25,7816,,0,25 rows/db2172a0
+2026-11-24T16:37:24+00:00,1,open,Q1585963,detail_opt,old,200,1.172,25,11198,,0,25 rows/db2172a0
+2026-11-24T16:37:26+00:00,1,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id_inline,old,200,0.841,1,1051,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T16:37:29+00:00,1,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id_inline,new,200,0.856,1,830,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T16:37:33+00:00,1,open,Q82425 Brandenburger Tor,by_id,new,200,3.310,1,1551,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-10-21T11:39:30Z""]"
+2026-11-24T16:37:42+00:00,1,open,Q82425 Brandenburger Tor,by_id,old,200,7.479,1,2089,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-09-25T16:05:43Z""]"
+2026-11-24T16:37:53+00:00,1,open,Q103185917 München (Samian Ware Discovery Site),detail,old,200,0.784,2,1214,,0,1 rows/10d0dc91
+2026-11-24T16:38:15+00:00,1,open,Q103185917 München (Samian Ware Discovery Site),detail,new,200,20.471,2,1134,,0,1 rows/10d0dc91
+2026-11-24T16:38:17+00:00,1,open,Q551837,by_id_inline,new,200,0.524,1,1227,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T16:38:22+00:00,1,open,Q551837,by_id_inline,old,200,3.415,1,1622,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T16:38:26+00:00,1,open,Q167193 Frauenkirche München,detail,old,200,1.981,6,3804,,0,5 rows/15ed27a3
+2026-11-24T16:38:48+00:00,1,open,Q167193 Frauenkirche München,detail,new,200,21.139,6,3141,,0,5 rows/15ed27a3
+2026-11-24T16:39:11+00:00,1,open,Q1902835,detail,new,200,21.017,23,5949,,0,22 rows/c21e0d6c
+2026-11-24T16:39:13+00:00,1,open,Q1902835,detail,old,200,0.648,23,9025,,0,22 rows/c21e0d6c
+2026-11-24T16:39:17+00:00,1,open,Q118145368 Burgstall,detail_opt,old,200,2.912,3,1442,,0,1 rows/78e4146d
+2026-11-24T16:39:20+00:00,1,open,Q118145368 Burgstall,detail_opt,new,200,1.127,3,1252,,0,1 rows/78e4146d
+2026-11-24T16:39:25+00:00,1,open,Q151897 Reichstagsgebäude,by_id,new,200,2.298,1,1243,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T16:39:27+00:00,1,open,Q151897 Reichstagsgebäude,by_id,old,200,0.811,1,1648,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T16:39:39+00:00,1,open,Q1902835,by_id,old,200,10.685,1,1185,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T16:39:44+00:00,1,open,Q1902835,by_id,new,200,3.214,1,928,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T16:39:48+00:00,1,map,München Marienplatz z14,box_new,new,200,2.260,5000,3317387,,0,4167 items
+2026-11-24T16:40:05+00:00,1,map,München Marienplatz z14,box_old,old,200,16.112,5000,4751941,,0,4395 items
+2026-11-24T16:40:09+00:00,1,open,Q530930,by_id_inline,old,200,1.827,1,1652,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T16:40:11+00:00,1,open,Q530930,by_id_inline,new,200,0.523,1,1255,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T16:40:15+00:00,1,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id,new,200,3.211,1,831,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T16:40:17+00:00,1,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id,old,200,0.553,1,1051,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T16:40:21+00:00,1,open,Q551837,detail,old,200,1.026,45,19473,,0,44 rows/c96a66d7
+2026-11-24T16:40:43+00:00,1,open,Q551837,detail,new,200,20.606,45,13235,,0,44 rows/c96a66d7
+2026-11-24T16:40:45+00:00,1,open,Q4152 Schloss Neuschwanstein,detail_opt,new,200,1.124,16,3563,,0,14 rows/8c401f03
+2026-11-24T16:40:58+00:00,1,open,Q4152 Schloss Neuschwanstein,detail_opt,old,200,11.092,16,5079,,0,14 rows/8c401f03
+2026-11-24T16:41:49+00:00,1,open,Q4152 Schloss Neuschwanstein,by_id,old,200,49.697,1,1634,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T16:41:53+00:00,1,open,Q4152 Schloss Neuschwanstein,by_id,new,200,2.595,1,1228,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T16:41:56+00:00,1,open,Q28121567,by_id_inline,new,200,0.958,1,923,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T16:41:58+00:00,1,open,Q28121567,by_id_inline,old,200,0.547,1,1190,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T16:42:00+00:00,1,open,Q106539974 Baudenkmal D-1-62-000-8162,detail,old,200,0.327,4,1598,,0,3 rows/80c22430
+2026-11-24T16:42:22+00:00,1,open,Q106539974 Baudenkmal D-1-62-000-8162,detail,new,200,20.520,4,1370,,0,3 rows/80c22430
+2026-11-24T16:42:26+00:00,1,map,München Marienplatz z16,box_new,new,200,1.962,2487,1650118,,0,1917 items
+2026-11-24T16:42:37+00:00,1,map,München Marienplatz z16,box_old,old,200,9.423,2491,2448075,,0,1917 items
+2026-11-24T16:42:44+00:00,1,open,Q151897 Reichstagsgebäude,detail_opt,old,200,5.431,16,7993,,0,13 rows/81e1bb69
+2026-11-24T16:42:47+00:00,1,open,Q151897 Reichstagsgebäude,detail_opt,new,200,1.150,16,5562,,0,13 rows/81e1bb69
+2026-11-24T16:42:52+00:00,1,map,Regensburg Altstadt z14,box_new,new,200,3.641,3275,2091145,,0,2608 items
+2026-11-24T16:42:57+00:00,1,map,Regensburg Altstadt z14,box_old,old,200,3.746,3275,3093890,,0,2608 items
+2026-11-24T16:42:59+00:00,1,open,Q4152 Schloss Neuschwanstein,detail,old,200,0.475,15,6816,,0,14 rows/8c401f03
+2026-11-24T16:43:21+00:00,1,open,Q4152 Schloss Neuschwanstein,detail,new,200,20.686,15,4671,,0,14 rows/8c401f03
+2026-11-24T16:43:25+00:00,1,open,Q530930,by_id,new,200,2.621,1,1256,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T16:43:28+00:00,1,open,Q530930,by_id,old,200,1.342,1,1652,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T16:43:31+00:00,1,open,Q103185917 München (Samian Ware Discovery Site),by_id,old,200,0.274,1,1059,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T16:43:35+00:00,1,open,Q103185917 München (Samian Ware Discovery Site),by_id,new,200,3.253,1,848,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T16:43:38+00:00,1,open,Q1025619 Café Jasmin,by_id_inline,new,200,0.605,1,938,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T16:43:42+00:00,1,open,Q1025619 Café Jasmin,by_id_inline,old,200,3.003,1,1198,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T16:43:46+00:00,1,open,Q103185917 München (Samian Ware Discovery Site),detail_opt,old,200,2.631,1,1202,,0,1 rows/10d0dc91
+2026-11-24T16:43:49+00:00,1,open,Q103185917 München (Samian Ware Discovery Site),detail_opt,new,200,1.125,1,1122,,0,1 rows/10d0dc91
+2026-11-24T16:43:51+00:00,1,open,Q167193 Frauenkirche München,detail_opt,new,200,1.172,17,2621,,0,5 rows/15ed27a3
+2026-11-24T16:43:54+00:00,1,open,Q167193 Frauenkirche München,detail_opt,old,200,0.739,17,3645,,0,5 rows/15ed27a3
+2026-11-24T16:43:56+00:00,1,open,Q131617 Deutsches Museum,by_id,old,200,0.935,1,1636,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T16:43:59+00:00,1,open,Q131617 Deutsches Museum,by_id,new,200,1.696,1,1238,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T16:44:03+00:00,1,map,Rothenburg o.d.T. z14,box_new,new,200,1.973,1568,1008655,,0,1208 items
+2026-11-24T16:44:08+00:00,1,map,Rothenburg o.d.T. z14,box_old,old,200,3.027,1568,1482780,,0,1208 items
+2026-11-24T16:44:10+00:00,1,open,Q4176 Kölner Dom,by_id_inline,old,200,0.723,1,1639,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T16:44:12+00:00,1,open,Q4176 Kölner Dom,by_id_inline,new,200,0.648,1,1232,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T16:44:14+00:00,2,open,Q103185917 München (Samian Ware Discovery Site),detail,old,200,0.657,2,1214,,0,1 rows/10d0dc91
+2026-11-24T16:44:36+00:00,2,open,Q103185917 München (Samian Ware Discovery Site),detail,new,200,20.402,2,1134,,0,1 rows/10d0dc91
+2026-11-24T16:44:58+00:00,2,open,Q530930,detail,new,200,20.575,19,8914,,0,18 rows/02ef543f
+2026-11-24T16:45:19+00:00,2,open,Q530930,detail,old,200,19.182,19,13077,,0,18 rows/02ef543f
+2026-11-24T16:45:33+00:00,2,open,Q4152 Schloss Neuschwanstein,detail,old,200,12.600,15,6816,,0,14 rows/8c401f03
+2026-11-24T16:45:56+00:00,2,open,Q4152 Schloss Neuschwanstein,detail,new,200,21.103,15,4671,,0,14 rows/8c401f03
+2026-11-24T16:46:01+00:00,2,open,Q82425 Brandenburger Tor,by_id,new,200,3.229,1,1551,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-10-21T11:39:30Z""]"
+2026-11-24T16:46:03+00:00,2,open,Q82425 Brandenburger Tor,by_id,old,200,0.511,1,2089,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-09-25T16:05:43Z""]"
+2026-11-24T16:46:17+00:00,2,open,Q167193 Frauenkirche München,detail_opt,old,200,12.305,17,3645,,0,5 rows/15ed27a3
+2026-11-24T16:46:20+00:00,2,open,Q167193 Frauenkirche München,detail_opt,new,200,1.121,17,2621,,0,5 rows/15ed27a3
+2026-11-24T16:46:24+00:00,2,open,Q530930,by_id,new,200,2.594,1,1256,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T16:46:26+00:00,2,open,Q530930,by_id,old,200,0.250,1,1652,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T16:46:28+00:00,2,open,Q151897 Reichstagsgebäude,by_id_inline,old,200,0.452,1,1649,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T16:46:30+00:00,2,open,Q151897 Reichstagsgebäude,by_id_inline,new,200,0.547,1,1242,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T16:46:32+00:00,2,open,Q28121567,detail_opt,new,200,1.125,17,3631,,0,15 rows/6d7f3985
+2026-11-24T16:46:36+00:00,2,open,Q28121567,detail_opt,old,200,1.734,17,5035,,0,15 rows/6d7f3985
+2026-11-24T16:46:38+00:00,2,open,Q118145368 Burgstall,by_id,old,200,0.678,1,1022,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T16:46:43+00:00,2,open,Q118145368 Burgstall,by_id,new,200,3.239,1,800,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T16:46:47+00:00,2,map,Berlin Mitte z16,box_new,new,200,2.101,2011,1405334,,0,1423 items
+2026-11-24T16:46:59+00:00,2,map,Berlin Mitte z16,box_old,old,200,11.221,2013,2059233,,0,1423 items
+2026-11-24T16:47:02+00:00,2,open,Q551837,detail,old,200,0.657,45,19473,,0,44 rows/c96a66d7
+2026-11-24T16:47:24+00:00,2,open,Q551837,detail,new,200,20.488,45,13235,,0,44 rows/c96a66d7
+2026-11-24T16:47:27+00:00,2,map,Rothenburg o.d.T. z16,box_new,new,200,1.633,1009,678885,,0,876 items
+2026-11-24T16:47:32+00:00,2,map,Rothenburg o.d.T. z16,box_old,old,200,3.968,1009,991247,,0,876 items
+2026-11-24T16:47:39+00:00,2,map,Köln Dom z16,box_old,old,200,4.888,1418,1351946,,0,1129 items
+2026-11-24T16:47:42+00:00,2,map,Köln Dom z16,box_new,new,200,1.811,1418,915686,,0,1129 items
+2026-11-24T16:47:46+00:00,2,map,Regensburg Altstadt z16,box_new,new,200,1.847,2210,1439174,,0,1893 items
+2026-11-24T16:48:03+00:00,2,map,Regensburg Altstadt z16,box_old,old,200,15.384,2210,2123965,,0,1893 items
+2026-11-24T16:48:11+00:00,2,open,Q4152 Schloss Neuschwanstein,by_id,old,200,6.515,1,1634,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T16:48:15+00:00,2,open,Q4152 Schloss Neuschwanstein,by_id,new,200,2.474,1,1228,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T16:48:17+00:00,2,open,Q167193 Frauenkirche München,by_id_inline,new,200,0.534,1,1276,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T16:48:19+00:00,2,open,Q167193 Frauenkirche München,by_id_inline,old,200,0.679,1,1682,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T16:48:22+00:00,2,open,Q1025619 Café Jasmin,detail_opt,old,200,1.527,5,1898,,0,4 rows/a3e372b9
+2026-11-24T16:48:25+00:00,2,open,Q1025619 Café Jasmin,detail_opt,new,200,1.072,5,1571,,0,4 rows/a3e372b9
+2026-11-24T16:48:29+00:00,2,open,Q28121567,by_id,new,200,3.201,1,924,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T16:48:31+00:00,2,open,Q28121567,by_id,old,200,0.459,1,1190,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T16:48:34+00:00,2,open,Q118145368 Burgstall,detail_opt,old,200,0.784,3,1442,,0,1 rows/78e4146d
+2026-11-24T16:48:37+00:00,2,open,Q118145368 Burgstall,detail_opt,new,200,1.123,3,1252,,0,1 rows/78e4146d
+2026-11-24T16:48:41+00:00,2,open,Q4176 Kölner Dom,by_id,new,200,2.519,1,1233,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T16:48:43+00:00,2,open,Q4176 Kölner Dom,by_id,old,200,0.365,1,1639,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T16:48:47+00:00,2,open,Q131617 Deutsches Museum,detail_opt,old,200,2.544,7,2082,,0,3 rows/1354f92b
+2026-11-24T16:48:49+00:00,2,open,Q131617 Deutsches Museum,detail_opt,new,200,1.069,7,1683,,0,3 rows/1354f92b
+2026-11-24T16:48:54+00:00,2,open,Q551837,by_id,new,200,2.734,1,1228,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T16:48:56+00:00,2,open,Q551837,by_id,old,200,0.693,1,1622,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T16:48:58+00:00,2,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id,old,200,0.385,1,1051,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T16:49:02+00:00,2,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id,new,200,3.243,1,831,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T16:49:05+00:00,2,open,Q4176 Kölner Dom,by_id_inline,new,200,0.523,1,1232,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T16:49:23+00:00,2,open,Q4176 Kölner Dom,by_id_inline,old,200,17.079,1,1639,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T16:49:27+00:00,2,open,Q82425 Brandenburger Tor,by_id_inline,old,200,1.718,1,2094,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-09-25T16:05:43Z""]"
+2026-11-24T16:49:29+00:00,2,open,Q82425 Brandenburger Tor,by_id_inline,new,200,0.550,1,1550,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-10-21T11:39:30Z""]"
+2026-11-24T16:49:32+00:00,2,map,Rothenburg o.d.T. z14,box_new,new,200,1.671,1565,1006976,,0,1207 items
+2026-11-24T16:49:48+00:00,2,map,Rothenburg o.d.T. z14,box_old,old,200,14.868,1565,1480249,,0,1207 items
+2026-11-24T16:49:50+00:00,2,open,Q1025619 Café Jasmin,by_id,old,200,0.348,1,1198,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T16:49:55+00:00,2,open,Q1025619 Café Jasmin,by_id,new,200,3.221,1,939,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T16:49:57+00:00,2,open,Q103185917 München (Samian Ware Discovery Site),detail_opt,new,200,1.078,1,1122,,0,1 rows/10d0dc91
+2026-11-24T16:50:00+00:00,2,open,Q103185917 München (Samian Ware Discovery Site),detail_opt,old,200,0.543,1,1202,,0,1 rows/10d0dc91
+2026-11-24T16:50:02+00:00,2,open,Q4176 Kölner Dom,detail,old,200,0.744,26,10759,,0,25 rows/78918353
+2026-11-24T16:50:24+00:00,2,open,Q4176 Kölner Dom,detail,new,200,20.578,26,7219,,0,25 rows/78918353
+2026-11-24T16:50:27+00:00,2,open,Q4152 Schloss Neuschwanstein,detail_opt,new,200,1.128,16,3563,,0,14 rows/8c401f03
+2026-11-24T16:50:31+00:00,2,open,Q4152 Schloss Neuschwanstein,detail_opt,old,200,2.354,16,5079,,0,14 rows/8c401f03
+2026-11-24T16:50:33+00:00,2,open,Q1025619 Café Jasmin,detail,old,200,0.484,5,2396,,0,4 rows/a3e372b9
+2026-11-24T16:50:55+00:00,2,open,Q1025619 Café Jasmin,detail,new,200,20.698,5,1875,,0,4 rows/a3e372b9
+2026-11-24T16:51:17+00:00,2,open,Q106539974 Baudenkmal D-1-62-000-8162,detail,new,200,20.773,4,1370,,0,3 rows/80c22430
+2026-11-24T16:51:19+00:00,2,open,Q106539974 Baudenkmal D-1-62-000-8162,detail,old,200,0.549,4,1598,,0,3 rows/80c22430
+2026-11-24T16:51:29+00:00,2,open,Q118145368 Burgstall,detail,old,200,7.836,2,1477,,0,1 rows/78e4146d
+2026-11-24T16:51:51+00:00,2,open,Q118145368 Burgstall,detail,new,200,20.351,2,1295,,0,1 rows/78e4146d
+2026-11-24T16:51:54+00:00,2,open,Q1585963,detail_opt,new,200,1.129,25,7816,,0,25 rows/db2172a0
+2026-11-24T16:51:58+00:00,2,open,Q1585963,detail_opt,old,200,2.797,25,11198,,0,25 rows/db2172a0
+2026-11-24T16:52:13+00:00,2,open,Q131617 Deutsches Museum,detail,old,200,13.653,4,2432,,0,3 rows/1354f92b
+2026-11-24T16:52:36+00:00,2,open,Q131617 Deutsches Museum,detail,new,200,20.593,4,2053,,0,3 rows/1354f92b
+2026-11-24T16:52:39+00:00,2,open,Q167193 Frauenkirche München,by_id,new,200,2.415,1,1277,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T16:52:41+00:00,2,open,Q167193 Frauenkirche München,by_id,old,200,0.555,1,1683,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T16:52:53+00:00,2,map,München Marienplatz z14,box_old,old,200,9.638,5000,4815069,,0,4317 items
+2026-11-24T16:52:57+00:00,2,map,München Marienplatz z14,box_new,new,200,2.486,5000,3317372,,0,4167 items
+2026-11-24T16:53:19+00:00,2,open,Q167193 Frauenkirche München,detail,new,200,20.527,6,3141,,0,5 rows/15ed27a3
+2026-11-24T16:53:21+00:00,2,open,Q167193 Frauenkirche München,detail,old,200,0.467,6,3804,,0,5 rows/15ed27a3
+2026-11-24T16:53:24+00:00,2,open,Q103185917 München (Samian Ware Discovery Site),by_id,old,200,0.306,1,1059,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T16:53:28+00:00,2,open,Q103185917 München (Samian Ware Discovery Site),by_id,new,200,3.223,1,848,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T16:53:33+00:00,2,open,Q1585963,by_id,new,200,3.061,1,973,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T16:53:39+00:00,2,open,Q1585963,by_id,old,200,4.264,1,1229,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T16:53:43+00:00,2,open,Q1025619 Café Jasmin,by_id_inline,old,200,3.121,1,1198,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T16:53:45+00:00,2,open,Q1025619 Café Jasmin,by_id_inline,new,200,0.575,1,938,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T16:53:47+00:00,2,open,Q1585963,by_id_inline,new,200,0.617,1,972,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T16:53:51+00:00,2,open,Q1585963,by_id_inline,old,200,1.570,1,1229,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T16:53:53+00:00,2,open,Q28121567,detail,old,200,0.594,16,7205,,0,15 rows/6d7f3985
+2026-11-24T16:54:15+00:00,2,open,Q28121567,detail,new,200,20.712,16,5123,,0,15 rows/6d7f3985
+2026-11-24T16:54:20+00:00,2,open,Q1902835,by_id,new,200,3.175,1,928,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T16:54:24+00:00,2,open,Q1902835,by_id,old,200,2.301,1,1185,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T16:54:26+00:00,2,open,Q551837,by_id_inline,old,200,1.019,1,1622,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T16:54:28+00:00,2,open,Q551837,by_id_inline,new,200,0.586,1,1227,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T16:54:31+00:00,2,open,Q551837,detail_opt,new,200,1.161,46,8213,,0,44 rows/c96a66d7
+2026-11-24T16:54:34+00:00,2,open,Q551837,detail_opt,old,200,1.264,46,12352,,0,44 rows/c96a66d7
+2026-11-24T16:54:36+00:00,2,open,Q1902835,by_id_inline,old,200,0.468,1,1185,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T16:54:38+00:00,2,open,Q1902835,by_id_inline,new,200,0.626,1,927,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T16:54:41+00:00,2,open,Q4176 Kölner Dom,detail_opt,new,200,1.161,27,5086,,0,25 rows/78918353
+2026-11-24T16:54:43+00:00,2,open,Q4176 Kölner Dom,detail_opt,old,200,1.162,27,7458,,0,25 rows/78918353
+2026-11-24T16:55:28+00:00,2,map,Berlin Mitte z14,box_old,old,200,42.300,5000,5156571,,0,4057 items
+2026-11-24T16:55:32+00:00,2,map,Berlin Mitte z14,box_new,new,200,2.527,5000,3559576,,0,3581 items
+2026-11-24T16:55:54+00:00,2,open,Q151897 Reichstagsgebäude,detail,new,200,20.817,14,6802,,0,13 rows/81e1bb69
+2026-11-24T16:55:57+00:00,2,open,Q151897 Reichstagsgebäude,detail,old,200,1.198,14,9758,,0,13 rows/81e1bb69
+2026-11-24T16:56:29+00:00,2,map,München Marienplatz z16,box_old,old,200,30.240,2485,2442453,,0,1911 items
+2026-11-24T16:56:32+00:00,2,map,München Marienplatz z16,box_new,new,200,1.989,2480,1645670,,0,1910 items
+2026-11-24T16:56:34+00:00,2,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id_inline,new,200,0.832,1,830,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T16:56:37+00:00,2,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id_inline,old,200,0.716,1,1051,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T16:56:42+00:00,2,open,Q118145368 Burgstall,by_id_inline,old,200,3.669,1,1022,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T16:56:44+00:00,2,open,Q118145368 Burgstall,by_id_inline,new,200,0.572,1,799,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T16:56:47+00:00,2,open,Q82425 Brandenburger Tor,detail_opt,new,200,1.130,10,2400,,0,8 rows/abc41661
+2026-11-24T16:56:51+00:00,2,open,Q82425 Brandenburger Tor,detail_opt,old,200,1.922,10,3229,,0,8 rows/84253f2b
+2026-11-24T16:56:54+00:00,2,open,Q4152 Schloss Neuschwanstein,by_id_inline,old,200,2.345,1,1634,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T16:56:56+00:00,2,open,Q4152 Schloss Neuschwanstein,by_id_inline,new,200,0.462,1,1227,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T16:56:59+00:00,2,open,Q106539974 Baudenkmal D-1-62-000-8162,detail_opt,new,200,1.113,3,1358,,0,3 rows/80c22430
+2026-11-24T16:57:21+00:00,2,open,Q106539974 Baudenkmal D-1-62-000-8162,detail_opt,old,200,20.785,3,1586,,0,3 rows/80c22430
+2026-11-24T16:57:23+00:00,2,open,Q131617 Deutsches Museum,by_id_inline,old,200,0.431,1,1637,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T16:57:25+00:00,2,open,Q131617 Deutsches Museum,by_id_inline,new,200,0.600,1,1237,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T16:57:28+00:00,2,map,Wildpoldsried (rural) z14,box_new,new,200,1.150,184,110584,,0,111 items
+2026-11-24T16:57:30+00:00,2,map,Wildpoldsried (rural) z14,box_old,old,200,0.958,184,165002,,0,111 items
+2026-11-24T16:57:51+00:00,2,open,Q530930,by_id_inline,old,200,0.539,1,1652,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T16:57:53+00:00,2,open,Q530930,by_id_inline,new,200,0.557,1,1255,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T16:57:57+00:00,2,map,Regensburg Altstadt z14,box_new,new,200,2.392,3278,2092847,,0,2609 items
+2026-11-24T16:58:08+00:00,2,map,Regensburg Altstadt z14,box_old,old,200,9.495,3278,3096444,,0,2609 items
+2026-11-24T16:58:10+00:00,2,open,Q131617 Deutsches Museum,by_id,old,200,0.490,1,1636,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T16:58:13+00:00,2,open,Q131617 Deutsches Museum,by_id,new,200,1.669,1,1238,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T16:58:35+00:00,2,open,Q1585963,detail,new,200,20.481,26,7828,,0,25 rows/db2172a0
+2026-11-24T16:58:37+00:00,2,open,Q1585963,detail,old,200,0.423,26,11210,,0,25 rows/db2172a0
+2026-11-24T16:58:39+00:00,2,open,Q151897 Reichstagsgebäude,by_id,old,200,1.055,1,1648,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T16:58:43+00:00,2,open,Q151897 Reichstagsgebäude,by_id,new,200,2.190,1,1243,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T16:58:46+00:00,2,map,Wildpoldsried (rural) z16,box_new,new,200,0.718,21,13587,,0,15 items
+2026-11-24T16:58:49+00:00,2,map,Wildpoldsried (rural) z16,box_old,old,200,1.211,21,19824,,0,15 items
+2026-11-24T16:58:51+00:00,2,open,Q1902835,detail_opt,old,200,1.393,23,6261,,0,22 rows/c21e0d6c
+2026-11-24T16:58:54+00:00,2,open,Q1902835,detail_opt,new,200,1.182,23,4261,,0,22 rows/c21e0d6c
+2026-11-24T16:59:16+00:00,2,open,Q1902835,detail,new,200,20.530,23,5949,,0,22 rows/c21e0d6c
+2026-11-24T16:59:20+00:00,2,open,Q1902835,detail,old,200,2.265,23,9025,,0,22 rows/c21e0d6c
+2026-11-24T16:59:22+00:00,2,open,Q82425 Brandenburger Tor,detail,old,200,0.852,9,4203,,0,8 rows/84253f2b
+2026-11-24T16:59:45+00:00,2,open,Q82425 Brandenburger Tor,detail,new,200,20.776,9,3038,,0,8 rows/abc41661
+2026-11-24T16:59:47+00:00,2,open,Q28121567,by_id_inline,new,200,0.568,1,923,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T16:59:49+00:00,2,open,Q28121567,by_id_inline,old,200,0.557,1,1190,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T16:59:58+00:00,2,open,Q530930,detail_opt,old,200,0.890,19,10705,,0,18 rows/02ef543f
+2026-11-24T17:00:00+00:00,2,open,Q530930,detail_opt,new,200,1.082,19,7422,,0,18 rows/02ef543f
+2026-11-24T17:00:03+00:00,2,open,Q151897 Reichstagsgebäude,detail_opt,new,200,1.195,16,5562,,0,13 rows/81e1bb69
+2026-11-24T17:00:08+00:00,2,open,Q151897 Reichstagsgebäude,detail_opt,old,200,3.888,16,7993,,0,13 rows/81e1bb69
+2026-11-24T17:00:10+00:00,2,open,Q103185917 München (Samian Ware Discovery Site),by_id_inline,old,200,0.302,1,1066,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T17:00:12+00:00,2,open,Q103185917 München (Samian Ware Discovery Site),by_id_inline,new,200,0.582,1,847,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T17:00:16+00:00,2,map,Köln Dom z14,box_new,new,200,2.323,3243,2135702,,0,2528 items
+2026-11-24T17:00:55+00:00,2,map,Köln Dom z14,box_old,old,200,36.958,3243,3151493,,0,2528 items
+2026-11-24T17:01:17+00:00,3,open,Q1585963,detail,new,200,20.654,26,7828,,0,25 rows/db2172a0
+2026-11-24T17:01:33+00:00,3,open,Q1585963,detail,old,200,15.159,26,11210,,0,25 rows/db2172a0
+2026-11-24T17:01:39+00:00,3,open,Q28121567,detail,old,200,0.471,16,7205,,0,15 rows/6d7f3985
+2026-11-24T17:02:01+00:00,3,open,Q28121567,detail,new,200,20.727,16,5123,,0,15 rows/6d7f3985
+2026-11-24T17:02:03+00:00,3,open,Q551837,by_id_inline,new,200,0.478,1,1227,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T17:02:05+00:00,3,open,Q551837,by_id_inline,old,200,0.700,1,1622,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T17:02:09+00:00,3,open,Q131617 Deutsches Museum,detail_opt,old,200,1.887,7,2082,,0,3 rows/1354f92b
+2026-11-24T17:02:11+00:00,3,open,Q131617 Deutsches Museum,detail_opt,new,200,1.103,7,1683,,0,3 rows/1354f92b
+2026-11-24T17:02:33+00:00,3,open,Q1902835,detail,new,200,20.599,23,5949,,0,22 rows/c21e0d6c
+2026-11-24T17:02:36+00:00,3,open,Q1902835,detail,old,200,0.931,23,9025,,0,22 rows/c21e0d6c
+2026-11-24T17:02:38+00:00,3,open,Q103185917 München (Samian Ware Discovery Site),detail_opt,old,200,0.855,1,1202,,0,1 rows/10d0dc91
+2026-11-24T17:02:41+00:00,3,open,Q103185917 München (Samian Ware Discovery Site),detail_opt,new,200,1.053,1,1122,,0,1 rows/10d0dc91
+2026-11-24T17:03:05+00:00,3,open,Q103185917 München (Samian Ware Discovery Site),detail,new,200,20.718,2,1134,,0,1 rows/10d0dc91
+2026-11-24T17:03:07+00:00,3,open,Q103185917 München (Samian Ware Discovery Site),detail,old,200,0.549,2,1214,,0,1 rows/10d0dc91
+2026-11-24T17:03:12+00:00,3,open,Q1025619 Café Jasmin,detail_opt,old,200,3.258,5,1898,,0,4 rows/a3e372b9
+2026-11-24T17:03:15+00:00,3,open,Q1025619 Café Jasmin,detail_opt,new,200,1.110,5,1571,,0,4 rows/a3e372b9
+2026-11-24T17:03:17+00:00,3,open,Q82425 Brandenburger Tor,by_id_inline,new,200,0.562,1,1550,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-10-21T11:39:30Z""]"
+2026-11-24T17:03:19+00:00,3,open,Q82425 Brandenburger Tor,by_id_inline,old,200,1.039,1,2094,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-09-25T16:05:43Z""]"
+2026-11-24T17:03:21+00:00,3,open,Q551837,by_id,old,200,0.323,1,1622,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T17:03:25+00:00,3,open,Q551837,by_id,new,200,2.752,1,1228,,0,"[""Sportforum Hohenschönhausen"", [13.4764, 52.54], ""1955-01-01T00:00:00Z"", ""2026-11-13T16:50:43Z""]"
+2026-11-24T17:03:30+00:00,3,open,Q1585963,by_id,new,200,2.667,1,973,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T17:03:34+00:00,3,open,Q1585963,by_id,old,200,3.157,1,1229,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T17:03:45+00:00,3,open,Q167193 Frauenkirche München,detail,old,200,8.724,6,3804,,0,5 rows/15ed27a3
+2026-11-24T17:04:08+00:00,3,open,Q167193 Frauenkirche München,detail,new,200,20.948,6,3141,,0,5 rows/15ed27a3
+2026-11-24T17:04:10+00:00,3,open,Q530930,by_id_inline,new,200,0.541,1,1255,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T17:04:12+00:00,3,open,Q530930,by_id_inline,old,200,0.528,1,1652,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T17:04:14+00:00,3,open,Q1025619 Café Jasmin,by_id,old,200,0.374,1,1198,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T17:04:18+00:00,3,open,Q1025619 Café Jasmin,by_id,new,200,3.176,1,939,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T17:04:22+00:00,3,map,Berlin Mitte z14,box_new,new,200,2.330,5000,3559493,,0,3581 items
+2026-11-24T17:04:37+00:00,3,map,Berlin Mitte z14,box_old,old,200,13.035,5000,5154085,,0,4027 items
+2026-11-24T17:04:40+00:00,3,open,Q167193 Frauenkirche München,by_id,old,200,1.549,1,1683,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T17:04:44+00:00,3,open,Q167193 Frauenkirche München,by_id,new,200,2.124,1,1277,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T17:05:13+00:00,3,open,Q530930,detail,new,200,20.405,19,8914,,0,18 rows/02ef543f
+2026-11-24T17:05:21+00:00,3,open,Q530930,detail,old,200,6.288,19,13077,,0,18 rows/02ef543f
+2026-11-24T17:05:23+00:00,3,open,Q131617 Deutsches Museum,detail,old,200,0.544,4,2432,,0,3 rows/1354f92b
+2026-11-24T17:05:45+00:00,3,open,Q131617 Deutsches Museum,detail,new,200,20.629,4,2053,,0,3 rows/1354f92b
+2026-11-24T17:05:48+00:00,3,open,Q118145368 Burgstall,detail_opt,new,200,1.070,3,1252,,0,1 rows/78e4146d
+2026-11-24T17:05:50+00:00,3,open,Q118145368 Burgstall,detail_opt,old,200,0.636,3,1442,,0,1 rows/78e4146d
+2026-11-24T17:05:53+00:00,3,open,Q551837,detail,old,200,1.360,45,19473,,0,44 rows/c96a66d7
+2026-11-24T17:06:15+00:00,3,open,Q551837,detail,new,200,20.727,45,13235,,0,44 rows/c96a66d7
+2026-11-24T17:06:17+00:00,3,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id_inline,new,200,0.587,1,830,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T17:06:19+00:00,3,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id_inline,old,200,0.657,1,1051,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T17:06:24+00:00,3,open,Q4152 Schloss Neuschwanstein,detail_opt,old,200,1.943,16,5079,,0,14 rows/8c401f03
+2026-11-24T17:06:27+00:00,3,open,Q4152 Schloss Neuschwanstein,detail_opt,new,200,1.217,16,3563,,0,14 rows/8c401f03
+2026-11-24T17:06:29+00:00,3,open,Q1585963,detail_opt,new,200,1.152,25,7816,,0,25 rows/db2172a0
+2026-11-24T17:06:34+00:00,3,open,Q1585963,detail_opt,old,200,2.585,25,11198,,0,25 rows/db2172a0
+2026-11-24T17:06:36+00:00,3,open,Q106539974 Baudenkmal D-1-62-000-8162,detail_opt,old,200,0.940,3,1586,,0,3 rows/80c22430
+2026-11-24T17:06:39+00:00,3,open,Q106539974 Baudenkmal D-1-62-000-8162,detail_opt,new,200,1.073,3,1358,,0,3 rows/80c22430
+2026-11-24T17:07:01+00:00,3,open,Q4152 Schloss Neuschwanstein,detail,new,200,20.539,15,4671,,0,14 rows/8c401f03
+2026-11-24T17:07:02+00:00,3,open,Q4152 Schloss Neuschwanstein,detail,old,200,0.361,15,6816,,0,14 rows/8c401f03
+2026-11-24T17:07:05+00:00,3,open,Q118145368 Burgstall,detail,old,200,0.651,2,1477,,0,1 rows/78e4146d
+2026-11-24T17:07:27+00:00,3,open,Q118145368 Burgstall,detail,new,200,20.387,2,1295,,0,1 rows/78e4146d
+2026-11-24T17:07:30+00:00,3,map,Rothenburg o.d.T. z14,box_new,new,200,1.787,1565,1006976,,0,1207 items
+2026-11-24T17:07:37+00:00,3,map,Rothenburg o.d.T. z14,box_old,old,200,5.363,1565,1480249,,0,1207 items
+2026-11-24T17:07:41+00:00,3,map,Regensburg Altstadt z14,box_old,old,200,2.389,3277,3095615,,0,2608 items
+2026-11-24T17:07:45+00:00,3,map,Regensburg Altstadt z14,box_new,new,200,1.943,3277,2092302,,0,2608 items
+2026-11-24T17:07:47+00:00,3,open,Q4152 Schloss Neuschwanstein,by_id_inline,new,200,0.484,1,1227,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T17:09:10+00:00,3,open,Q4152 Schloss Neuschwanstein,by_id_inline,old,200,82.252,1,1634,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T17:09:13+00:00,3,open,Q167193 Frauenkirche München,by_id_inline,old,200,0.855,1,1682,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T17:09:15+00:00,3,open,Q167193 Frauenkirche München,by_id_inline,new,200,0.547,1,1276,,0,"[""Frauenkirche, München"", [11.5736, 48.1386], ""1401-01-01T00:00:00Z"", ""2026-09-01T11:58:26Z""]"
+2026-11-24T17:09:17+00:00,3,open,Q1585963,by_id_inline,new,200,0.463,1,972,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T17:09:19+00:00,3,open,Q1585963,by_id_inline,old,200,0.424,1,1229,,0,"[""Langenbeck-Virchow-Haus"", [13.3793, 52.5258], null, ""2023-12-30T18:15:16Z""]"
+2026-11-24T17:09:21+00:00,3,open,Q4152 Schloss Neuschwanstein,by_id,old,200,0.373,1,1634,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T17:09:25+00:00,3,open,Q4152 Schloss Neuschwanstein,by_id,new,200,2.469,1,1228,,0,"[""Schloss Neuschwanstein"", [10.7494, 47.5575], ""1869-01-01T00:00:00Z"", ""2026-09-30T10:19:05Z""]"
+2026-11-24T17:09:28+00:00,3,open,Q4176 Kölner Dom,detail_opt,new,200,1.156,27,5086,,0,25 rows/78918353
+2026-11-24T17:09:31+00:00,3,open,Q4176 Kölner Dom,detail_opt,old,200,1.877,27,7458,,0,25 rows/78918353
+2026-11-24T17:09:33+00:00,3,open,Q103185917 München (Samian Ware Discovery Site),by_id,old,200,0.642,1,1059,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T17:09:38+00:00,3,open,Q103185917 München (Samian Ware Discovery Site),by_id,new,200,3.320,1,848,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T17:09:42+00:00,3,open,Q28121567,by_id,new,200,2.697,1,924,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T17:09:46+00:00,3,open,Q28121567,by_id,old,200,1.863,1,1190,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T17:10:00+00:00,3,open,Q151897 Reichstagsgebäude,detail,old,200,12.829,14,9758,,0,13 rows/81e1bb69
+2026-11-24T17:10:22+00:00,3,open,Q151897 Reichstagsgebäude,detail,new,200,20.938,14,6802,,0,13 rows/81e1bb69
+2026-11-24T17:10:31+00:00,3,open,Q151897 Reichstagsgebäude,detail_opt,new,200,1.103,16,5562,,0,13 rows/81e1bb69
+2026-11-24T17:10:37+00:00,3,open,Q151897 Reichstagsgebäude,detail_opt,old,200,4.527,16,7993,,0,13 rows/81e1bb69
+2026-11-24T17:10:42+00:00,3,open,Q82425 Brandenburger Tor,by_id,old,200,3.664,1,2089,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-09-25T16:05:43Z""]"
+2026-11-24T17:10:47+00:00,3,open,Q82425 Brandenburger Tor,by_id,new,200,3.196,1,1551,,0,"[""Brandenburger Tor"", [13.3777, 52.5163], ""1791-01-01T00:00:00Z"", ""2026-10-21T11:39:30Z""]"
+2026-11-24T17:10:49+00:00,3,open,Q118145368 Burgstall,by_id_inline,new,200,0.642,1,799,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T17:10:53+00:00,3,open,Q118145368 Burgstall,by_id_inline,old,200,2.194,1,1022,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T17:12:58+00:00,3,open,Q1902835,detail_opt,old,200,3.493,23,6261,,1,22 rows/c21e0d6c
+2026-11-24T17:13:01+00:00,3,open,Q1902835,detail_opt,new,200,1.159,23,4261,,0,22 rows/c21e0d6c
+2026-11-24T17:13:03+00:00,3,open,Q28121567,by_id_inline,new,200,0.652,1,923,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T17:13:05+00:00,3,open,Q28121567,by_id_inline,old,200,0.423,1,1190,,0,"[""Sporthalle Glückauf"", [13.4328, 51.5961], null, ""2025-06-26T07:20:50Z""]"
+2026-11-24T17:13:07+00:00,3,open,Q1902835,by_id,old,200,0.288,1,1185,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T17:13:12+00:00,3,open,Q1902835,by_id,new,200,3.201,1,928,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T17:13:14+00:00,3,open,Q131617 Deutsches Museum,by_id_inline,new,200,0.576,1,1237,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T17:13:16+00:00,3,open,Q131617 Deutsches Museum,by_id_inline,old,200,0.616,1,1637,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T17:13:18+00:00,3,open,Q4176 Kölner Dom,by_id,old,200,0.430,1,1639,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T17:13:22+00:00,3,open,Q4176 Kölner Dom,by_id,new,200,2.494,1,1233,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T17:13:24+00:00,3,open,Q1902835,by_id_inline,new,200,0.448,1,927,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T17:13:27+00:00,3,open,Q1902835,by_id_inline,old,200,0.820,1,1185,,0,"[""Marstall Ludwigsburg"", [9.1903, 48.8997], null, ""2022-11-08T04:28:46Z""]"
+2026-11-24T17:13:30+00:00,3,map,Wildpoldsried (rural) z14,box_old,old,200,1.475,184,165002,,0,111 items
+2026-11-24T17:13:32+00:00,3,map,Wildpoldsried (rural) z14,box_new,new,200,1.163,184,110584,,0,111 items
+2026-11-24T17:13:38+00:00,3,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id,new,200,3.204,1,831,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T17:13:40+00:00,3,open,Q106539974 Baudenkmal D-1-62-000-8162,by_id,old,200,0.565,1,1051,,0,"[""Baudenkmal D-1-62-000-8162 in München"", [11.579, 48.1373], null, ""2023-06-07T18:26:14Z""]"
+2026-11-24T17:13:54+00:00,3,open,Q4176 Kölner Dom,detail,old,200,13.076,26,10759,,0,25 rows/78918353
+2026-11-24T17:14:16+00:00,3,open,Q4176 Kölner Dom,detail,new,200,20.666,26,7219,,0,25 rows/78918353
+2026-11-24T17:14:21+00:00,3,open,Q118145368 Burgstall,by_id,new,200,3.432,1,800,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T17:14:26+00:00,3,open,Q118145368 Burgstall,by_id,old,200,3.498,1,1022,,0,"[""Burgstall"", [11.5788, 48.1411], null, ""2023-05-05T19:37:40Z""]"
+2026-11-24T17:14:48+00:00,3,open,Q106539974 Baudenkmal D-1-62-000-8162,detail,old,200,19.919,4,1598,,0,3 rows/80c22430
+2026-11-24T17:15:10+00:00,3,open,Q106539974 Baudenkmal D-1-62-000-8162,detail,new,200,20.699,4,1370,,0,3 rows/80c22430
+2026-11-24T17:15:13+00:00,3,open,Q551837,detail_opt,new,200,1.177,46,8213,,0,44 rows/c96a66d7
+2026-11-24T17:15:16+00:00,3,open,Q551837,detail_opt,old,200,1.451,46,12352,,0,44 rows/c96a66d7
+2026-11-24T17:15:23+00:00,3,open,Q530930,detail_opt,old,200,2.076,19,10705,,0,18 rows/02ef543f
+2026-11-24T17:15:26+00:00,3,open,Q530930,detail_opt,new,200,1.388,19,7422,,0,18 rows/02ef543f
+2026-11-24T17:15:29+00:00,3,map,Regensburg Altstadt z16,box_new,new,200,1.801,2211,1439577,,0,1892 items
+2026-11-24T17:15:35+00:00,3,map,Regensburg Altstadt z16,box_old,old,200,4.551,2211,2124578,,0,1892 items
+2026-11-24T17:15:37+00:00,3,open,Q103185917 München (Samian Ware Discovery Site),by_id_inline,old,200,0.369,1,1066,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T17:15:39+00:00,3,open,Q103185917 München (Samian Ware Discovery Site),by_id_inline,new,200,0.575,1,847,,0,"[""München (Samian Ware Discovery Site)"", [11.5833, 48.15], null, ""2021-09-23T07:23:30Z""]"
+2026-11-24T17:15:42+00:00,3,open,Q167193 Frauenkirche München,detail_opt,new,200,1.109,17,2621,,0,5 rows/15ed27a3
+2026-11-24T17:15:45+00:00,3,open,Q167193 Frauenkirche München,detail_opt,old,200,1.337,17,3645,,0,5 rows/15ed27a3
+2026-11-24T17:15:47+00:00,3,open,Q4176 Kölner Dom,by_id_inline,old,200,0.972,1,1639,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T17:15:49+00:00,3,open,Q4176 Kölner Dom,by_id_inline,new,200,0.545,1,1232,,0,"[""Kölner Dom"", [6.9583, 50.9414], ""1248-01-01T00:00:00Z"", ""2026-11-23T17:02:36Z""]"
+2026-11-24T17:15:52+00:00,3,open,Q1025619 Café Jasmin,by_id_inline,new,200,0.554,1,938,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T17:15:54+00:00,3,open,Q1025619 Café Jasmin,by_id_inline,old,200,1.180,1,1198,,0,"[""Café Jasmin"", [11.5637, 48.15], null, ""2023-05-20T13:54:34Z""]"
+2026-11-24T17:17:26+00:00,3,open,Q530930,by_id,old,0,90.186,,0,TimeoutError: The read operation timed out,0,
+2026-11-24T17:17:30+00:00,3,open,Q530930,by_id,new,200,2.746,1,1256,,0,"[""Kronprinzenpalais"", [13.3969, 52.5172], ""1663-01-01T00:00:00Z"", ""2026-10-12T23:43:57Z""]"
+2026-11-24T17:17:34+00:00,3,map,München Marienplatz z14,box_new,new,200,2.429,5000,3317352,,0,4167 items
+2026-11-24T17:17:43+00:00,3,map,München Marienplatz z14,box_old,old,200,6.623,5000,4825790,,0,4258 items
+2026-11-24T17:17:54+00:00,3,open,Q151897 Reichstagsgebäude,by_id,old,200,9.920,1,1648,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T17:17:58+00:00,3,open,Q151897 Reichstagsgebäude,by_id,new,200,2.128,1,1243,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T17:18:01+00:00,3,map,München Marienplatz z16,box_new,new,200,2.304,2485,1649230,,0,1912 items
+2026-11-24T17:18:20+00:00,3,map,München Marienplatz z16,box_old,old,200,17.253,2489,2446736,,0,1912 items
+2026-11-24T17:18:53+00:00,3,open,Q28121567,detail_opt,old,200,29.714,17,5035,,0,15 rows/6d7f3985
+2026-11-24T17:18:55+00:00,3,open,Q28121567,detail_opt,new,200,1.134,17,3631,,0,15 rows/6d7f3985
+2026-11-24T17:19:02+00:00,3,map,Köln Dom z16,box_new,new,200,5.427,1416,914329,,0,1127 items
+2026-11-24T17:19:25+00:00,3,map,Köln Dom z16,box_old,old,200,20.909,1416,1349950,,0,1127 items
+2026-11-24T17:19:39+00:00,3,map,Rothenburg o.d.T. z16,box_old,old,200,12.506,1009,991247,,0,876 items
+2026-11-24T17:19:42+00:00,3,map,Rothenburg o.d.T. z16,box_new,new,200,1.560,1009,678885,,0,876 items
+2026-11-24T17:19:46+00:00,3,map,Köln Dom z14,box_new,new,200,2.472,3243,2135703,,0,2528 items
+2026-11-24T17:20:06+00:00,3,map,Köln Dom z14,box_old,old,200,18.376,3243,3151493,,0,2528 items
+2026-11-24T17:20:08+00:00,3,open,Q131617 Deutsches Museum,by_id,old,200,0.518,1,1636,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T17:20:11+00:00,3,open,Q131617 Deutsches Museum,by_id,new,200,1.686,1,1238,,0,"[""Deutsches Museum"", [11.5833, 48.13], ""1903-06-28T00:00:00Z"", ""2026-11-22T18:08:17Z""]"
+2026-11-24T17:20:21+00:00,3,map,Wildpoldsried (rural) z16,box_new,new,200,0.610,21,13587,,0,15 items
+2026-11-24T17:20:23+00:00,3,map,Wildpoldsried (rural) z16,box_old,old,200,0.428,21,19824,,0,15 items
+2026-11-24T17:20:25+00:00,3,open,Q82425 Brandenburger Tor,detail_opt,old,200,0.953,10,3229,,0,8 rows/84253f2b
+2026-11-24T17:20:28+00:00,3,open,Q82425 Brandenburger Tor,detail_opt,new,200,1.099,10,2400,,0,8 rows/abc41661
+2026-11-24T17:20:50+00:00,3,open,Q82425 Brandenburger Tor,detail,new,200,21.134,9,3038,,0,8 rows/abc41661
+2026-11-24T17:20:52+00:00,3,open,Q82425 Brandenburger Tor,detail,old,200,0.374,9,4203,,0,8 rows/84253f2b
+2026-11-24T17:21:02+00:00,3,open,Q151897 Reichstagsgebäude,by_id_inline,old,200,7.980,1,1649,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T17:21:04+00:00,3,open,Q151897 Reichstagsgebäude,by_id_inline,new,200,0.498,1,1242,,0,"[""Reichstagsgebäude"", [13.3761, 52.5186], ""1894-01-01T00:00:00Z"", ""2026-11-23T01:51:56Z""]"
+2026-11-24T17:21:07+00:00,3,map,Berlin Mitte z16,box_new,new,200,1.977,2010,1404180,,0,1423 items
+2026-11-24T17:21:19+00:00,3,map,Berlin Mitte z16,box_old,old,200,10.355,2012,2057538,,0,1423 items
+2026-11-24T17:22:02+00:00,3,open,Q1025619 Café Jasmin,detail,old,200,40.454,5,2396,,0,4 rows/a3e372b9
+2026-11-24T17:22:25+00:00,3,open,Q1025619 Café Jasmin,detail,new,200,20.996,5,1875,,0,4 rows/a3e372b9

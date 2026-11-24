@@ -54,7 +54,7 @@ Pushes to `main` are built and deployed to GitHub Pages by [`.github/workflows/d
 |---|---|
 | UI | Lit 3 + TypeScript, localised with `@lit/localize` |
 | Map | MapLibre GL JS + OpenFreeMap, OHM vector tiles for historical layers |
-| Read | Wikidata SPARQL (`query.wikidata.org`), OHM Overpass, Nominatim, Wikimedia Commons |
+| Read | Wikidata SPARQL (`query-next.wikidata.org`, QLever), OHM Overpass, Nominatim, Wikimedia Commons |
 | Write | Wikidata REST API (`wikibase/v1`), OHM API 0.6 — both via OAuth 2.0 in the browser |
 | Build | Vite 6, Vitest + happy-dom |
 

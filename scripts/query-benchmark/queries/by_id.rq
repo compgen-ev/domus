@@ -1,0 +1,35 @@
+SELECT ?itemLabel ?type ?typeLabel ?coord ?image ?inceptionTime ?inceptionPrec ?inceptionCal ?inceptionEarliestTime ?inceptionEarliestPrec ?inceptionEarliestCal ?inceptionLatestTime ?inceptionLatestPrec ?inceptionLatestCal ?modified WHERE {
+  BIND(wd:${id} AS ?item)
+  OPTIONAL { ?item wdt:P625 ?coord . }
+  OPTIONAL { ?item wdt:P31 ?type . }
+  OPTIONAL { ?item wdt:P18 ?image . }
+
+  OPTIONAL {
+    ?item p:P571 ?inceptionStmt .
+    ?inceptionStmt a wikibase:BestRank .
+    OPTIONAL {
+      ?inceptionStmt psv:P571 [
+        wikibase:timeValue ?inceptionTime ;
+        wikibase:timePrecision ?inceptionPrec ;
+        wikibase:timeCalendarModel ?inceptionCal
+      ] .
+    }
+    OPTIONAL {
+      ?inceptionStmt pqv:P1319 [
+        wikibase:timeValue ?inceptionEarliestTime ;
+        wikibase:timePrecision ?inceptionEarliestPrec ;
+        wikibase:timeCalendarModel ?inceptionEarliestCal
+      ] .
+    }
+    OPTIONAL {
+      ?inceptionStmt pqv:P1326 [
+        wikibase:timeValue ?inceptionLatestTime ;
+        wikibase:timePrecision ?inceptionLatestPrec ;
+        wikibase:timeCalendarModel ?inceptionLatestCal
+      ] .
+    }
+  }
+  OPTIONAL { ?item schema:dateModified ?modified . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en,mul" . }
+}
+LIMIT 1
