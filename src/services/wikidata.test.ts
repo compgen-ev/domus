@@ -119,13 +119,14 @@ describe('fetchBuildingDetail aliases', () => {
     expect(detail.aliasesLang).toBe('mul');
   });
 
-  it('keeps an alias containing a comma whole and drops repeats', async () => {
+  it('splits aliases at commas, like the edit field, and drops repeats', async () => {
     respondWithRows([
-      alias('Liebfrauendom, München', getLocale()),
-      alias('Liebfrauendom, München', getLocale()),
+      alias('Liebfrauendom,München', getLocale()),
+      alias('Münchner Dom', getLocale()),
+      alias('Münchner Dom', getLocale()),
     ]);
     const detail = await fetchBuildingDetail('Q1');
-    expect(detail.aliases).toEqual(['Liebfrauendom, München']);
+    expect(detail.aliases).toEqual(['Liebfrauendom', 'München', 'Münchner Dom']);
   });
 
   it('reports no aliases and no language when the item has none', async () => {

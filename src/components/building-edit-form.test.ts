@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import './building-edit-form';
+import { fetchBuildingDetail } from '../services/wikidata';
 import type { BuildingEditForm } from './building-edit-form';
 import { parseDate } from '../utils/dates';
 import { getLocale } from '../locale';
@@ -517,6 +518,25 @@ describe('the alias field edits the whole list', () => {
     await el.updateComplete;
     expect(el._aliasesChanged).toBe(true);
     expect(el._canSave).toBe(true);
+    el.remove();
+  });
+
+  it('leaves aliases containing a comma alone when only the label changes', async () => {
+    // Wikidata stores 'Liebfrauendom,München' as one alias; the detail query
+    // hands it over split, so the untouched field matches its baseline.
+    vi.stubGlobal('fetch', async () => ({
+      ok: true,
+      json: async () => ({ results: { bindings: [
+        { alias: { type: 'literal', 'xml:lang': getLocale(), value: 'Liebfrauendom,München' } },
+      ] } }),
+    }));
+    const detail = await fetchBuildingDetail('Q1');
+    vi.unstubAllGlobals();
+    const el = await mount(detail);
+    el.formLabel = 'Neuer Name';
+    await el.updateComplete;
+    expect(el._canSave).toBe(true);
+    expect(el._aliasesChanged).toBe(false);
     el.remove();
   });
 

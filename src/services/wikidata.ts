@@ -1,5 +1,6 @@
 import type { WikidataBuilding, WikidataItem, BuildingDetail, PersonRef, AddressEntry, ExternalLink, WikidataTime, StatementDate } from '../types/building';
 import { statementDateFromTimeString, PROLEPTIC_GREGORIAN } from '../utils/dates';
+import { normalizeAliases } from '../utils/aliases';
 import { getLocale } from '../locale';
 import { BUILDING_TYPE_SET } from './building-type-set';
 
@@ -565,8 +566,11 @@ export async function fetchBuildingDetail(
 
   // Like the item's label, its aliases come from the first language of the
   // fallback chain that has any, and that language is reported alongside.
+  // They are split at commas, the edit field's separator: the form takes
+  // this list as its baseline, and an untouched field must compare equal to
+  // it so a save without alias changes leaves the item's aliases alone.
   const aliasesLang = langs.find((lang) => aliasesByLang.has(lang));
-  const aliases = aliasesLang ? aliasesByLang.get(aliasesLang)! : [];
+  const aliases = aliasesLang ? normalizeAliases(aliasesByLang.get(aliasesLang)!.join(',')) : [];
 
   const byStart = (a: { start?: WikidataTime }, b: { start?: WikidataTime }) => {
     if (!a.start && !b.start) return 0;
