@@ -529,8 +529,8 @@ describe('the alias field edits the whole list', () => {
   });
 
   describe('when the aliases came back in another language', () => {
-    // The field writes to /aliases/<current locale>. Names the label service
-    // resolved from a fallback language live under a different code, so this
+    // The field writes to /aliases/<current locale>. Names from a fallback
+    // language live under a different code, so this
     // locale's list is the empty one, and editing starts from empty.
     it('does not prefill them', async () => {
       const el = await mount(loaded(['Douglas N. Adams'], 'mul'));

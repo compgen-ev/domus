@@ -516,8 +516,8 @@ export class BuildingEditForm extends LitElement {
    *
    * `undefined` means the list is unknown -- the detail fetch failed or has not
    * landed -- and the field stays disabled, since it replaces the list wholesale
-   * and would otherwise drop names. Aliases the label service resolved from a
-   * fallback language belong to a different list than the one being written, so
+   * and would otherwise drop names. Aliases from a fallback language belong to
+   * a different list than the one being written, so
    * for this locale the item has none: the baseline is empty and the field
    * edits a list that starts out empty.
    */

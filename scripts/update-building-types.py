@@ -16,7 +16,7 @@ import urllib.request
 from datetime import date
 from pathlib import Path
 
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+SPARQL_ENDPOINT = "https://query-next.wikidata.org/sparql"
 OUTPUT_FILE = Path(__file__).parent.parent / "src/services/building-types.ts"
 BATCH_SIZE = 200  # max items per VALUES clause
 HEADERS = {

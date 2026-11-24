@@ -1,0 +1,129 @@
+SELECT ?itemAltLabel ?demolishedTime ?demolishedPrec ?demolishedCal ?demolishedEarliestTime ?demolishedEarliestPrec ?demolishedEarliestCal ?demolishedLatestTime ?demolishedLatestPrec ?demolishedLatestCal ?heritage ?heritageLabel
+  ?image
+  ?occupant ?occupantLabel ?occupStartTime ?occupStartPrec ?occupStartCal ?occupEndTime ?occupEndPrec ?occupEndCal
+  ?occupantGenWiki ?occupantWikiTree
+  ?owner ?ownerLabel ?ownerStartTime ?ownerStartPrec ?ownerStartCal ?ownerEndTime ?ownerEndPrec ?ownerEndCal
+  ?ownerGenWiki ?ownerWikiTree
+  ?address ?addrStartTime ?addrStartPrec ?addrStartCal ?addrEndTime ?addrEndPrec ?addrEndCal
+  ?architect ?architectLabel
+  ?architectGenWiki ?architectWikiTree
+  ?commissioned ?commissionedLabel
+  ?commissionedGenWiki ?commissionedWikiTree
+  ?replacedBy ?replacedByLabel
+  ?replaces ?replacesLabel
+  ?ohmId ?govId ?wikiTreeId ?genWikiId
+  ?modified
+WHERE {
+  VALUES ?item { wd:${id} }
+  {
+  } UNION {
+    ?item p:P576 ?demolishedStmt .
+    ?demolishedStmt a wikibase:BestRank .
+    OPTIONAL {
+      ?demolishedStmt psv:P576 [
+        wikibase:timeValue ?demolishedTime ;
+        wikibase:timePrecision ?demolishedPrec ;
+        wikibase:timeCalendarModel ?demolishedCal
+      ] .
+    }
+    OPTIONAL {
+      ?demolishedStmt pqv:P1319 [
+        wikibase:timeValue ?demolishedEarliestTime ;
+        wikibase:timePrecision ?demolishedEarliestPrec ;
+        wikibase:timeCalendarModel ?demolishedEarliestCal
+      ] .
+    }
+    OPTIONAL {
+      ?demolishedStmt pqv:P1326 [
+        wikibase:timeValue ?demolishedLatestTime ;
+        wikibase:timePrecision ?demolishedLatestPrec ;
+        wikibase:timeCalendarModel ?demolishedLatestCal
+      ] .
+    }
+  } UNION {
+    ?item wdt:P18 ?image .
+  } UNION {
+    ?item p:P1435 ?hStmt .
+    ?hStmt ps:P1435 ?heritage .
+  } UNION {
+    ?item p:P466 ?occStmt .
+    ?occStmt ps:P466 ?occupant .
+    OPTIONAL {
+      ?occStmt pqv:P580 [
+        wikibase:timeValue ?occupStartTime ;
+        wikibase:timePrecision ?occupStartPrec ;
+        wikibase:timeCalendarModel ?occupStartCal
+      ] .
+    }
+    OPTIONAL {
+      ?occStmt pqv:P582 [
+        wikibase:timeValue ?occupEndTime ;
+        wikibase:timePrecision ?occupEndPrec ;
+        wikibase:timeCalendarModel ?occupEndCal
+      ] .
+    }
+    OPTIONAL { ?occupant wdt:P14871 ?occupantGenWiki . }
+    OPTIONAL { ?occupant wdt:P2949 ?occupantWikiTree . }
+  } UNION {
+    ?item p:P127 ?ownStmt .
+    ?ownStmt ps:P127 ?owner .
+    OPTIONAL {
+      ?ownStmt pqv:P580 [
+        wikibase:timeValue ?ownerStartTime ;
+        wikibase:timePrecision ?ownerStartPrec ;
+        wikibase:timeCalendarModel ?ownerStartCal
+      ] .
+    }
+    OPTIONAL {
+      ?ownStmt pqv:P582 [
+        wikibase:timeValue ?ownerEndTime ;
+        wikibase:timePrecision ?ownerEndPrec ;
+        wikibase:timeCalendarModel ?ownerEndCal
+      ] .
+    }
+    OPTIONAL { ?owner wdt:P14871 ?ownerGenWiki . }
+    OPTIONAL { ?owner wdt:P2949 ?ownerWikiTree . }
+  } UNION {
+    ?item p:P6375 ?addrStmt .
+    ?addrStmt ps:P6375 ?address .
+    OPTIONAL {
+      ?addrStmt pqv:P580 [
+        wikibase:timeValue ?addrStartTime ;
+        wikibase:timePrecision ?addrStartPrec ;
+        wikibase:timeCalendarModel ?addrStartCal
+      ] .
+    }
+    OPTIONAL {
+      ?addrStmt pqv:P582 [
+        wikibase:timeValue ?addrEndTime ;
+        wikibase:timePrecision ?addrEndPrec ;
+        wikibase:timeCalendarModel ?addrEndCal
+      ] .
+    }
+  } UNION {
+    ?item p:P84 ?archStmt .
+    ?archStmt ps:P84 ?architect .
+    OPTIONAL { ?architect wdt:P14871 ?architectGenWiki . }
+    OPTIONAL { ?architect wdt:P2949 ?architectWikiTree . }
+  } UNION {
+    ?item p:P88 ?commStmt .
+    ?commStmt ps:P88 ?commissioned .
+    OPTIONAL { ?commissioned wdt:P14871 ?commissionedGenWiki . }
+    OPTIONAL { ?commissioned wdt:P2949 ?commissionedWikiTree . }
+  } UNION {
+    ?item wdt:P167 ?replacedBy .
+  } UNION {
+    ?item wdt:P1398 ?replaces .
+  } UNION {
+    ?item wdt:P8424 ?ohmId .
+  } UNION {
+    ?item wdt:P2503 ?govId .
+  } UNION {
+    ?item wdt:P7607 ?wikiTreeId .
+  } UNION {
+    ?item wdt:P14871 ?genWikiId .
+  } UNION {
+    ?item schema:dateModified ?modified .
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en,mul" . }
+}

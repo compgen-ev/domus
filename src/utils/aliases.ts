@@ -1,7 +1,7 @@
 /**
- * Aliases travel as one comma-separated string: that is how the edit field
- * takes them, and how Wikidata's label service hands them back. This is the
- * single rule for turning that text into the list Wikidata stores.
+ * The edit field takes aliases as one comma-separated string, so there an
+ * alias cannot itself contain a comma. This is the single rule for turning
+ * that text into the list Wikidata stores.
  */
 export function normalizeAliases(text: string): string[] {
   const seen = new Set<string>();

@@ -1,0 +1,12 @@
+PREFIX geo: <http://www.opengis.net/ont/geosparql#>
+PREFIX geof: <http://www.opengis.net/def/function/geosparql/>
+SELECT ?item ?itemLabel ?type ?typeLabel ?coord ?image ?inception ?modified WHERE {
+  ?item wdt:P625 ?coord .
+  FILTER geof:sfWithin(?coord, "POLYGON((${west} ${south}, ${east} ${south}, ${east} ${north}, ${west} ${north}, ${west} ${south}))"^^geo:wktLiteral)
+  ?item wdt:P31 ?type .
+  OPTIONAL { ?item wdt:P18 ?image . }
+  OPTIONAL { ?item wdt:P571 ?inception . }
+  OPTIONAL { ?item schema:dateModified ?modified . }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "de,en,mul" . }
+}
+LIMIT 5000
